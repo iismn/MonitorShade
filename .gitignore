@@ -1,0 +1,17 @@
+# Built application and per-user settings
+/MonitorShade.exe
+/MonitorShade.settings.xml
+/MonitorShade.settings.xml.tmp
+*.pdb
+
+# Generated verification reports, previews and diagnostics
+/tests/
+/MonitorShade.diagnostics.txt
+*.log
+*.tmp
+
+# Local editor files
+.vs/
+.vscode/
+*.user
+*.suo

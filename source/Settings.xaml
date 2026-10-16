@@ -1,0 +1,298 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ FontFamily="Segoe UI, Malgun Gothic" FontSize="14" Foreground="{DynamicResource Text}" Background="{DynamicResource Page}"
+ UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+ <UserControl.Resources>
+  <SolidColorBrush x:Key="Page" Color="#202020"/><SolidColorBrush x:Key="Card" Color="#2B2B2B"/>
+  <SolidColorBrush x:Key="Map" Color="#1C1C1C"/><SolidColorBrush x:Key="Input" Color="#343434"/>
+  <SolidColorBrush x:Key="Stroke" Color="#494949"/><SolidColorBrush x:Key="Text" Color="#F3F3F3"/>
+  <SolidColorBrush x:Key="Muted" Color="#C2C2C2"/><SolidColorBrush x:Key="Accent" Color="#60CDFF"/>
+  <SolidColorBrush x:Key="AccentText" Color="#101010"/><SolidColorBrush x:Key="Hover" Color="#404040"/>
+  <SolidColorBrush x:Key="Monitor" Color="#373737"/><SolidColorBrush x:Key="Selection" Color="#0078D4"/>
+  <Style TargetType="Button">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Background" Value="{DynamicResource Input}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Padding" Value="16,0"/><Setter Property="Height" Value="36"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+     <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.85"/></Trigger>
+     <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.65"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="2"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.45"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="RadioButton" x:Key="UnitButton">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Width" Value="56"/><Setter Property="Height" Value="36"/>
+   <Setter Property="Cursor" Value="Hand"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton">
+    <Border x:Name="Surface" Background="Transparent" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource Hover}"/></Trigger>
+     <Trigger Property="IsChecked" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource Accent}"/><Setter Property="Foreground" Value="{DynamicResource AccentText}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Text}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="TextBox">
+   <Setter Property="Height" Value="36"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="Padding" Value="12,0"/>
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Background" Value="{DynamicResource Input}"/>
+   <Setter Property="CaretBrush" Value="{DynamicResource Text}"/><Setter Property="SelectionBrush" Value="{DynamicResource Selection}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TextBox">
+    <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="4" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+     <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="1,1,1,2"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="Slider">
+   <Setter Property="Height" Value="32"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Slider">
+    <Grid VerticalAlignment="Center"><Track x:Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value}" Orientation="Horizontal">
+     <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="{DynamicResource Accent}" Height="4" CornerRadius="2"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton>
+     <Track.Thumb><Thumb Width="20" Height="20"><Thumb.Template><ControlTemplate TargetType="Thumb"><Grid><Ellipse Fill="{DynamicResource Page}" Stroke="{DynamicResource Stroke}" StrokeThickness="1"/><Ellipse Fill="{DynamicResource Accent}" Width="10" Height="10"/></Grid></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+     <Track.IncreaseRepeatButton><RepeatButton Command="Slider.IncreaseLarge" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="{DynamicResource Stroke}" Height="4" CornerRadius="2"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton>
+    </Track></Grid>
+    <ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="CheckBox">
+   <Setter Property="Width" Value="48"/><Setter Property="Height" Value="28"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+    <Border x:Name="Track" Height="24" CornerRadius="12" BorderBrush="{DynamicResource Muted}" BorderThickness="1" Background="Transparent">
+     <Ellipse x:Name="Knob" Width="14" Height="14" Fill="{DynamicResource Muted}" HorizontalAlignment="Left" Margin="4,0,0,0"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsChecked" Value="True"><Setter TargetName="Track" Property="Background" Value="{DynamicResource Accent}"/><Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Knob" Property="Fill" Value="{DynamicResource AccentText}"/><Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/><Setter TargetName="Knob" Property="Margin" Value="0,0,4,0"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Track" Property="BorderThickness" Value="2"/><Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource Text}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="ComboBoxItem">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Padding" Value="12,8"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="Item" CornerRadius="4" Background="Transparent" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+    <ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Item" Property="Background" Value="{DynamicResource Hover}"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="Item" Property="Background" Value="{DynamicResource Selection}"/><Setter Property="Foreground" Value="White"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="ComboBox">
+   <Setter Property="Height" Value="36"/><Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Background" Value="{DynamicResource Input}"/>
+   <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox">
+    <Grid>
+     <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+      <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="{DynamicResource Input}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="4"><Path Data="M 0 0 L 4 4 L 8 0" Stroke="{DynamicResource Text}" StrokeThickness="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"/></Border></ControlTemplate></ToggleButton.Template>
+     </ToggleButton>
+     <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="12,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+     <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+      <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Margin="0,4,0,0" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="4">
+       <ScrollViewer MaxHeight="280"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
+      </Border>
+     </Popup>
+     <Border x:Name="FocusBorder" IsHitTestVisible="False" CornerRadius="4" BorderThickness="0" BorderBrush="{DynamicResource Accent}"/>
+    </Grid>
+    <ControlTemplate.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="FocusBorder" Property="BorderThickness" Value="1,1,1,2"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="Border" x:Key="CardStyle"><Setter Property="Background" Value="{DynamicResource Card}"/><Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="4"/><Setter Property="Padding" Value="20,16"/></Style>
+  <Style TargetType="ListBoxItem">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Margin" Value="0,0,8,0"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+    <Border x:Name="Tile" Background="{DynamicResource Input}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="4" Padding="12,8" MinWidth="104">
+     <ContentPresenter HorizontalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsSelected" Value="True"><Setter TargetName="Tile" Property="Background" Value="{DynamicResource Accent}"/><Setter Property="Foreground" Value="{DynamicResource AccentText}"/></Trigger>
+     <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="{DynamicResource Text}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="ScrollBar">
+   <Setter Property="Width" Value="10"/><Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+    <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="Vertical" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value}" ViewportSize="{TemplateBinding ViewportSize}">
+     <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton>
+     <Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{DynamicResource Muted}" Opacity="0.4" Margin="3,2" CornerRadius="2"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+     <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton>
+    </Track>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="TextBlock" x:Key="Caption"><Setter Property="Foreground" Value="{DynamicResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,4,0,0"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
+  <Style TargetType="TextBlock" x:Key="Glyph"><Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/><Setter Property="FontSize" Value="20"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Width" Value="40"/></Style>
+  <Style TargetType="Expander">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander"><StackPanel>
+    <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Content="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}" Cursor="Hand" Height="28">
+     <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+      <Border x:Name="HeaderBorder" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="4"><Grid>
+       <ContentPresenter VerticalAlignment="Center" Margin="0,0,28,0"/>
+       <Path x:Name="Chevron" Data="M 0 0 L 4 4 L 8 0" Stroke="{DynamicResource Text}" StrokeThickness="1.2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" RenderTransformOrigin="0.5,0.5"/>
+      </Grid></Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="RenderTransform"><Setter.Value><RotateTransform Angle="180"/></Setter.Value></Setter></Trigger>
+       <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderBorder" Property="Opacity" Value="0.8"/></Trigger>
+       <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="HeaderBorder" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate></ToggleButton.Template>
+    </ToggleButton>
+    <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed"/>
+   </StackPanel><ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="RadioButton" x:Key="NavigationItem">
+   <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Height" Value="46"/><Setter Property="Margin" Value="0,0,0,4"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton">
+    <Border x:Name="Surface" CornerRadius="5" Background="Transparent"><Grid>
+     <Border x:Name="Indicator" Width="3" Height="18" HorizontalAlignment="Left" Background="Transparent" CornerRadius="2"/>
+     <ContentPresenter Margin="16,0" VerticalAlignment="Center"/>
+    </Grid></Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource Hover}"/></Trigger>
+     <Trigger Property="IsChecked" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource Card}"/><Setter TargetName="Indicator" Property="Background" Value="{DynamicResource Accent}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="1"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </UserControl.Resources>
+ <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="218"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+  <Border BorderBrush="{DynamicResource Stroke}" BorderThickness="0,0,1,0" Padding="16,28,12,16">
+   <DockPanel>
+    <TextBlock DockPanel.Dock="Top" Text="MonitorShade" FontWeight="SemiBold" FontSize="19" Margin="12,0,0,28"/>
+    <StackPanel>
+     <RadioButton x:Name="NavProtection" GroupName="Navigation" IsChecked="True" Style="{StaticResource NavigationItem}" AutomationProperties.Name="화면 보호 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7F4;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="화면 보호" VerticalAlignment="Center"/></StackPanel></RadioButton>
+     <RadioButton x:Name="NavLayout" GroupName="Navigation" Style="{StaticResource NavigationItem}" AutomationProperties.Name="창 배치 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A9;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="창 배치" VerticalAlignment="Center"/></StackPanel></RadioButton>
+     <RadioButton x:Name="NavBrightness" GroupName="Navigation" Style="{StaticResource NavigationItem}" AutomationProperties.Name="모니터 밝기 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE706;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="모니터 밝기" VerticalAlignment="Center"/></StackPanel></RadioButton>
+     <RadioButton x:Name="NavGeneral" GroupName="Navigation" Style="{StaticResource NavigationItem}" AutomationProperties.Name="일반 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="일반" VerticalAlignment="Center"/></StackPanel></RadioButton>
+     <RadioButton x:Name="NavHelp" GroupName="Navigation" Style="{StaticResource NavigationItem}" AutomationProperties.Name="도움말 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE897;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="도움말" VerticalAlignment="Center"/></StackPanel></RadioButton>
+    </StackPanel>
+   </DockPanel>
+  </Border>
+  <DockPanel Grid.Column="1" LastChildFill="True">
+   <Border DockPanel.Dock="Bottom" Background="{DynamicResource Page}" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Padding="28,16">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock x:Name="Status" Text="준비됨" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+     <Button x:Name="Exit" Grid.Column="1" Content="종료" Margin="12,0,8,0"/>
+     <Button x:Name="Start" Grid.Column="2" Content="저장하고 감시" MinWidth="128" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderBrush="{DynamicResource Accent}"/>
+    </Grid>
+   </Border>
+   <Grid>
+    <ScrollViewer x:Name="ProtectionPage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
+     <TextBlock Text="화면 보호" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Background="{DynamicResource Map}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="20,12,20,16">
+      <Grid><Grid.RowDefinitions><RowDefinition Height="156"/><RowDefinition Height="36"/></Grid.RowDefinitions>
+       <Canvas x:Name="Map" ClipToBounds="True" Focusable="False"/>
+       <Button x:Name="Refresh" Grid.Row="1" Content="새로고침" HorizontalAlignment="Right"/>
+      </Grid>
+     </Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="228"/></Grid.ColumnDefinitions>
+      <TextBlock Text="&#xE7F4;" Style="{StaticResource Glyph}"/>
+      <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0"><TextBlock Text="대상 모니터"/><TextBlock x:Name="DisplayDetail" Style="{StaticResource Caption}"/></StackPanel>
+      <ListBox x:Name="Displays" Grid.Column="2" SelectionMode="Multiple" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Center" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="감시할 모니터 다중 선택">
+       <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+       <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}"/></DataTemplate></ListBox.ItemTemplate>
+      </ListBox>
+     </Grid></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="&#xE916;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="대기 시간" VerticalAlignment="Center"/>
+      <Grid Grid.Column="2" VerticalAlignment="Center"><Grid.ColumnDefinitions><ColumnDefinition Width="104"/><ColumnDefinition Width="12"/><ColumnDefinition Width="112"/></Grid.ColumnDefinitions>
+       <TextBox x:Name="Amount" Text="120" MaxLength="5" TextAlignment="Right" AutomationProperties.Name="대기 시간 값" ToolTip="1 이상의 정수를 입력하세요."/>
+       <Border Grid.Column="2" Background="{DynamicResource Input}" CornerRadius="4"><StackPanel Orientation="Horizontal"><RadioButton x:Name="Seconds" GroupName="TimeUnit" Content="초" IsChecked="True" Style="{StaticResource UnitButton}" AutomationProperties.Name="초 단위"/><RadioButton x:Name="Minutes" GroupName="TimeUnit" Content="분" Style="{StaticResource UnitButton}" AutomationProperties.Name="분 단위"/></StackPanel></Border>
+      </Grid>
+     </Grid></Border>
+     <TextBlock x:Name="Validation" Foreground="{DynamicResource Accent}" FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xEB9F;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="배경화면 움직임 무시" VerticalAlignment="Center"/><CheckBox x:Name="IgnoreWallpaper" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="배경화면 움직임 무시"/></Grid></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><StackPanel>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xE708;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="강제 검은 화면 단축키" VerticalAlignment="Center"/><CheckBox x:Name="ManualEnabled" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="강제 검은 화면 단축키 사용"/></Grid>
+      <Grid Margin="40,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="228"/></Grid.ColumnDefinitions><TextBlock Text="Ctrl + Alt + F9" VerticalAlignment="Center"/><ComboBox x:Name="ManualFirst" Grid.Column="1" AutomationProperties.Name="F9 강제 가림 대상 모니터"/></Grid>
+      <Grid Margin="40,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="228"/></Grid.ColumnDefinitions><TextBlock Text="Ctrl + Alt + F10" VerticalAlignment="Center"/><ComboBox x:Name="ManualSecond" Grid.Column="1" AutomationProperties.Name="F10 강제 가림 대상 모니터"/></Grid>
+      <Button x:Name="ApplyManual" Content="적용" HorizontalAlignment="Right" Margin="0,12,0,0" AutomationProperties.Name="강제 검은 화면 단축키 적용"/>
+      <TextBlock x:Name="ManualStatus" Style="{StaticResource Caption}" Margin="40,8,0,0" Visibility="Collapsed"/>
+     </StackPanel></Border>
+    </StackPanel></ScrollViewer>
+    <ScrollViewer x:Name="LayoutPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
+     <TextBlock Text="창 배치" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="&#xE765;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="창 배치 단축키" VerticalAlignment="Center"/>
+      <CheckBox x:Name="LayoutEnabled" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="창 배치 단축키 사용"/>
+     </Grid></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="&#xE9A6;" Style="{StaticResource Glyph}"/><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="중앙 창 너비"/><TextBlock Text="Win + Del · 16:9" Style="{StaticResource Caption}"/></StackPanel>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"><TextBox x:Name="CenterPercent" Width="80" MaxLength="3" TextAlignment="Right" AutomationProperties.Name="중앙 창 너비 백분율"/><TextBlock Text="%" Margin="10,0,0,0" VerticalAlignment="Center"/></StackPanel>
+     </Grid></Border>
+     <TextBlock x:Name="CenterValidation" Foreground="{DynamicResource Accent}" Text="10~100 사이의 정수를 입력하세요." FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/>
+     <Button x:Name="ApplyLayout" Content="적용" HorizontalAlignment="Left" MinWidth="88" Margin="0,16,0,0" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderBrush="{DynamicResource Accent}"/>
+     <TextBlock x:Name="LayoutStatus" Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+    </StackPanel></ScrollViewer>
+    <ScrollViewer x:Name="BrightnessPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
+     <Grid Margin="0,0,0,24"><TextBlock Text="모니터 밝기" FontSize="28" FontWeight="SemiBold"/><Button x:Name="RefreshBrightness" Content="새로고침" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.Name="밝기 새로고침"/></Grid>
+     <TextBlock x:Name="BrightnessStatus" Style="{StaticResource Caption}" Margin="0,0,0,12" Visibility="Collapsed"/>
+     <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="밝기 동기화" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessSync" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="선택한 모니터 밝기 동기화"/></Grid></Border>
+     <StackPanel x:Name="BrightnessCards"/>
+     <TextBlock Text="단축키" FontWeight="SemiBold" Margin="0,16,0,12"/>
+     <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="밝기 단축키 사용" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessHotkeys" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="밝기 단축키 사용"/></Grid></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><StackPanel>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="170"/><ColumnDefinition Width="110"/><ColumnDefinition Width="110"/></Grid.ColumnDefinitions>
+       <TextBlock Text="키 조합" VerticalAlignment="Center"/>
+       <StackPanel Grid.Column="1" Margin="0,0,8,0"><TextBlock Text="보조키" Style="{StaticResource Caption}" Margin="0,0,0,6"/><ComboBox x:Name="BrightnessModifier" AutomationProperties.Name="밝기 단축키 보조키"/></StackPanel>
+       <StackPanel Grid.Column="2" Margin="0,0,8,0"><TextBlock Text="낮추기" Style="{StaticResource Caption}" Margin="0,0,0,6"/><ComboBox x:Name="BrightnessDown" AutomationProperties.Name="밝기 낮추기 키"/></StackPanel>
+       <StackPanel Grid.Column="3"><TextBlock Text="높이기" Style="{StaticResource Caption}" Margin="0,0,0,6"/><ComboBox x:Name="BrightnessUp" AutomationProperties.Name="밝기 높이기 키"/></StackPanel>
+      </Grid>
+      <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="280"/></Grid.ColumnDefinitions><TextBlock Text="조절 대상" VerticalAlignment="Center"/><ComboBox x:Name="BrightnessTarget" Grid.Column="1" AutomationProperties.Name="밝기 단축키 대상"/></Grid>
+      <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="80"/><ColumnDefinition Width="32"/></Grid.ColumnDefinitions><TextBlock Text="조절 간격" VerticalAlignment="Center"/><TextBox x:Name="BrightnessStep" Grid.Column="1" TextAlignment="Right" MaxLength="2" AutomationProperties.Name="밝기 변경 간격"/><TextBlock Grid.Column="2" Text="%" Margin="10,0,0,0" VerticalAlignment="Center"/></Grid>
+     </StackPanel></Border>
+     <Button x:Name="ApplyBrightness" Content="저장" AutomationProperties.Name="밝기 단축키 설정 저장" HorizontalAlignment="Left" MinWidth="88" Margin="0,16,0,0" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderBrush="{DynamicResource Accent}"/>
+    </StackPanel></ScrollViewer>
+    <ScrollViewer x:Name="GeneralPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
+     <TextBlock Text="일반" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="&#xE7E8;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="로그인 시 자동 실행" VerticalAlignment="Center"/>
+      <CheckBox x:Name="AutoStart" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="Windows 로그인 시 자동 실행 및 감시"/>
+     </Grid></Border>
+    </StackPanel></ScrollViewer>
+    <ScrollViewer x:Name="HelpPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
+     <TextBlock Text="도움말" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource CardStyle}"><Expander x:Name="HelpProtection" Header="화면 보호" Foreground="{DynamicResource Text}" IsExpanded="True"><StackPanel Margin="0,12,0,0">
+      <TextBlock Text="모니터 배치 그림이나 모니터 버튼을 눌러 여러 대를 선택할 수 있습니다. 화면 내용이 설정한 시간 동안 변하지 않으면 해당 모니터만 검게 가립니다. 대기 시간은 초 또는 분으로 지정합니다." Style="{StaticResource Caption}" LineHeight="20"/>
+      <TextBlock Text="마우스가 있는 화면은 가리지 않으며, 다른 화면의 감시는 계속됩니다. 가려진 화면에 마우스가 들어오거나 뒤쪽 화면 내용이 바뀌면 자동으로 복귀합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="‘배경화면 움직임 무시’를 켜면 앱 창 영역만 비교합니다. 작은 창 주위에 보이는 Lively 배경과 바탕 화면 아이콘·작업표시줄의 변화는 무시하며, 앱 창의 내용·위치·크기·열림·닫힘은 감지합니다. 앱이 없는 화면도 대기 시간 후 검게 가립니다. 배경 애니메이션만으로는 다시 켜지지 않으며 마우스가 들어오면 바로 복귀합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="앱 내부 영상은 계속 변화로 감지합니다. 반투명 앱을 통해 배경이 비치는 경우에는 감지가 계속될 수 있습니다. 창 그림자와 둥근 모서리의 작은 영역은 비교에서 제외합니다. 옵션을 끄면 배경을 포함한 화면 전체를 비교합니다. Lively 재생이나 설정은 변경하지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="설정 창을 열면 화면 보호가 일시정지합니다. ‘저장하고 감시’를 누르면 설정을 저장하고 트레이로 돌아갑니다. 창 배치와 밝기 단축키는 화면 보호를 일시정지해도 사용할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="강제 검은 화면은 Ctrl + Alt + F9 / F10으로 켜고 끕니다. ‘화면 보호’에서 각 키의 대상 모니터를 고른 뒤 ‘적용’을 누르세요. 기본 대상은 각각 모니터 1 / 2이며, 자동 감시를 중지해도 사용할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="강제 가림은 앱·배경의 움직임을 무시하며, 마우스가 해당 화면으로 들어오거나 같은 단축키를 다시 누르면 해제됩니다. 시작할 때 마우스가 이미 그 화면에 있었다면 밖으로 나갔다가 다시 들어올 때 해제됩니다. 해제 후에는 자동 감시의 대기 시간을 처음부터 셉니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="Ctrl + Alt + F11로 설정을 열거나 Ctrl + Alt + F12로 일시정지하면 모든 강제 가림이 해제됩니다. 잠금·절전·화면 접근 중단·모니터 구성 변경 시에도 해제되며 자동으로 다시 강제 가리지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+     </StackPanel></Expander></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Expander x:Name="HelpLayout" Header="창 배치" Foreground="{DynamicResource Text}"><StackPanel Margin="0,12,0,0">
+      <TextBlock Text="Win + ← / →  ·  왼쪽 / 오른쪽부터 너비 1/2 → 2/3 → 최대화&#x0a;Win + ↑ / ↓  ·  위쪽 / 아래쪽부터 높이 1/2 → 2/3 → 최대화&#x0a;Win + Del  ·  16:9 중앙 배치 ↔ 최대화" TextWrapping="Wrap" LineHeight="26"/>
+      <TextBlock Text="같은 키를 반복해서 누르면 크기가 순환합니다. 활성 창이 있는 모니터에서 동작하며, 다른 방향을 누르거나 창을 직접 옮기면 1/2부터 다시 시작합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="중앙 창 너비는 모니터 작업 영역의 너비 기준입니다. 높이를 넘으면 16:9를 유지해 줄입니다. 최대화는 작업표시줄과 창 제목 표시줄을 남깁니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="창 배치 단축키를 켜면 Win + 방향키의 기본 동작을 대체합니다. Ctrl·Alt·Shift를 추가한 Windows 단축키는 유지됩니다. 고정 크기 창이나 관리자 권한 앱에서는 배치가 제한될 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+     </StackPanel></Expander></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Expander x:Name="HelpBrightness" Header="모니터 밝기" Foreground="{DynamicResource Text}"><StackPanel Margin="0,12,0,0">
+      <TextBlock Text="DDC/CI로 모니터 자체 밝기를 조절합니다. 슬라이더와 − / + 버튼은 바로 적용되며, 모니터에서 값을 다시 읽어 확인합니다. 앱을 시작하거나 새로고침하는 것만으로 밝기가 바뀌지는 않습니다." Style="{StaticResource Caption}" LineHeight="20"/>
+      <TextBlock Text="‘밝기 동기화’를 켜면 ‘함께 조절’로 선택한 모니터에 같은 밝기 %를 적용합니다. 어느 쪽 슬라이더를 움직여도 묶인 모니터가 같은 값으로 바뀝니다. 동기화와 그룹 선택은 즉시 저장되며, 스위치만 켜는 것으로 실제 밝기는 바뀌지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="기본 단축키는 오른쪽 Alt + F2 / F3(5% 낮추기 / 높이기)입니다. 동기화 중에는 높이기는 가장 밝은 값, 낮추기는 가장 어두운 값을 기준으로 합니다. 예: 40·60에서 높이기 → 65·65, 낮추기 → 35·35. 동기화를 끄면 각각의 밝기에서 조절합니다. ‘마우스가 있는 모니터’도 묶인 대상이면 그룹 전체를 조절합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="보조키, 낮추기·높이기 키, 조절 간격과 단축키 대상은 ‘저장’ 또는 ‘저장하고 감시’로 저장합니다. 키를 계속 누르고 있어도 한 번만 조절합니다. Ctrl+Alt·AltGr의 F9~F12는 공통 단축키로 예약되어 있습니다. 한국어 키보드에서 오른쪽 Alt 조합이 동작하지 않으면 보조키를 변경하세요." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="nit는 Windows가 보고한 피크·전체 화면 휘도 메타데이터이며 현재 밝기의 실측값이 아닙니다. 읽기 전용으로 표시하며 밝기 %를 nit로 환산하지 않습니다. 같은 %여도 모니터 모드에 따라 실제 휘도는 다를 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="HDR이나 특정 화면 모드에서는 모니터가 밝기 변경을 제한할 수 있습니다. 통신 실패 시 모니터 OSD의 DDC/CI와 연결 상태를 확인하세요. 변경 명령은 표준 밝기(0x10)에 한정합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+     </StackPanel></Expander></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Expander x:Name="HelpGeneral" Header="실행 및 공통 단축키" Foreground="{DynamicResource Text}"><StackPanel Margin="0,12,0,0">
+      <TextBlock Text="Ctrl + Alt + F11 · 설정 열기" TextWrapping="Wrap"/>
+      <TextBlock x:Name="Shortcut" Text="Ctrl + Alt + F12 · 화면 보호 일시정지 / 재시작" Margin="0,8,0,0" TextWrapping="Wrap"/>
+      <TextBlock Text="트레이 아이콘을 두 번 클릭해도 설정을 열 수 있습니다. X 버튼은 트레이로 숨기며, 완전히 종료하려면 ‘종료’를 사용하세요." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="‘로그인 시 자동 실행’을 켜면 저장한 설정으로 자동 감시를 시작합니다. 로그인하거나 EXE를 실행하면 설정 창 없이 트레이에서 시작하며 화면 보호는 약 3초 뒤 준비됩니다. EXE 옆의 settings.xml에 설정을 보관합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="화면 캡처는 메모리에서만 비교하며 저장하거나 전송하지 않습니다. 화면 공유에는 검은 오버레이 대신 뒤쪽 내용이 보일 수 있습니다. DRM 영상·독점 전체 화면·보안 화면은 변화 감지가 제한될 수 있습니다. Windows 화면보호기·잠금·절전 중에는 조용히 대기하며, 복귀하면 감시를 재개하고 대기 시간을 처음부터 셉니다. 직접 일시정지하거나 설정 창을 열어 중지한 경우에는 자동 재개하지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="선택한 모니터의 연결이 끊겨도 감시 설정을 기억합니다. 다시 연결되면 자동으로 감시를 재개하고 대기 시간을 처음부터 셉니다. 연결된 다른 모니터의 감시는 계속됩니다. 시작할 때 대상이 없어도 연결을 기다립니다. Windows의 모니터 식별 정보로 대상을 찾으며, 다른 포트로 옮겨 식별 정보가 달라지면 한 번 다시 선택해야 할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+     </StackPanel></Expander></Border>
+     <TextBlock Text="진단" FontWeight="SemiBold" Margin="0,24,0,12"/>
+     <Border Style="{StaticResource CardStyle}"><StackPanel>
+      <WrapPanel><Button x:Name="Diagnose" Content="화면 보호 진단" Margin="0,0,8,8"/><Button x:Name="TestLayout" Content="창 배치 진단" Margin="0,0,8,8"/><Button x:Name="BrightnessCapabilities" Content="DDC/CI 지원 정보" Margin="0,0,0,8"/></WrapPanel>
+      <TextBlock x:Name="HelpStatus" Style="{StaticResource Caption}" TextWrapping="Wrap"/>
+      <TextBlock x:Name="DdcStatus" Style="{StaticResource Caption}" Visibility="Collapsed"/>
+      <StackPanel x:Name="DdcDetails"/>
+     </StackPanel></Border>
+    </StackPanel></ScrollViewer>
+   </Grid>
+  </DockPanel>
+ </Grid>
+</UserControl>
