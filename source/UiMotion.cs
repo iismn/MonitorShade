@@ -10,6 +10,19 @@ namespace MonitorShade
 {
     internal static class TextPresentation
     {
+        internal static readonly M.FontFamily DesignFont = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Pretendard");
+        private static readonly M.FontFamily WindowsFont = new M.FontFamily("Malgun Gothic");
+        internal static bool HasWindowsFont
+        {
+            get
+            {
+                M.GlyphTypeface glyph;
+                return new M.Typeface(WindowsFont, W.FontStyles.Normal, W.FontWeights.Normal, W.FontStretches.Normal).TryGetGlyphTypeface(out glyph)
+                    && glyph.FamilyNames.Values.Contains("Malgun Gothic") && glyph.CharacterToGlyphMap.ContainsKey('한');
+            }
+        }
+        internal static M.FontFamily KoreanFamily(string choice, bool available)
+        { return choice == "MalgunGothic" && available ? WindowsFont : DesignFont; }
         internal static void Apply(W.DependencyObject root, bool glass)
         {
             M.TextOptions.SetTextFormattingMode(root, M.TextFormattingMode.Display);

@@ -28,13 +28,19 @@ namespace MonitorShade
                 check(preferences.Blur && preferences.Hour(new DateTime(2026, 10, 21, 9, 30, 0)) == 9.5, "New settings use local system time and enable backdrop by default");
                 preferences.Theme = "Evening"; check(preferences.Hour(DateTime.MinValue) == 20, "Fixed evening palette does not depend on current time");
                 preferences.Theme = "invalid"; preferences.Normalize(); check(preferences.Theme == "Auto", "Unknown theme settings safely normalize");
+                check(preferences.KoreanFont == "MalgunGothic", "New settings prefer the Windows Korean font");
+                preferences.KoreanFont = "Pretendard"; preferences.Normalize(); check(preferences.KoreanFont == "Pretendard", "Existing design font can be selected explicitly");
+                preferences.KoreanFont = "invalid"; preferences.Normalize(); check(preferences.KoreanFont == "MalgunGothic", "Unknown Korean font settings safely normalize");
                 string settingsPath = path + ".settings.xml";
                 try
                 {
                     File.WriteAllText(settingsPath, "<Preferences><WaitValue>30</WaitValue><Minutes>false</Minutes></Preferences>");
                     var restored = Preferences.Read(settingsPath); check(restored.WaitValue == 30 && restored.Appearance.Blur && restored.Appearance.Theme == "Auto", "Version 1.10 settings migrate without losing protection delay");
+                    check(restored.Appearance.KoreanFont == "MalgunGothic", "Older settings without a font choice adopt the new Korean font");
                     restored.Appearance.Blur = false; restored.Appearance.Theme = "Morning"; restored.Write(settingsPath);
                     restored = Preferences.Read(settingsPath); check(!restored.Appearance.Blur && restored.Appearance.Theme == "Morning" && restored.WaitValue == 30, "Appearance settings round-trip alongside protection settings");
+                    restored.Appearance.KoreanFont = "Pretendard"; restored.Write(settingsPath);
+                    restored = Preferences.Read(settingsPath); check(restored.Appearance.KoreanFont == "Pretendard" && !restored.Appearance.Blur && restored.WaitValue == 30, "Font selection persists without changing blur or protection settings");
                 }
                 finally { if (File.Exists(settingsPath)) File.Delete(settingsPath); }
                 File.WriteAllLines(path, results); return 0;

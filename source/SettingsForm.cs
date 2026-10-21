@@ -321,16 +321,21 @@ namespace MonitorShade
             string[] values = { "Auto", "Morning", "Day", "Evening", "Night" };
             mode.SelectedIndex = Array.IndexOf(values, appearance.Theme);
             Find<C.CheckBox>("UseBackdrop").IsChecked = appearance.Blur;
+            var koreanFont = Find<C.ComboBox>("KoreanFont");
+            koreanFont.ItemsSource = new[] { "맑은 고딕 · Windows", "Pretendard · 기존" };
+            koreanFont.SelectedIndex = appearance.KoreanFont == "Pretendard" ? 1 : 0;
             Action save = delegate
             {
                 appearance.Theme = values[Math.Max(0, mode.SelectedIndex)];
                 appearance.Blur = Find<C.CheckBox>("UseBackdrop").IsChecked == true;
+                appearance.KoreanFont = koreanFont.SelectedIndex == 1 ? "Pretendard" : "MalgunGothic";
                 previewHour = null; ApplyTheme(null);
                 if (preview) return;
                 try { var saved = Preferences.Read(preferencesPath); saved.Appearance = appearance; saved.Write(preferencesPath); }
                 catch (Exception e) { Find<C.TextBlock>("AppearanceStatus").Text = "외형 설정 저장 실패: " + e.Message; }
             };
             mode.SelectionChanged += delegate { save(); };
+            koreanFont.SelectionChanged += delegate { save(); };
             Find<C.CheckBox>("UseBackdrop").Checked += delegate { save(); };
             Find<C.CheckBox>("UseBackdrop").Unchecked += delegate { save(); };
         }
@@ -355,7 +360,15 @@ namespace MonitorShade
             }
             ui.Resources["AuraColor"] = W.SystemParameters.HighContrast ? M.Colors.Transparent : DayPalette.Alpha(p.Aura, 88);
             ui.Resources["AccentColor"] = colors[8];
-            ui.FontFamily = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Pretendard");
+            bool hasWindowsFont = TextPresentation.HasWindowsFont;
+            ui.FontFamily = TextPresentation.KoreanFamily(appearance.KoreanFont, hasWindowsFont);
+            var fontStatus = Find<C.TextBlock>("KoreanFontStatus");
+            if (fontStatus != null)
+            {
+                bool fallback = appearance.KoreanFont == "MalgunGothic" && !hasWindowsFont;
+                fontStatus.Text = fallback ? "맑은 고딕이 설치되어 있지 않아 내장 Pretendard를 사용합니다." : "";
+                fontStatus.Visibility = fallback ? W.Visibility.Visible : W.Visibility.Collapsed;
+            }
             ui.Resources["NumberFont"] = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Manrope");
             foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) NavigationFeedback.Update(Find<C.RadioButton>("Nav" + name), Find<C.RadioButton>("Nav" + name).IsMouseOver, false);
             var time = Find<C.TextBlock>("ThemeTime"); if (time != null) time.Text = TimeSpan.FromHours(hour).ToString(@"hh\:mm") + (appearance.Theme == "Auto" && !forceDark.HasValue ? " · 자동" : "");
@@ -639,6 +652,7 @@ namespace MonitorShade
         }
         private void RenderPreview(string path, int width, int height)
         {
+            foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) NavigationFeedback.Update(Find<C.RadioButton>("Nav" + name), false, false);
             Width = width + 16; Height = height + 40;
             ui.HorizontalAlignment = W.HorizontalAlignment.Left; ui.VerticalAlignment = W.VerticalAlignment.Top;
             ui.Width = width; ui.Height = height;
@@ -769,8 +783,17 @@ namespace MonitorShade
             foreach (string button in new[] { "CaptionMinimize", "CaptionMaximize", "CaptionClose" })
                 check(W.Shell.WindowChrome.GetIsHitTestVisibleInChrome(Find<C.Button>(button)), button + " remains clickable inside the caption");
             M.GlyphTypeface regular, semibold;
-            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.Normal, W.FontStretches.Normal).TryGetGlyphTypeface(out regular) && regular.FamilyNames.Values.Contains("Pretendard") && regular.CharacterToGlyphMap.ContainsKey('한'), "Embedded Pretendard regular provides Korean glyphs without font fallback");
-            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.SemiBold, W.FontStretches.Normal).TryGetGlyphTypeface(out semibold) && semibold.FamilyNames.Values.Contains("Pretendard"), "Embedded Pretendard semibold resolves without synthesized weight");
+            string expectedFamily = appearance.KoreanFont == "MalgunGothic" && TextPresentation.HasWindowsFont ? "Malgun Gothic" : "Pretendard";
+            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.Normal, W.FontStretches.Normal).TryGetGlyphTypeface(out regular) && regular.FamilyNames.Values.Contains(expectedFamily) && regular.CharacterToGlyphMap.ContainsKey('한'), "Selected Korean font resolves its actual regular glyphs: " + expectedFamily);
+            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.SemiBold, W.FontStretches.Normal).TryGetGlyphTypeface(out semibold) && semibold.FamilyNames.Values.Contains(expectedFamily) && semibold.StyleSimulations == M.StyleSimulations.None, "Selected Korean font resolves an actual heading face without synthesized weight");
+            check(TextPresentation.KoreanFamily("MalgunGothic", false) == TextPresentation.DesignFont, "A missing Windows Korean font falls back to bundled Pretendard");
+            bool originalBlur = appearance.Blur; string originalTheme = appearance.Theme;
+            var originalNumbers = ui.Resources["NumberFont"].ToString();
+            Find<C.ComboBox>("KoreanFont").SelectedIndex = 1;
+            check(appearance.KoreanFont == "Pretendard" && ui.FontFamily == TextPresentation.DesignFont, "Selecting Pretendard immediately updates the UI font");
+            Find<C.ComboBox>("KoreanFont").SelectedIndex = 0;
+            check(appearance.KoreanFont == "MalgunGothic" && ui.FontFamily == TextPresentation.KoreanFamily("MalgunGothic", TextPresentation.HasWindowsFont), "Selecting Malgun Gothic immediately updates the UI font");
+            check(originalBlur == appearance.Blur && originalTheme == appearance.Theme && originalNumbers == ui.Resources["NumberFont"].ToString(), "Switching Korean fonts preserves blur, theme and Manrope numbers");
             check(ui.UseLayoutRounding && ui.SnapsToDevicePixels && M.TextOptions.GetTextFormattingMode(ui) == M.TextFormattingMode.Display && M.TextOptions.GetTextHintingMode(ui) == M.TextHintingMode.Fixed, "Text uses pixel-aligned display metrics and fixed hinting");
             var surface = new C.Grid(); TextPresentation.Apply(surface, true);
             check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Grayscale && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Transparent glass avoids invalid subpixel ClearType blending");

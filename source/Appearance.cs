@@ -11,7 +11,12 @@ namespace MonitorShade
     {
         public bool Blur = true;
         public string Theme = "Auto";
-        public void Normalize() { if (!new[] { "Auto", "Morning", "Day", "Evening", "Night" }.Contains(Theme)) Theme = "Auto"; }
+        public string KoreanFont = "MalgunGothic";
+        public void Normalize()
+        {
+            if (!new[] { "Auto", "Morning", "Day", "Evening", "Night" }.Contains(Theme)) Theme = "Auto";
+            if (KoreanFont != "MalgunGothic" && KoreanFont != "Pretendard") KoreanFont = "MalgunGothic";
+        }
         internal double Hour(DateTime now)
         { return Theme == "Morning" ? 9 : Theme == "Day" ? 14 : Theme == "Evening" ? 20 : Theme == "Night" ? 0 : now.TimeOfDay.TotalHours; }
     }
