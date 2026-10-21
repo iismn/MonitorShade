@@ -46,7 +46,7 @@ namespace MonitorShade
         public override string ToString() { return "디스플레이 " + Number + (Screen.Primary ? " (기본)" : ""); }
     }
 
-    internal sealed class SettingsForm : Form
+    internal sealed class SettingsForm : SettingsWindow
     {
         private readonly WatchGroup watcher = new WatchGroup();
         private readonly DisplayRecovery displayRecovery;
@@ -82,26 +82,26 @@ namespace MonitorShade
         private readonly NotifyIcon tray;
         private readonly ToolStripMenuItem pauseItem;
         private bool exiting, hotkey, settingsHotkey, diagnosing, dark;
-        private bool allowSettingsWindow;
         private bool sessionBlocked, powerBlocked;
+        private readonly Timer appearanceTimer = new Timer { Interval = 30000 };
+        private readonly Icon trayIcon;
+        private AppearancePreferences appearance;
+        private double? previewHour;
         private bool SystemSuspended { get { return sessionBlocked || powerBlocked; } }
         private readonly uint settingsMessage = Native.RegisterWindowMessage("MonitorShade.ShowSettings.v1");
 
         public SettingsForm(bool previewMode, bool automatic = true)
         {
-            SuspendLayout();
             preview = previewMode;
             displayRecovery = new DisplayRecovery(watcher);
             reconnectTimer.Tick += delegate { ReconcileDisplays(); };
             startupPending = automatic && !preview;
-            allowSettingsWindow = !startupPending;
             Text = "MonitorShade";
-            AutoScaleDimensions = new SizeF(96, 96);
-            AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(1020, 880);
-            MinimumSize = new Size(980, 640);
-            StartPosition = FormStartPosition.CenterScreen;
-            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+            Width = 1120; Height = 840; MinWidth = 960; MinHeight = 640;
+            WindowStartupLocation = W.WindowStartupLocation.CenterScreen;
+            Background = M.Brushes.Transparent;
+            trayIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+            Icon = W.Interop.Imaging.CreateBitmapSourceFromHIcon(trayIcon.Handle, W.Int32Rect.Empty, I.BitmapSizeOptions.FromEmptyOptions());
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("MonitorShade.Settings.xaml"))
                 ui = (C.UserControl)W.Markup.XamlReader.Load(stream);
             displays = Find<C.ListBox>("Displays"); amount = Find<C.TextBox>("Amount");
@@ -112,10 +112,10 @@ namespace MonitorShade
             autoStart = Find<C.CheckBox>("AutoStart");
             ignoreWallpaper = Find<C.CheckBox>("IgnoreWallpaper");
             layoutEnabled = Find<C.CheckBox>("LayoutEnabled"); centerPercent = Find<C.TextBox>("CenterPercent");
-            Controls.Add(new ElementHost { Child = ui, Dock = DockStyle.Fill });
-            ApplyTheme(null);
+            Content = ui;
 
             Preferences preferences = File.Exists(preferencesPath) ? Preferences.Read(preferencesPath) : new Preferences { WaitValue = 120, Minutes = false };
+            appearance = preferences.Appearance; ApplyTheme(null);
             if (!File.Exists(preferencesPath)) preferences.DeviceNames = Screen.AllScreens.Select(s => s.DeviceName).ToArray();
             displaySelection = new DisplaySelection(preferences);
             brightnessPage = new BrightnessPage(ui, preview ? new BrightnessPreferences() : preferences.Brightness, preferencesPath, preview);
@@ -129,6 +129,7 @@ namespace MonitorShade
             Find<C.RadioButton>("NavLayout").Checked += delegate { SelectPage("Layout"); };
             Find<C.RadioButton>("NavGeneral").Checked += delegate { SelectPage("General"); };
             Find<C.RadioButton>("NavHelp").Checked += delegate { SelectPage("Help"); };
+            Find<C.RadioButton>("NavShortcuts").Checked += delegate { SelectPage("Shortcuts"); };
             Find<C.RadioButton>("NavBrightness").Checked += async delegate { SelectPage("Brightness"); await brightnessPage.Refresh(false); };
             Find<C.Button>("ApplyLayout").Click += delegate { ApplyLayoutSettings(); };
             Find<C.Button>("TestLayout").Click += delegate { DiagnoseLayout(); };
@@ -162,7 +163,7 @@ namespace MonitorShade
             pauseItem = new ToolStripMenuItem("감시 시작 / 다시 시작", null, delegate { Toggle(); });
             menu.Items.Add(pauseItem); menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("종료", null, delegate { ExitApplication(); });
-            tray = new NotifyIcon { Icon = Icon, Text = "MonitorShade · 준비됨", ContextMenuStrip = menu, Visible = !preview };
+            tray = new NotifyIcon { Icon = trayIcon, Text = "MonitorShade · 준비됨", ContextMenuStrip = menu, Visible = !preview };
             tray.DoubleClick += delegate { OpenSettings(); };
             arranger.Failed += delegate(string reason) { Find<C.TextBlock>("LayoutStatus").Text = reason; tray.ShowBalloonTip(3000, "MonitorShade 창 배치", reason, ToolTipIcon.Info); };
             watcher.StateChanged += UpdateWatchingStatus;
@@ -175,7 +176,9 @@ namespace MonitorShade
                 SystemEvents.PowerModeChanged += PowerChanged;
                 SystemEvents.UserPreferenceChanged += ThemeChanged;
             }
-            ResumeLayout(false); PerformLayout();
+            InitializeAppearance();
+            appearanceTimer.Tick += delegate { if (IsVisible) ApplyTheme(null); };
+            IsVisibleChanged += delegate { if (IsVisible) { ApplyTheme(null); appearanceTimer.Start(); } else appearanceTimer.Stop(); };
             ValidateLayout();
             if (!preview) { IntPtr messageWindow = Handle; SetLayoutHook(); manualShade.Register(); }
             if (!preview) BeginInvoke(new Action(async delegate { await brightnessPage.Refresh(false); }));
@@ -186,9 +189,9 @@ namespace MonitorShade
                 startupTimer.Tick += delegate { TryAutomaticStart(); };
                 startupTimer.Start();
             }
+            Find<C.RadioButton>("NavBrightness").IsChecked = true;
         }
 
-        protected override void SetVisibleCore(bool value) { base.SetVisibleCore(value && allowSettingsWindow); }
         private void CancelAutomaticStart() { startupPending = false; startupTimer.Stop(); }
         private void TryAutomaticStart()
         {
@@ -241,7 +244,7 @@ namespace MonitorShade
 
         private void SelectPage(string page)
         {
-            foreach (string name in new[] { "Protection", "Layout", "Brightness", "General", "Help" }) Find<C.ScrollViewer>(name + "Page").Visibility = name == page ? W.Visibility.Visible : W.Visibility.Collapsed;
+            foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) Find<C.ScrollViewer>(name + "Page").Visibility = name == page ? W.Visibility.Visible : W.Visibility.Collapsed;
         }
         private bool TryGetPercent(out int value) { return int.TryParse(centerPercent.Text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value >= 10 && value <= 100; }
         private void ValidateLayout()
@@ -295,33 +298,68 @@ namespace MonitorShade
 
         private T Find<T>(string name) where T : class { return (T)ui.FindName(name); }
         private M.Brush Brush(string name) { return (M.Brush)ui.Resources[name]; }
-        private void ApplyTheme(bool? forceDark)
+        private void InitializeAppearance()
         {
-            dark = true;
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"))
-                    if (key != null) dark = Convert.ToInt32(key.GetValue("AppsUseLightTheme", 0)) == 0;
+                string licenses = "";
+                foreach (string name in new[] { "pretendard-license.txt", "manrope-ofl.txt" })
+                {
+                    var resource = W.Application.GetResourceStream(new Uri("pack://application:,,,/MonitorShade;component/fonts/" + name));
+                    if (resource != null) using (var reader = new StreamReader(resource.Stream)) licenses += reader.ReadToEnd() + Environment.NewLine + Environment.NewLine;
+                }
+                Find<C.TextBlock>("FontLicenses").Text = licenses;
             }
-            catch { }
-            if (forceDark.HasValue) dark = forceDark.Value;
-            string[] names = { "Page", "Card", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection" };
-            string[] colors = dark ?
-                new[] { "#202020", "#2B2B2B", "#1C1C1C", "#343434", "#494949", "#F3F3F3", "#C2C2C2", "#60CDFF", "#101010", "#404040", "#373737", "#0078D4" } :
-                new[] { "#F3F3F3", "#FBFBFB", "#EEEEEE", "#FFFFFF", "#D6D6D6", "#1A1A1A", "#606060", "#005FB8", "#FFFFFF", "#E5E5E5", "#DADADA", "#005FB8" };
-            for (int i = 0; i < names.Length; i++) ui.Resources[names[i]] = new M.SolidColorBrush((M.Color)M.ColorConverter.ConvertFromString(colors[i]));
-            BackColor = ColorTranslator.FromHtml(colors[0]);
-            if (IsHandleCreated) ApplyWindowStyle();
+            catch { Find<C.TextBlock>("FontLicenses").Text = "Pretendard / Manrope — SIL Open Font License 1.1. 라이선스 원문은 EXE의 fonts 리소스에 포함되어 있습니다."; }
+            var mode = Find<C.ComboBox>("AppearanceMode");
+            mode.ItemsSource = new[] { "시간에 따라 자동", "아침 · 09:00", "낮 · 14:00", "저녁 · 20:00", "밤 · 00:00" };
+            string[] values = { "Auto", "Morning", "Day", "Evening", "Night" };
+            mode.SelectedIndex = Array.IndexOf(values, appearance.Theme);
+            Find<C.CheckBox>("UseBackdrop").IsChecked = appearance.Blur;
+            Action save = delegate
+            {
+                appearance.Theme = values[Math.Max(0, mode.SelectedIndex)];
+                appearance.Blur = Find<C.CheckBox>("UseBackdrop").IsChecked == true;
+                previewHour = null; ApplyTheme(null);
+                if (preview) return;
+                try { var saved = Preferences.Read(preferencesPath); saved.Appearance = appearance; saved.Write(preferencesPath); }
+                catch (Exception e) { Find<C.TextBlock>("AppearanceStatus").Text = "외형 설정 저장 실패: " + e.Message; }
+            };
+            mode.SelectionChanged += delegate { save(); };
+            Find<C.CheckBox>("UseBackdrop").Checked += delegate { save(); };
+            Find<C.CheckBox>("UseBackdrop").Unchecked += delegate { save(); };
+        }
+        private void ApplyTheme(bool? forceDark)
+        {
+            double hour = forceDark.HasValue ? (forceDark.Value ? 20 : 9) : previewHour ?? appearance.Hour(DateTime.Now);
+            DayPalette p = DayPalette.At(hour); dark = !p.Light;
+            bool glass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur, dark);
+            string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft" };
+            M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), DayPalette.Alpha(p.Panel, 210), DayPalette.Alpha(p.Raised, 210), p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft };
+            if (W.SystemParameters.HighContrast)
+            {
+                for (int i = 0; i < colors.Length; i++) colors[i] = W.SystemColors.WindowColor;
+                colors[6] = colors[7] = W.SystemColors.WindowTextColor; colors[8] = colors[12] = W.SystemColors.HighlightColor;
+                colors[9] = W.SystemColors.HighlightTextColor; colors[5] = colors[13] = W.SystemColors.GrayTextColor;
+            }
+            for (int i = 0; i < names.Length; i++)
+            {
+                var brush = ui.Resources[names[i]] as M.SolidColorBrush;
+                if (brush == null || brush.IsFrozen) ui.Resources[names[i]] = new M.SolidColorBrush(colors[i]); else brush.Color = colors[i];
+            }
+            ui.Resources["AuraColor"] = W.SystemParameters.HighContrast ? M.Colors.Transparent : DayPalette.Alpha(p.Aura, 88);
+            ui.Resources["AccentColor"] = colors[8];
+            ui.FontFamily = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Pretendard");
+            ui.Resources["NumberFont"] = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Manrope");
+            var time = Find<C.TextBlock>("ThemeTime"); if (time != null) time.Text = TimeSpan.FromHours(hour).ToString(@"hh\:mm") + (appearance.Theme == "Auto" && !forceDark.HasValue ? " · 자동" : "");
+            var label = Find<C.TextBlock>("AppearanceStatus");
+            if (label != null) label.Text = !appearance.Blur ? "" : glass ? "" : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
             if (map != null) DrawMap();
         }
         private void ApplyWindowStyle()
         {
-            if (Environment.OSVersion.Version.Build < 22000) return;
-            int darkValue = dark ? 1 : 0, rounded = 2;
-            DwmSetWindowAttribute(Handle, 20, ref darkValue, 4);
-            DwmSetWindowAttribute(Handle, 33, ref rounded, 4);
+            ApplyTheme(null);
         }
-        [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e); ApplyWindowStyle();
@@ -381,7 +419,7 @@ namespace MonitorShade
                 C.Button button = new C.Button
                 {
                     Width = Math.Max(32, b.Width * scale - 4), Height = Math.Max(32, b.Height * scale - 4),
-                    Background = Brush(selected ? "Selection" : "Monitor"), Foreground = selected ? M.Brushes.White : Brush("Text"),
+                    Background = Brush(selected ? "Selection" : "Monitor"), Foreground = Brush(selected ? "AccentText" : "Text"),
                     BorderBrush = selected ? Brush("Accent") : M.Brushes.Transparent,
                     BorderThickness = new W.Thickness(selected ? 2 : 0), Padding = new W.Thickness(0),
                     Content = new C.TextBlock { Text = choice.Number, FontSize = 28, FontWeight = W.FontWeights.SemiBold },
@@ -413,6 +451,7 @@ namespace MonitorShade
         }
         private bool StartWatching(bool quiet = false)
         {
+            if (preview) { status.Text = "디자인 미리보기 · 실제 감시와 밝기는 변경하지 않습니다."; return false; }
             if (diagnosing) return false;
             int delay;
             if (!TryGetSeconds(out delay)) { ValidateWait(); if (!quiet) amount.Focus(); return false; }
@@ -472,7 +511,7 @@ namespace MonitorShade
             finally { diagnosing = false; SetLayoutHook(); Show(); Activate(); }
         }
         private void Toggle() { if (displayRecovery.Enabled || startupPending || manualShade.Controller.Count > 0) Pause("일시정지됨"); else StartWatching(); }
-        private void OpenSettings() { Pause("일시정지됨"); allowSettingsWindow = true; Show(); WindowState = FormWindowState.Normal; Activate(); }
+        private void OpenSettings() { Pause("일시정지됨"); Show(); WindowState = W.WindowState.Normal; Activate(); }
         private void Dispatch(Action action) { if (!IsDisposed && IsHandleCreated) try { BeginInvoke(action); } catch (InvalidOperationException) { } }
         private void UpdateWatchingStatus()
         {
@@ -549,16 +588,20 @@ namespace MonitorShade
         private void ThemeChanged(object sender, UserPreferenceChangedEventArgs e) { Dispatch(delegate { ApplyTheme(null); }); }
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == settingsMessage || (m.Msg == 0x0312 && m.WParam.ToInt32() == 2)) { OpenSettings(); return; }
-            if (m.Msg == 0x0312 && m.WParam.ToInt32() == 1) { Toggle(); return; }
+            if (m.Msg == settingsMessage || (m.Msg == 0x0312 && m.WParam.ToInt32() == 2)) { m.Msg = 0; OpenSettings(); return; }
+            if (m.Msg == 0x0312 && m.WParam.ToInt32() == 1) { m.Msg = 0; Toggle(); return; }
             if (m.Msg == 0x0312 && (m.WParam.ToInt32() == 3 || m.WParam.ToInt32() == 4))
-            { if (!SystemSuspended && !diagnosing && manualShade != null) manualShade.Shortcut(m.WParam.ToInt32() - 3); return; }
+            { m.Msg = 0; if (!SystemSuspended && !diagnosing && manualShade != null) manualShade.Shortcut(m.WParam.ToInt32() - 3); return; }
+            if (m.Msg == 0x031E && IsHandleCreated) ApplyTheme(null);
             base.WndProc(ref m);
         }
         protected override void OnFormClosing(FormClosingEventArgs e) { if (!preview && !exiting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); return; } base.OnFormClosing(e); }
         private void ExitApplication() { exiting = true; Close(); }
+        internal void AllowSystemExit() { exiting = true; }
         protected override void Dispose(bool disposing)
         {
+            if (IsDisposed) return;
+            exiting = true;
             if (disposing)
             {
                 if (!preview)
@@ -573,8 +616,9 @@ namespace MonitorShade
                 if (layoutHook != null) layoutHook.Dispose();
                 if (brightnessPage != null) brightnessPage.Dispose();
                 arranger.Dispose();
-                startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose();
+                startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose();
                 if (tray != null) { tray.Visible = false; ContextMenuStrip menu = tray.ContextMenuStrip; tray.Dispose(); if (menu != null) menu.Dispose(); }
+                if (trayIcon != null) trayIcon.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -587,10 +631,12 @@ namespace MonitorShade
         }
         private void RenderPreview(string path, int width, int height)
         {
+            Width = width + 16; Height = height + 40;
             ui.HorizontalAlignment = W.HorizontalAlignment.Left; ui.VerticalAlignment = W.VerticalAlignment.Top;
             ui.Width = width; ui.Height = height;
             ui.Measure(new W.Size(width, height)); ui.Arrange(new W.Rect(0, 0, width, height)); ui.UpdateLayout();
             DrawMap(); ui.UpdateLayout();
+            ui.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render, new Action(delegate { }));
             I.RenderTargetBitmap bitmap = new I.RenderTargetBitmap(width, height, 96, 96, M.PixelFormats.Pbgra32);
             bitmap.Render(ui);
             I.PngBitmapEncoder encoder = new I.PngBitmapEncoder(); encoder.Frames.Add(I.BitmapFrame.Create(bitmap));
@@ -635,6 +681,7 @@ namespace MonitorShade
                 amount.Text = "86400"; check(TryGetSeconds(out delay) && delay == 86400, "Maximum seconds accepted");
                 minutes.IsChecked = true; check(!start.IsEnabled, "Minutes have their own maximum");
                 seconds.IsChecked = true; amount.Text = "120";
+                Find<C.RadioButton>("NavProtection").IsChecked = true;
                 foreach (bool light in new[] { false, true })
                 {
                     ApplyTheme(!light);
@@ -676,8 +723,20 @@ namespace MonitorShade
                 Find<C.RadioButton>("NavBrightness").IsChecked = true;
                 check(Find<C.ScrollViewer>("BrightnessPage").Visibility == W.Visibility.Visible, "Sidebar switches to monitor brightness");
                 brightnessPage.VerifyUi(check);
-                foreach (bool light in new[] { false, true }) { ApplyTheme(!light); Find<C.ScrollViewer>("BrightnessPage").ScrollToTop(); RenderPreview(Path.Combine(Path.GetDirectoryName(path), light ? "Brightness-light.png" : "Brightness-dark.png"), 1020, 880); }
-                Find<C.ScrollViewer>("BrightnessPage").ScrollToBottom(); RenderPreview(Path.Combine(Path.GetDirectoryName(path), "Brightness-shortcuts.png"), 1020, 880);
+                foreach (bool light in new[] { false, true })
+                {
+                    ApplyTheme(!light); Find<C.ScrollViewer>("BrightnessPage").ScrollToTop();
+                    Application.DoEvents(); ui.UpdateLayout();
+                    RenderPreview(Path.Combine(Path.GetDirectoryName(path), light ? "Brightness-light.png" : "Brightness-dark.png"), 1020, 880);
+                    var number = Find<AnimatedPercent>("MasterPercent");
+                    check(!string.IsNullOrWhiteSpace(number.Text) && number.ActualWidth > 20 && number.ActualHeight > 30, "Master readout has visible content and a measured layout");
+                }
+                Find<C.RadioButton>("NavShortcuts").IsChecked = true;
+                check(Find<C.ScrollViewer>("ShortcutsPage").Visibility == W.Visibility.Visible, "Brightness shortcuts have their own sidebar page");
+                Find<C.ComboBox>("BrightnessUp").SelectedIndex = Find<C.ComboBox>("BrightnessDown").SelectedIndex;
+                brightnessPage.ApplySettings();
+                check(Find<C.TextBlock>("ShortcutsStatus").Visibility == W.Visibility.Visible && Find<C.TextBlock>("ShortcutsStatus").Text.Length > 0, "Shortcut validation appears on the shortcuts page");
+                RenderPreview(Path.Combine(Path.GetDirectoryName(path), "Brightness-shortcuts.png"), 1020, 880);
                 Find<C.RadioButton>("NavProtection").IsChecked = true;
                 RenderPreview(Path.Combine(Path.GetDirectoryName(path), "MonitorShade-compact.png"), 960, 640);
                 check(start.ActualWidth >= 112 && seconds.ActualWidth == 56 && minutes.ActualWidth == 56, "Compact layout keeps actions and both units usable");

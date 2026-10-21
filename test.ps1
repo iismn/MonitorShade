@@ -1,13 +1,14 @@
-param([switch]$IncludeUi)
+param([switch]$IncludeUi, [string]$ExecutablePath)
 
 $ErrorActionPreference = 'Stop'
 $executable = Join-Path $PSScriptRoot 'MonitorShade.exe'
+if ($ExecutablePath) { $executable = [IO.Path]::GetFullPath($ExecutablePath) }
 if (-not (Test-Path -LiteralPath $executable)) {
     throw 'Build first: powershell -NoProfile -ExecutionPolicy Bypass -File .\source\build.ps1'
 }
 $reports = Join-Path $PSScriptRoot 'tests'
 New-Item -ItemType Directory -Path $reports -Force | Out-Null
-$checks = @('reconnect', 'recovery', 'manual', 'brightness', 'wallpaper', 'logic', 'layout')
+$checks = @('reconnect', 'recovery', 'manual', 'brightness', 'wallpaper', 'logic', 'layout', 'appearance')
 if ($IncludeUi) { $checks += 'ui' }
 
 foreach ($check in $checks) {

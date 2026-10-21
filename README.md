@@ -2,7 +2,7 @@
 
 Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니터의 화면 내용이 일정 시간 동안 바뀌지 않으면 해당 화면만 검은 오버레이로 가립니다. 다른 모니터에서의 작업은 계속할 수 있습니다.
 
-현재 소스 버전: **1.10**
+현재 소스 버전: **1.11**
 
 ## 기능
 
@@ -14,6 +14,15 @@ Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니�
 - 트레이에서 숨김 실행하며, 설정에서 Windows 로그인 시 자동 실행을 등록할 수 있습니다.
 - 모니터별 강제 검은 화면 단축키, 창 배치 단축키, DDC/CI 밝기 조절을 제공합니다.
 - 밝기 동기화를 켜면 선택한 모니터에 같은 밝기 값을 적용합니다.
+- 시간에 따라 바뀌는 색상과 창 뒤 배경 블러를 결합한 네이티브 WPF UI를 제공합니다. 오전 9시는 흰색·살구색, 오후는 세이지, 저녁은 올리브, 밤은 슬레이트 계열입니다.
+- 반원형 밝기 게이지, 모니터별 카드, 마우스를 올리면 은은하게 밝아지는 슬라이더를 제공합니다. 마우스를 올리는 것만으로 모니터 밝기가 바뀌지는 않습니다.
+- Pretendard 한글 글꼴과 Manrope 숫자 글꼴을 EXE에 포함합니다. 별도 글꼴 설치가 필요하지 않습니다.
+
+## 디자인 설정
+
+**일반 → 시간별 색상**에서 자동 변화 또는 아침·낮·저녁·밤을 고정할 수 있습니다. 자동 모드는 PC의 현지 시간을 사용합니다. **창 뒤 배경 블러**는 Windows 11 22H2 이상에서 Windows 투명도 효과가 켜져 있을 때 Desktop Acrylic으로 적용됩니다. 이전 Windows나 투명도 효과가 꺼진 환경에서는 같은 색상의 불투명 배경을 사용합니다. 고대비 및 애니메이션 설정도 따릅니다.
+
+밝기 단축키는 **단축키** 탭에, 상세 안내와 글꼴 라이선스는 **도움말**에 있습니다. 글꼴 출처와 라이선스는 [source/fonts/README.md](source/fonts/README.md)를 참고하세요.
 
 ## 실행
 
@@ -31,6 +40,8 @@ Windows 10 버전 2004 이상 또는 Windows 11, .NET Framework 4.8이 필요합
 # 설정 창을 바로 열기
 .\MonitorShade.exe --settings
 ```
+
+기존 버전에서 업데이트하려면 트레이 메뉴의 **종료**로 앱을 닫고, 기존 EXE를 새 파일로 교체하세요. 같은 폴더의 `MonitorShade.settings.xml`을 유지하면 기존 감시 대상과 단축키 설정을 이어서 사용합니다. 기본 실행은 계속 창 없이 트레이에서 시작합니다.
 
 ## 단축키
 
@@ -88,6 +99,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
 - `source/DesktopRecovery.cs`, `source/DisplayRecovery.cs`: 화면 접근 복구와 모니터 재연결 처리
 - `source/WallpaperRegions.cs`: 바탕화면 영역 제외
 - `source/SettingsForm.cs`, `source/Settings.xaml`: Windows 스타일 설정 UI
+- `source/SettingsWindow.cs`: 네이티브 WPF 창, 트레이 및 메시지 처리 연결
+- `source/Appearance.cs`, `source/BrightnessControls.cs`: 시간별 색상, Desktop Acrylic, 게이지 및 슬라이더 효과
 - `source/WindowLayout.cs`: 창 배치 단축키
 - `source/ManualShade.cs`: 강제 검은 화면
 - `source/Ddc.cs`, `source/Brightness*.cs`: 밝기 조절과 단축키

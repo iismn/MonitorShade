@@ -6,6 +6,7 @@
 
 # Generated verification reports, previews and diagnostics
 /tests/
+/.build/
 /MonitorShade.diagnostics.txt
 *.log
 *.tmp

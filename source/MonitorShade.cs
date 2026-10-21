@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.10.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.10.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.11.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.11.0.0")]
 
 namespace MonitorShade
 {
@@ -27,8 +27,15 @@ namespace MonitorShade
             Native.SetProcessDpiAwarenessContext(new IntPtr(-4));
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Length == 1 && args[0] == "--design-preview")
+            {
+                var demo = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose };
+                using (var form = new SettingsForm(true, false)) demo.Run(form);
+                return 0;
+            }
             if (args.Length == 3 && args[0] == "--ddc-worker") return DdcWorker.Run(args[1], args[2]);
             if (args.Length == 2 && args[0] == "--brightness-test") return BrightnessVerification.Run(args[1]);
+            if (args.Length == 2 && args[0] == "--appearance-test") return AppearanceVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--recovery-test") return RecoveryVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--reconnect-test") return DisplayRecoveryVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--manual-test") return ManualShadeVerification.Run(args[1], false);
@@ -51,12 +58,14 @@ namespace MonitorShade
             if (args.Length == 2 && args[0] == "--test") return Verification.Run(args[1]);
             if (args.Length == 2 && (args[0] == "--preview" || args[0] == "--preview-light" || args[0] == "--ui-test"))
             {
+                var previewApplication = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
                 using (SettingsForm form = new SettingsForm(true))
                 {
                     form.Show();
                     Application.DoEvents();
                     form.ExportPreview(args[1], args[0]);
                 }
+                previewApplication.Shutdown();
                 return 0;
             }
             bool created;
@@ -77,6 +86,7 @@ namespace MonitorShade
                     return 1;
                 }
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+                var application = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
                 using (SettingsForm form = new SettingsForm(false, automatic))
                 {
                     Application.ThreadException += delegate(object sender, ThreadExceptionEventArgs e)
@@ -84,7 +94,12 @@ namespace MonitorShade
                         form.Pause("오류로 감시를 중지했습니다.");
                         MessageBox.Show(e.Exception.Message, "MonitorShade 오류");
                     };
-                    Application.Run(form);
+                    application.SessionEnding += delegate { form.AllowSystemExit(); };
+                    application.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+                    { form.Pause("오류로 감시를 중지했습니다."); MessageBox.Show(e.Exception.Message, "MonitorShade 오류"); e.Handled = true; };
+                    form.Closed += delegate { application.Shutdown(); };
+                    if (!automatic) form.Show();
+                    application.Run();
                 }
                 mutex.ReleaseMutex();
             }
@@ -124,6 +139,7 @@ namespace MonitorShade
         public int CenterPercent = 65;
         public BrightnessPreferences Brightness = new BrightnessPreferences();
         public ManualShadePreferences ManualShade = new ManualShadePreferences();
+        public AppearancePreferences Appearance = new AppearancePreferences();
         public static Preferences Read(string path)
         {
             try
@@ -135,6 +151,8 @@ namespace MonitorShade
                     if (p.CenterPercent < 10 || p.CenterPercent > 100) p.CenterPercent = 65;
                     if (p.Brightness == null) p.Brightness = new BrightnessPreferences();
                     if (p.ManualShade == null) p.ManualShade = new ManualShadePreferences();
+                    if (p.Appearance == null) p.Appearance = new AppearancePreferences();
+                    p.Appearance.Normalize();
                     p.Brightness.Normalize();
                     return p;
                 }
