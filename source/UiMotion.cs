@@ -10,6 +10,7 @@ namespace MonitorShade
 {
     internal static class TextPresentation
     {
+        static TextPresentation() { }
         internal static readonly M.FontFamily DesignFont = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Pretendard");
         private static readonly M.FontFamily WindowsFont = new M.FontFamily("Malgun Gothic");
         internal static bool HasWindowsFont
@@ -27,9 +28,9 @@ namespace MonitorShade
         {
             M.TextOptions.SetTextFormattingMode(root, M.TextFormattingMode.Display);
             M.TextOptions.SetTextHintingMode(root, M.TextHintingMode.Fixed);
-            // Subpixel ClearType cannot correctly blend with an unknown translucent backdrop.
-            // Keep grayscale antialiasing on glass; opaque surfaces can use the system's ClearType.
-            M.TextOptions.SetTextRenderingMode(root, glass ? M.TextRenderingMode.Grayscale : M.TextRenderingMode.Auto);
+            // The window remains translucent. Only locally opaque content surfaces opt into
+            // ClearTypeHint.Enabled; never assert that the whole acrylic window is opaque.
+            M.TextOptions.SetTextRenderingMode(root, M.TextRenderingMode.ClearType);
             M.RenderOptions.SetClearTypeHint(root, glass ? M.ClearTypeHint.Auto : M.ClearTypeHint.Enabled);
         }
     }

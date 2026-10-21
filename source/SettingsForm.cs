@@ -120,7 +120,7 @@ namespace MonitorShade
             StateChanged += delegate { if (IsHandleCreated) BeginInvoke(new Action(delegate { if (!IsDisposed) ApplyTheme(null); })); };
 
             Preferences preferences = File.Exists(preferencesPath) ? Preferences.Read(preferencesPath) : new Preferences { WaitValue = 120, Minutes = false };
-            appearance = preferences.Appearance; ApplyTheme(null);
+            appearance = preferences.Appearance; appearance.Normalize(); ApplyTheme(null);
             if (!File.Exists(preferencesPath)) preferences.DeviceNames = Screen.AllScreens.Select(s => s.DeviceName).ToArray();
             displaySelection = new DisplaySelection(preferences);
             brightnessPage = new BrightnessPage(ui, preview ? new BrightnessPreferences() : preferences.Brightness, preferencesPath, preview);
@@ -322,7 +322,7 @@ namespace MonitorShade
             mode.SelectedIndex = Array.IndexOf(values, appearance.Theme);
             Find<C.CheckBox>("UseBackdrop").IsChecked = appearance.Blur;
             var koreanFont = Find<C.ComboBox>("KoreanFont");
-            koreanFont.ItemsSource = new[] { "맑은 고딕 · Windows", "Pretendard · 기존" };
+            koreanFont.ItemsSource = new[] { "맑은 고딕 · Windows", "Pretendard · 기본" };
             koreanFont.SelectedIndex = appearance.KoreanFont == "Pretendard" ? 1 : 0;
             Action save = delegate
             {
@@ -345,8 +345,10 @@ namespace MonitorShade
             DayPalette p = DayPalette.At(hour); dark = !p.Light;
             bool glass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur, dark);
             TextPresentation.Apply(ui, glass);
-            string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft" };
-            M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), DayPalette.Alpha(p.Panel, 210), DayPalette.Alpha(p.Raised, 210), p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft };
+            string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft", "TextSurface" };
+            // Keep native desktop blur in the canvas and gaps. Text-bearing surfaces
+            // are opaque at composition time, including every stop of the card gradient.
+            M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), p.Panel, p.Raised, p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft, p.Background };
             if (W.SystemParameters.HighContrast)
             {
                 for (int i = 0; i < colors.Length; i++) colors[i] = W.SystemColors.WindowColor;
@@ -787,18 +789,30 @@ namespace MonitorShade
             check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.Normal, W.FontStretches.Normal).TryGetGlyphTypeface(out regular) && regular.FamilyNames.Values.Contains(expectedFamily) && regular.CharacterToGlyphMap.ContainsKey('한'), "Selected Korean font resolves its actual regular glyphs: " + expectedFamily);
             check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.SemiBold, W.FontStretches.Normal).TryGetGlyphTypeface(out semibold) && semibold.FamilyNames.Values.Contains(expectedFamily) && semibold.StyleSimulations == M.StyleSimulations.None, "Selected Korean font resolves an actual heading face without synthesized weight");
             check(TextPresentation.KoreanFamily("MalgunGothic", false) == TextPresentation.DesignFont, "A missing Windows Korean font falls back to bundled Pretendard");
-            bool originalBlur = appearance.Blur; string originalTheme = appearance.Theme;
+            bool originalBlur = appearance.Blur; string originalTheme = appearance.Theme, originalFont = appearance.KoreanFont;
             var originalNumbers = ui.Resources["NumberFont"].ToString();
             Find<C.ComboBox>("KoreanFont").SelectedIndex = 1;
             check(appearance.KoreanFont == "Pretendard" && ui.FontFamily == TextPresentation.DesignFont, "Selecting Pretendard immediately updates the UI font");
             Find<C.ComboBox>("KoreanFont").SelectedIndex = 0;
             check(appearance.KoreanFont == "MalgunGothic" && ui.FontFamily == TextPresentation.KoreanFamily("MalgunGothic", TextPresentation.HasWindowsFont), "Selecting Malgun Gothic immediately updates the UI font");
             check(originalBlur == appearance.Blur && originalTheme == appearance.Theme && originalNumbers == ui.Resources["NumberFont"].ToString(), "Switching Korean fonts preserves blur, theme and Manrope numbers");
+            Find<C.ComboBox>("KoreanFont").SelectedIndex = originalFont == "Pretendard" ? 1 : 0;
             check(ui.UseLayoutRounding && ui.SnapsToDevicePixels && M.TextOptions.GetTextFormattingMode(ui) == M.TextFormattingMode.Display && M.TextOptions.GetTextHintingMode(ui) == M.TextHintingMode.Fixed, "Text uses pixel-aligned display metrics and fixed hinting");
             var surface = new C.Grid(); TextPresentation.Apply(surface, true);
-            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Grayscale && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Transparent glass avoids invalid subpixel ClearType blending");
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.ClearType && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Glass allows scoped ClearType without declaring the entire transparent window opaque");
             TextPresentation.Apply(surface, false);
-            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Auto && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Enabled, "Opaque surfaces permit the system ClearType setting");
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.ClearType && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Enabled, "Opaque mode enables ClearType");
+            check(((M.SolidColorBrush)ui.Resources["Card"]).Color.A == 255 && ((M.SolidColorBrush)ui.Resources["TextSurface"]).Color.A == 255 && M.RenderOptions.GetClearTypeHint(Find<C.Border>("MasterCard")) == M.ClearTypeHint.Enabled, "Text cards provide an opaque background inside the scrolling page");
+            var feedback = Find<C.TextBlock>("BrightnessStatus");
+            var feedbackSurface = (C.Border)feedback.Parent;
+            string savedFeedback = feedback.Text; W.Visibility savedVisibility = feedback.Visibility;
+            feedback.Text = ""; feedback.Visibility = W.Visibility.Visible; PumpFrames(20);
+            check(feedbackSurface.Visibility == W.Visibility.Collapsed, "Empty feedback does not leave a visible strip on the glass canvas");
+            feedback.Text = "연결 확인"; PumpFrames(20);
+            check(feedbackSurface.Visibility == W.Visibility.Visible, "Feedback text reveals its opaque surface when needed");
+            feedback.Visibility = W.Visibility.Collapsed; PumpFrames(20);
+            check(feedbackSurface.Visibility == W.Visibility.Collapsed, "Dismissing feedback also removes its background");
+            feedback.Text = savedFeedback; feedback.Visibility = savedVisibility;
 
             var nav = Find<C.RadioButton>("NavGeneral"); nav.ApplyTemplate();
             var navSurface = (C.Border)nav.Template.FindName("Surface", nav);

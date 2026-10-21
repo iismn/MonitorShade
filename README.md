@@ -2,7 +2,7 @@
 
 Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니터의 화면 내용이 일정 시간 동안 바뀌지 않으면 해당 화면만 검은 오버레이로 가립니다. 다른 모니터에서의 작업은 계속할 수 있습니다.
 
-현재 소스 버전: **1.13**
+현재 소스 버전: **1.14**
 
 ## 기능
 
@@ -16,7 +16,7 @@ Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니�
 - 밝기 동기화를 켜면 선택한 모니터에 같은 밝기 값을 적용합니다.
 - 시간에 따라 바뀌는 색상과 창 뒤 배경 블러를 결합한 네이티브 WPF UI를 제공합니다. 오전 9시는 흰색·살구색, 오후는 세이지, 저녁은 올리브, 밤은 슬레이트 계열입니다.
 - 반원형 밝기 게이지, 모니터별 카드, 마우스를 올리면 은은하게 밝아지는 슬라이더를 제공합니다. 마우스를 올리는 것만으로 모니터 밝기가 바뀌지는 않습니다.
-- 한글 UI의 기본 글꼴은 Windows의 맑은 고딕입니다. 일반 설정에서 기존 Pretendard로 바꿀 수 있습니다. Pretendard와 숫자용 Manrope는 EXE에 포함합니다.
+- 한글 UI의 기본 글꼴은 Pretendard, 숫자는 Manrope이며 모두 EXE에 포함합니다. 글자가 있는 카드와 메뉴는 불투명한 배경에 ClearType으로 표시하고, 창 바탕과 카드 사이에는 Desktop Acrylic 블러를 유지합니다.
 
 ## 디자인 설정
 
@@ -28,9 +28,11 @@ Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니�
 
 왼쪽 메뉴는 배경·글자색·선택 표시를 180ms 동안 변화시키며, 본문은 약 270ms에 걸쳐 사라졌다 나타납니다. 빠르게 전환해도 마지막 선택을 따르고 작성 중인 값은 유지합니다. Windows의 애니메이션 끄기와 고대비 설정을 따릅니다.
 
-**일반 → 한글 글꼴**에서 맑은 고딕과 Pretendard를 즉시 전환하고 선택을 저장할 수 있습니다. 맑은 고딕은 [Microsoft가 ClearType과 작은 글자의 화면 가독성을 고려해 개발한 한글 글꼴](https://learn.microsoft.com/en-us/typography/font-list/malgun-gothic)입니다. Windows 설치본을 참조하며 EXE에 재배포하지 않습니다. 해당 글꼴이 없는 PC에서는 내장 Pretendard로 자동 대체합니다. 숫자용 Manrope와 배경 블러 설정은 그대로 유지합니다.
+**일반 → 한글 글꼴**에서 Pretendard와 맑은 고딕을 즉시 전환하고 선택을 저장할 수 있습니다. 1.13의 글꼴 설정은 처음 읽을 때 Pretendard로 복원하며, 이후 선택은 유지합니다. 맑은 고딕은 Windows 설치본을 참조하며 EXE에 재배포하지 않습니다. 해당 글꼴이 없는 PC에서는 내장 Pretendard로 자동 대체합니다. 숫자용 Manrope와 배경 블러 설정은 그대로 유지합니다.
 
-ClearType은 글꼴을 화면에 그리는 기술이며 전용 글꼴만 지원한다는 뜻이 아닙니다. WPF는 반투명 배경에서 정확한 ClearType 합성을 보장하지 않으므로, 글라스 영역은 그레이스케일 안티앨리어싱으로 표시합니다. 불투명 배경과 입력란은 시스템의 ClearType 설정을 사용합니다. ([Microsoft 렌더링 안내](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.cleartypehint))
+ClearType은 글꼴을 화면에 그리는 기술이며 Pretendard에도 적용할 수 있습니다. 1.14는 글라스 전체에 그레이스케일을 강제하던 설정을 제거했습니다. 카드·메뉴·제목·입력란의 텍스트 배경은 불투명하게 합성하고 해당 영역에 ClearType을 활성화합니다. 실제 데스크톱 블러는 바탕과 여백에 남습니다. 투명한 창 전체에 `ClearTypeHint.Enabled`를 강제하지 않습니다. ([Microsoft 렌더링 안내](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.cleartypehint))
+
+`MonitorShade.exe --text-test <보고서 경로>`는 모니터 밝기를 변경하지 않는 별도의 렌더링 검사입니다. 잠시 띄운 테스트 창의 한글 픽셀을 그레이스케일 대조군과 비교해 RGB 서브픽셀 렌더링을 확인합니다. 일반 `--ui-test`의 오프스크린 PNG는 레이아웃 검사용이며 ClearType 확인 자료로 사용하지 않습니다.
 
 ## 실행
 

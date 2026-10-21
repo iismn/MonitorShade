@@ -7,4 +7,4 @@ These unmodified fonts and their full SIL Open Font License texts are embedded i
 
 All fonts are distributed under the SIL Open Font License 1.1. Font names and copyright statements remain unchanged.
 
-The default Korean UI font, [Malgun Gothic](https://learn.microsoft.com/en-us/typography/font-list/malgun-gothic), is loaded from the user's Windows installation. It is **not** embedded or redistributed in this project and is not covered by the bundled OFL licenses. If unavailable, MonitorShade uses bundled Pretendard. The user can also explicitly select Pretendard in General settings.
+The default Korean UI font is bundled **Pretendard**. The optional [Malgun Gothic](https://learn.microsoft.com/en-us/typography/font-list/malgun-gothic) choice in General settings is loaded from the user's Windows installation. It is **not** embedded or redistributed in this project and is not covered by the bundled OFL licenses. If unavailable, MonitorShade uses bundled Pretendard.
