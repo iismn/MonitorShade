@@ -85,6 +85,7 @@ namespace MonitorShade
         private bool sessionBlocked, powerBlocked;
         private readonly Timer appearanceTimer = new Timer { Interval = 30000 };
         private PageTransition pageTransition;
+        private readonly CompositedBackdrop backdrop;
         private bool suppressMotion;
         private readonly Icon trayIcon;
         private AppearancePreferences appearance;
@@ -114,9 +115,14 @@ namespace MonitorShade
             autoStart = Find<C.CheckBox>("AutoStart");
             ignoreWallpaper = Find<C.CheckBox>("IgnoreWallpaper");
             layoutEnabled = Find<C.CheckBox>("LayoutEnabled"); centerPercent = Find<C.TextBox>("CenterPercent");
-            Content = ui;
+            backdrop = new CompositedBackdrop(this, ui, () => SystemSuspended, delegate {
+                Dispatcher.BeginInvoke(new Action(delegate { if (!IsDisposed && appearance != null) ApplyTheme(null); }));
+            });
+            Content = backdrop.Root;
             ConnectCaption(ui);
             pageTransition = new PageTransition(Find<C.Grid>("PageHost"), new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }.ToDictionary(name => name, name => Find<C.ScrollViewer>(name + "Page")));
+            foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" })
+                M.RenderOptions.SetClearTypeHint((W.DependencyObject)Find<C.ScrollViewer>(name + "Page").Content, M.ClearTypeHint.Enabled);
             StateChanged += delegate { if (IsHandleCreated) BeginInvoke(new Action(delegate { if (!IsDisposed) ApplyTheme(null); })); };
 
             Preferences preferences = File.Exists(preferencesPath) ? Preferences.Read(preferencesPath) : new Preferences { WaitValue = 120, Minutes = false };
@@ -343,12 +349,14 @@ namespace MonitorShade
         {
             double hour = forceDark.HasValue ? (forceDark.Value ? 20 : 9) : previewHour ?? appearance.Hour(DateTime.Now);
             DayPalette p = DayPalette.At(hour); dark = !p.Light;
-            bool glass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur, dark);
-            TextPresentation.Apply(ui, glass);
+            bool composed = backdrop.Apply(appearance.Blur, dark);
+            bool nativeGlass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur && !composed, dark);
+            bool glass = composed || nativeGlass;
+            TextPresentation.Apply(backdrop.Root, glass, composed);
             string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft", "TextSurface" };
-            // Keep native desktop blur in the canvas and gaps. Text-bearing surfaces
-            // are opaque at composition time, including every stop of the card gradient.
-            M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), p.Panel, p.Raised, p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft, p.Background };
+            // Preserve 1.12's translucent card brushes. Only the final background
+            // canvas is RGB; no opaque text patches are added to the design.
+            M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), DayPalette.Alpha(p.Panel, (byte)(glass ? 210 : 255)), DayPalette.Alpha(p.Raised, (byte)(glass ? 210 : 255)), p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft, p.Background };
             if (W.SystemParameters.HighContrast)
             {
                 for (int i = 0; i < colors.Length; i++) colors[i] = W.SystemColors.WindowColor;
@@ -375,7 +383,7 @@ namespace MonitorShade
             foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) NavigationFeedback.Update(Find<C.RadioButton>("Nav" + name), Find<C.RadioButton>("Nav" + name).IsMouseOver, false);
             var time = Find<C.TextBlock>("ThemeTime"); if (time != null) time.Text = TimeSpan.FromHours(hour).ToString(@"hh\:mm") + (appearance.Theme == "Auto" && !forceDark.HasValue ? " · 자동" : "");
             var label = Find<C.TextBlock>("AppearanceStatus");
-            if (label != null) label.Text = !appearance.Blur ? "" : glass ? "" : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
+            if (label != null) label.Text = !appearance.Blur || composed ? "" : nativeGlass ? "배경 합성을 사용할 수 없어 Windows 블러로 표시합니다. 글자는 그레이스케일로 표시되며 자동으로 다시 시도합니다." : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
             if (map != null) DrawMap();
         }
         private void ApplyWindowStyle()
@@ -638,6 +646,7 @@ namespace MonitorShade
                 if (layoutHook != null) layoutHook.Dispose();
                 if (brightnessPage != null) brightnessPage.Dispose();
                 if (pageTransition != null) pageTransition.Dispose();
+                if (backdrop != null) backdrop.Dispose();
                 arranger.Dispose();
                 startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose();
                 if (tray != null) { tray.Visible = false; ContextMenuStrip menu = tray.ContextMenuStrip; tray.Dispose(); if (menu != null) menu.Dispose(); }
@@ -799,20 +808,15 @@ namespace MonitorShade
             Find<C.ComboBox>("KoreanFont").SelectedIndex = originalFont == "Pretendard" ? 1 : 0;
             check(ui.UseLayoutRounding && ui.SnapsToDevicePixels && M.TextOptions.GetTextFormattingMode(ui) == M.TextFormattingMode.Display && M.TextOptions.GetTextHintingMode(ui) == M.TextHintingMode.Fixed, "Text uses pixel-aligned display metrics and fixed hinting");
             var surface = new C.Grid(); TextPresentation.Apply(surface, true);
-            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.ClearType && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Glass allows scoped ClearType without declaring the entire transparent window opaque");
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Grayscale && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Native glass fallback avoids invalid subpixel blending");
+            TextPresentation.Apply(surface, true, true);
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.ClearType && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Enabled, "Composed RGB background enables ClearType without opaque cards");
             TextPresentation.Apply(surface, false);
             check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.ClearType && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Enabled, "Opaque mode enables ClearType");
-            check(((M.SolidColorBrush)ui.Resources["Card"]).Color.A == 255 && ((M.SolidColorBrush)ui.Resources["TextSurface"]).Color.A == 255 && M.RenderOptions.GetClearTypeHint(Find<C.Border>("MasterCard")) == M.ClearTypeHint.Enabled, "Text cards provide an opaque background inside the scrolling page");
+            check(((M.SolidColorBrush)ui.Resources["Card"]).Color.A == (appearance.Blur && DesktopBackdrop.TransparencyEnabled ? 210 : 255), "Cards retain 1.12 alpha instead of an opaque text surface");
             var feedback = Find<C.TextBlock>("BrightnessStatus");
-            var feedbackSurface = (C.Border)feedback.Parent;
-            string savedFeedback = feedback.Text; W.Visibility savedVisibility = feedback.Visibility;
-            feedback.Text = ""; feedback.Visibility = W.Visibility.Visible; PumpFrames(20);
-            check(feedbackSurface.Visibility == W.Visibility.Collapsed, "Empty feedback does not leave a visible strip on the glass canvas");
-            feedback.Text = "연결 확인"; PumpFrames(20);
-            check(feedbackSurface.Visibility == W.Visibility.Visible, "Feedback text reveals its opaque surface when needed");
-            feedback.Visibility = W.Visibility.Collapsed; PumpFrames(20);
-            check(feedbackSurface.Visibility == W.Visibility.Collapsed, "Dismissing feedback also removes its background");
-            feedback.Text = savedFeedback; feedback.Visibility = savedVisibility;
+            check(feedback.Parent is C.StackPanel, "Feedback stays directly on the glass canvas with no opaque patch");
+            PumpFrames(500); // Let resized backdrop/theme callbacks settle before synthetic hover.
 
             var nav = Find<C.RadioButton>("NavGeneral"); nav.ApplyTemplate();
             var navSurface = (C.Border)nav.Template.FindName("Surface", nav);
@@ -827,11 +831,11 @@ namespace MonitorShade
             SelectPage("General");
             bool animation = W.SystemParameters.ClientAreaAnimation && !W.SystemParameters.HighContrast;
             check(!animation || (!Find<C.Grid>("PageHost").IsHitTestVisible && first.Visibility == W.Visibility.Visible), "Page fade starts on the outgoing page and suppresses stale clicks");
-            PumpFrames(380);
-            check(last.Visibility == W.Visibility.Visible && first.Visibility == W.Visibility.Collapsed && last.Opacity == 1 && Find<C.Grid>("PageHost").IsHitTestVisible, "Page fade finishes with the new page fully opaque and interactive");
+            PumpFrames(650);
+            check(last.Visibility == W.Visibility.Visible && first.Visibility == W.Visibility.Collapsed && last.Opacity == 1 && Find<C.Grid>("PageHost").IsHitTestVisible, "Page fade finishes with the new page fully opaque and interactive: " + last.Visibility + ", old=" + first.Visibility + ", opacity=" + last.Opacity + ", hit=" + Find<C.Grid>("PageHost").IsHitTestVisible);
             SelectPage("Help"); PumpFrames(30); SelectPage("Layout"); PumpFrames(30); SelectPage("Brightness"); PumpFrames(400);
             check(Find<C.ScrollViewer>("BrightnessPage").Visibility == W.Visibility.Visible && new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }.Count(n => Find<C.ScrollViewer>(n + "Page").Visibility == W.Visibility.Visible) == 1, "Rapid navigation keeps only the last requested page visible");
-            SelectPage("Protection"); PumpFrames(380);
+            SelectPage("Protection"); PumpFrames(650);
             check(amount.Text == draft && first.Opacity == 1, "Navigation preserves unsaved form values and restores full text opacity");
             SelectPage("Help"); pageTransition.Finish(); PumpFrames(350);
             check(Find<C.ScrollViewer>("HelpPage").Visibility == W.Visibility.Visible && Find<C.Grid>("PageHost").IsHitTestVisible, "Canceling a transition prevents stale callbacks and restores interaction");

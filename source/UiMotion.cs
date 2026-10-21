@@ -24,14 +24,15 @@ namespace MonitorShade
         }
         internal static M.FontFamily KoreanFamily(string choice, bool available)
         { return choice == "MalgunGothic" && available ? WindowsFont : DesignFont; }
-        internal static void Apply(W.DependencyObject root, bool glass)
+        internal static void Apply(W.DependencyObject root, bool glass, bool composed = false)
         {
             M.TextOptions.SetTextFormattingMode(root, M.TextFormattingMode.Display);
             M.TextOptions.SetTextHintingMode(root, M.TextHintingMode.Fixed);
-            // The window remains translucent. Only locally opaque content surfaces opt into
-            // ClearTypeHint.Enabled; never assert that the whole acrylic window is opaque.
-            M.TextOptions.SetTextRenderingMode(root, M.TextRenderingMode.ClearType);
-            M.RenderOptions.SetClearTypeHint(root, glass ? M.ClearTypeHint.Auto : M.ClearTypeHint.Enabled);
+            // ClearType sees the fully composed desktop + translucent UI. Native DWM
+            // fallback cannot supply that RGB surface, so it uses grayscale instead.
+            bool opaque = composed || !glass;
+            M.TextOptions.SetTextRenderingMode(root, opaque ? M.TextRenderingMode.ClearType : M.TextRenderingMode.Grayscale);
+            M.RenderOptions.SetClearTypeHint(root, opaque ? M.ClearTypeHint.Enabled : M.ClearTypeHint.Auto);
         }
     }
 
@@ -100,6 +101,9 @@ namespace MonitorShade
             if (active == null || !animate || !host.IsVisible || !W.SystemParameters.ClientAreaAnimation || W.SystemParameters.HighContrast)
             { Finish(); return; }
             host.IsHitTestVisible = false;
+            // A fading page is a transparent intermediate surface. Subpixel text is
+            // valid again only after it has returned to the composed RGB canvas.
+            foreach (var page in pages.Values) M.TextOptions.SetTextRenderingMode(page, M.TextRenderingMode.Grayscale);
             var old = pages[active];
             var fadeOut = new A.DoubleAnimation(old.Opacity, 0, TimeSpan.FromMilliseconds(95)) { FillBehavior = A.FillBehavior.Stop };
             fadeOut.Completed += delegate
@@ -108,7 +112,7 @@ namespace MonitorShade
                 ShowOnly(name); active = name;
                 var next = pages[name]; next.Opacity = 1;
                 var fadeIn = new A.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(175)) { FillBehavior = A.FillBehavior.Stop, EasingFunction = new A.CubicEase { EasingMode = A.EasingMode.EaseOut } };
-                fadeIn.Completed += delegate { if (!disposed && token == revision) { next.BeginAnimation(W.UIElement.OpacityProperty, null); host.IsHitTestVisible = true; } };
+                fadeIn.Completed += delegate { if (!disposed && token == revision) { next.BeginAnimation(W.UIElement.OpacityProperty, null); RestoreText(); host.IsHitTestVisible = true; } };
                 next.BeginAnimation(W.UIElement.OpacityProperty, fadeIn);
             };
             old.BeginAnimation(W.UIElement.OpacityProperty, fadeOut);
@@ -119,7 +123,8 @@ namespace MonitorShade
             { pair.Value.BeginAnimation(W.UIElement.OpacityProperty, null); pair.Value.Opacity = 1; pair.Value.Visibility = pair.Key == name ? W.Visibility.Visible : W.Visibility.Collapsed; }
         }
         internal void Finish()
-        { ++revision; if (requested != null) { ShowOnly(requested); active = requested; } host.IsHitTestVisible = true; }
+        { ++revision; if (requested != null) { ShowOnly(requested); active = requested; } RestoreText(); host.IsHitTestVisible = true; }
+        private void RestoreText() { foreach (var page in pages.Values) page.ClearValue(M.TextOptions.TextRenderingModeProperty); }
         public void Dispose() { Finish(); disposed = true; }
     }
 }

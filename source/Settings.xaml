@@ -1,13 +1,8 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:MonitorShade;assembly=MonitorShade" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
- FontFamily="Pretendard, Malgun Gothic, Segoe UI" FontSize="14" Foreground="{DynamicResource Text}" Background="{DynamicResource Page}"
+ FontFamily="Pretendard, Segoe UI, Malgun Gothic" FontSize="14" Foreground="{DynamicResource Text}" Background="{DynamicResource Page}"
  UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextHintingMode="Fixed">
  <UserControl.Resources>
   <SolidColorBrush x:Key="Page" Color="#202020"/><SolidColorBrush x:Key="Card" Color="#2B2B2B"/>
-  <SolidColorBrush x:Key="TextSurface" Color="#202020"/>
-  <Style x:Key="TextSurfaceStyle" TargetType="Border">
-   <Setter Property="Background" Value="{DynamicResource TextSurface}"/><Setter Property="CornerRadius" Value="20"/>
-   <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
-  </Style>
   <SolidColorBrush x:Key="Map" Color="#1C1C1C"/><SolidColorBrush x:Key="Input" Color="#343434"/>
   <SolidColorBrush x:Key="Stroke" Color="#494949"/><SolidColorBrush x:Key="Text" Color="#F3F3F3"/>
   <SolidColorBrush x:Key="Muted" Color="#C2C2C2"/><SolidColorBrush x:Key="Accent" Color="#60CDFF"/>
@@ -18,14 +13,14 @@
    <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/>
    <Setter Property="Padding" Value="16,0"/><Setter Property="Height" Value="36"/><Setter Property="Cursor" Value="Hand"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-    <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" RenderOptions.ClearTypeHint="Enabled">
+    <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
      <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </Border>
     <ControlTemplate.Triggers>
-     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>
-     <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource Hover}"/></Trigger>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.85"/></Trigger>
+     <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.65"/></Trigger>
      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="2"/></Trigger>
-     <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource Muted}"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.45"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
@@ -43,14 +38,14 @@
    </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="TextBox">
-   <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/><Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+   <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/><Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
    <Setter Property="Height" Value="36"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="Padding" Value="12,0"/>
    <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Background" Value="{DynamicResource Input}"/>
    <Setter Property="CaretBrush" Value="{DynamicResource Text}"/><Setter Property="SelectionBrush" Value="{DynamicResource Selection}"/>
    <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TextBox">
     <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="10" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-     <ScrollViewer x:Name="PART_ContentHost" Background="{TemplateBinding Background}" RenderOptions.ClearTypeHint="Enabled" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+     <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
     </Border>
     <ControlTemplate.Triggers><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="1,1,1,2"/></Trigger></ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
@@ -100,7 +95,7 @@
      </ToggleButton>
      <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="12,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
      <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
-      <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Margin="0,4,0,0" Background="{DynamicResource Card}" RenderOptions.ClearTypeHint="Enabled" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="4">
+      <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Margin="0,4,0,0" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="4">
        <ScrollViewer MaxHeight="280"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
       </Border>
      </Popup>
@@ -109,7 +104,7 @@
     <ControlTemplate.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="FocusBorder" Property="BorderThickness" Value="1,1,1,2"/></Trigger></ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
-  <Style TargetType="Border" x:Key="CardStyle"><Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/><Setter Property="Background" Value="{DynamicResource Card}"/><Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="20"/><Setter Property="Padding" Value="24,20"/></Style>
+  <Style TargetType="Border" x:Key="CardStyle"><Setter Property="Background" Value="{DynamicResource Card}"/><Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="20"/><Setter Property="Padding" Value="24,20"/></Style>
   <Style TargetType="ListBoxItem">
    <Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="Margin" Value="0,0,8,0"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
@@ -158,7 +153,7 @@
    <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusRing}"/>
    <Setter Property="local:NavigationFeedback.Enabled" Value="True"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/><Setter Property="Height" Value="46"/><Setter Property="Margin" Value="0,0,0,5"/><Setter Property="Cursor" Value="Hand"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton">
-    <Grid RenderOptions.ClearTypeHint="Enabled">
+    <Grid Background="Transparent">
      <Border x:Name="Surface" CornerRadius="10" Background="{DynamicResource Card}" Opacity="0"/>
      <Border x:Name="HoverWash" CornerRadius="10" Opacity="0"><Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="{DynamicResource AccentColor}"/><GradientStop Color="Transparent" Offset="1"/></LinearGradientBrush></Border.Background></Border>
      <Border x:Name="Indicator" Width="3" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource Accent}" CornerRadius="2" Opacity="0" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform ScaleY="0.5"/></Border.RenderTransform></Border>
@@ -178,7 +173,7 @@
   <Style TargetType="Button" x:Key="CloseCaptionButton" BasedOn="{StaticResource CaptionButton}"><Setter Property="Background" Value="#C42B1C"/><Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="White"/></Trigger></Style.Triggers></Style>
  </UserControl.Resources>
  <Grid x:Name="WindowRoot"><Grid.Background><RadialGradientBrush Center="0.9,0" GradientOrigin="0.9,0" RadiusX="1" RadiusY="0.9"><GradientStop Color="{DynamicResource AuraColor}" Offset="0"/><GradientStop Color="Transparent" Offset="1"/></RadialGradientBrush></Grid.Background><Grid.RowDefinitions><RowDefinition Height="40"/><RowDefinition/></Grid.RowDefinitions>
-  <Grid x:Name="CaptionBar" Background="{DynamicResource TextSurface}" RenderOptions.ClearTypeHint="Enabled">
+  <Grid x:Name="CaptionBar" Background="Transparent">
    <TextBlock Text="MonitorShade" Foreground="{DynamicResource Muted}" FontWeight="SemiBold" FontSize="12" Margin="24,0,150,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" shell:WindowChrome.IsHitTestVisibleInChrome="True">
     <Button x:Name="CaptionMinimize" Style="{StaticResource CaptionButton}" ToolTip="최소화" AutomationProperties.Name="최소화"><TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" Text="&#xE921;"/></Button>
@@ -187,7 +182,7 @@
    </StackPanel>
   </Grid>
  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="176"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-  <Border Background="{DynamicResource TextSurface}" RenderOptions.ClearTypeHint="Enabled" BorderBrush="{DynamicResource Stroke}" BorderThickness="0" Padding="12,24,8,16">
+  <Border BorderBrush="{DynamicResource Stroke}" BorderThickness="0" Padding="12,24,8,16">
    <DockPanel>
     <StackPanel>
      <RadioButton x:Name="NavBrightness" GroupName="Navigation" Style="{StaticResource NavigationItem}" AutomationProperties.Name="모니터 밝기 메뉴"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE706;" Style="{StaticResource Glyph}" Width="32"/><TextBlock Text="밝기" VerticalAlignment="Center"/></StackPanel></RadioButton>
@@ -201,7 +196,7 @@
    </DockPanel>
   </Border>
   <DockPanel Grid.Column="1" LastChildFill="True">
-   <Border DockPanel.Dock="Bottom" Background="{DynamicResource TextSurface}" RenderOptions.ClearTypeHint="Enabled" BorderBrush="{DynamicResource Stroke}" BorderThickness="0" Padding="28,16">
+   <Border DockPanel.Dock="Bottom" Background="Transparent" BorderBrush="{DynamicResource Stroke}" BorderThickness="0" Padding="28,16">
     <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
      <TextBlock x:Name="Status" Text="준비됨" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
      <Button x:Name="Exit" Grid.Column="1" Content="종료" Margin="12,0,8,0"/>
@@ -210,8 +205,8 @@
    </Border>
    <Grid x:Name="PageHost">
     <ScrollViewer x:Name="ProtectionPage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><TextBlock Text="화면 보호" FontSize="28" FontWeight="SemiBold" /></Border>
-     <Border Background="{DynamicResource Map}" RenderOptions.ClearTypeHint="Enabled" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="20,12,20,16">
+     <TextBlock Text="화면 보호" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Background="{DynamicResource Map}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="20,12,20,16">
       <Grid><Grid.RowDefinitions><RowDefinition Height="156"/><RowDefinition Height="36"/></Grid.RowDefinitions>
        <Canvas x:Name="Map" ClipToBounds="True" Focusable="False"/>
        <Button x:Name="Refresh" Grid.Row="1" Content="새로고침" HorizontalAlignment="Right"/>
@@ -232,7 +227,7 @@
        <Border Grid.Column="2" Background="{DynamicResource Input}" CornerRadius="10"><StackPanel Orientation="Horizontal"><RadioButton x:Name="Seconds" GroupName="TimeUnit" Content="초" IsChecked="True" Style="{StaticResource UnitButton}" AutomationProperties.Name="초 단위"/><RadioButton x:Name="Minutes" GroupName="TimeUnit" Content="분" Style="{StaticResource UnitButton}" AutomationProperties.Name="분 단위"/></StackPanel></Border>
       </Grid>
      </Grid></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=Validation}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=Validation}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="Validation" Foreground="{DynamicResource Accent}" FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/></Border>
+     <TextBlock x:Name="Validation" Foreground="{DynamicResource Accent}" FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/>
      <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xEB9F;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="배경화면 움직임 무시" VerticalAlignment="Center"/><CheckBox x:Name="IgnoreWallpaper" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="배경화면 움직임 무시"/></Grid></Border>
      <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xE708;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="강제 검은 화면 단축키" VerticalAlignment="Center"/><CheckBox x:Name="ManualEnabled" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="강제 검은 화면 단축키 사용"/></Grid>
@@ -243,7 +238,7 @@
      </StackPanel></Border>
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="LayoutPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><TextBlock Text="창 배치" FontSize="28" FontWeight="SemiBold" /></Border>
+     <TextBlock Text="창 배치" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
      <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <TextBlock Text="&#xE765;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="창 배치 단축키" VerticalAlignment="Center"/>
       <CheckBox x:Name="LayoutEnabled" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="창 배치 단축키 사용"/>
@@ -252,13 +247,13 @@
       <TextBlock Text="&#xE9A6;" Style="{StaticResource Glyph}"/><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="중앙 창 너비"/><TextBlock Text="Win + Del · 16:9" Style="{StaticResource Caption}"/></StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"><TextBox x:Name="CenterPercent" Width="80" MaxLength="3" TextAlignment="Right" AutomationProperties.Name="중앙 창 너비 백분율"/><TextBlock Text="%" Margin="10,0,0,0" VerticalAlignment="Center"/></StackPanel>
      </Grid></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=CenterValidation}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=CenterValidation}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="CenterValidation" Foreground="{DynamicResource Accent}" Text="10~100 사이의 정수를 입력하세요." FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/></Border>
+     <TextBlock x:Name="CenterValidation" Foreground="{DynamicResource Accent}" Text="10~100 사이의 정수를 입력하세요." FontSize="12" Margin="0,8,0,0" Visibility="Collapsed"/>
      <Button x:Name="ApplyLayout" Content="적용" HorizontalAlignment="Left" MinWidth="88" Margin="0,16,0,0" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderBrush="{DynamicResource Accent}"/>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=LayoutStatus}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=LayoutStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="LayoutStatus" Style="{StaticResource Caption}" Margin="0,10,0,0"/></Border>
+     <TextBlock x:Name="LayoutStatus" Style="{StaticResource Caption}" Margin="0,10,0,0"/>
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="BrightnessPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,20">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><Grid><TextBlock Text="밝기" FontSize="30" FontWeight="SemiBold"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock x:Name="ThemeTime" Style="{StaticResource Caption}" Margin="0,0,16,0" VerticalAlignment="Center"/><Button x:Name="RefreshBrightness" Content="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Width="36" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="밝기 새로고침" ToolTip="밝기 새로고침"/></StackPanel></Grid></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=BrightnessStatus}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=BrightnessStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="BrightnessStatus" Style="{StaticResource Caption}" Margin="0,0,0,12" Visibility="Collapsed"/></Border>
+     <Grid Margin="0,0,0,24"><TextBlock Text="밝기" FontSize="30" FontWeight="SemiBold"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock x:Name="ThemeTime" Style="{StaticResource Caption}" Margin="0,0,16,0" VerticalAlignment="Center"/><Button x:Name="RefreshBrightness" Content="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Width="36" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="밝기 새로고침" ToolTip="밝기 새로고침"/></StackPanel></Grid>
+     <TextBlock x:Name="BrightnessStatus" Style="{StaticResource Caption}" Margin="0,0,0,12" Visibility="Collapsed"/>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xE71B;" Style="{StaticResource Glyph}" Width="24" FontSize="18"/><TextBlock Grid.Column="1" Text="두 모니터 밝기 동기화" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessSync" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="선택한 모니터 밝기 동기화"/></Grid></Border>
      <Grid x:Name="BrightnessConsole"><Grid.ColumnDefinitions><ColumnDefinition Width="1.08*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
       <Border x:Name="MasterCard" Style="{StaticResource CardStyle}" Padding="26" VerticalAlignment="Top" MinHeight="476">
@@ -281,7 +276,7 @@
      </Grid>
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="ShortcutsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><TextBlock Text="단축키" FontWeight="SemiBold" FontSize="28" /></Border>
+     <TextBlock Text="단축키" FontWeight="SemiBold" FontSize="28" Margin="0,0,0,24"/>
      <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="밝기 단축키 사용" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessHotkeys" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="밝기 단축키 사용"/></Grid></Border>
      <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="170"/><ColumnDefinition Width="110"/><ColumnDefinition Width="110"/></Grid.ColumnDefinitions>
@@ -293,16 +288,16 @@
       <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="280"/></Grid.ColumnDefinitions><TextBlock Text="조절 대상" VerticalAlignment="Center"/><ComboBox x:Name="BrightnessTarget" Grid.Column="1" AutomationProperties.Name="밝기 단축키 대상"/></Grid>
       <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="80"/><ColumnDefinition Width="32"/></Grid.ColumnDefinitions><TextBlock Text="조절 간격" VerticalAlignment="Center"/><TextBox x:Name="BrightnessStep" Grid.Column="1" TextAlignment="Right" MaxLength="2" AutomationProperties.Name="밝기 변경 간격"/><TextBlock Grid.Column="2" Text="%" Margin="10,0,0,0" VerticalAlignment="Center"/></Grid>
      </StackPanel></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=ShortcutsStatus}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=ShortcutsStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="ShortcutsStatus" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed"/></Border>
+     <TextBlock x:Name="ShortcutsStatus" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed"/>
      <Button x:Name="ApplyBrightness" Content="저장" AutomationProperties.Name="밝기 단축키 설정 저장" HorizontalAlignment="Left" MinWidth="88" Margin="0,16,0,0" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentText}" BorderBrush="{DynamicResource Accent}"/>
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="GeneralPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><TextBlock Text="일반" FontSize="28" FontWeight="SemiBold" /></Border>
+     <TextBlock Text="일반" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="시간별 색상" VerticalAlignment="Center"/><ComboBox x:Name="AppearanceMode" Grid.Column="1" AutomationProperties.Name="시간별 색상 모드"/></Grid></Border>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="한글 글꼴" VerticalAlignment="Center"/><ComboBox x:Name="KoreanFont" Grid.Column="1" AutomationProperties.Name="한글 글꼴"/></Grid></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=KoreanFontStatus}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=KoreanFontStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="KoreanFontStatus" Style="{StaticResource Caption}" Visibility="Collapsed" Margin="0,0,0,12"/></Border>
+     <TextBlock x:Name="KoreanFontStatus" Style="{StaticResource Caption}" Visibility="Collapsed" Margin="0,0,0,12"/>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="창 뒤 배경 블러" VerticalAlignment="Center"/><CheckBox x:Name="UseBackdrop" Grid.Column="1" AutomationProperties.Name="창 뒤 배경 블러"/></Grid></Border>
-     <Border Padding="12,4"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource TextSurfaceStyle}"><Setter Property="Visibility" Value="{Binding Visibility, ElementName=AppearanceStatus}"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=AppearanceStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock x:Name="AppearanceStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/></Border>
+     <TextBlock x:Name="AppearanceStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
 
      <Border Style="{StaticResource CardStyle}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <TextBlock Text="&#xE7E8;" Style="{StaticResource Glyph}"/><TextBlock Grid.Column="1" Text="로그인 시 자동 실행" VerticalAlignment="Center"/>
@@ -310,7 +305,7 @@
      </Grid></Border>
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="HelpPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,0,0,18"><TextBlock Text="도움말" FontSize="28" FontWeight="SemiBold" /></Border>
+     <TextBlock Text="도움말" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
      <Border Style="{StaticResource CardStyle}"><Expander x:Name="HelpProtection" Header="화면 보호" Foreground="{DynamicResource Text}" IsExpanded="True"><StackPanel Margin="0,12,0,0">
       <TextBlock Text="모니터 배치 그림이나 모니터 버튼을 눌러 여러 대를 선택할 수 있습니다. 화면 내용이 설정한 시간 동안 변하지 않으면 해당 모니터만 검게 가립니다. 대기 시간은 초 또는 분으로 지정합니다." Style="{StaticResource Caption}" LineHeight="20"/>
       <TextBlock Text="마우스가 있는 화면은 가리지 않으며, 다른 화면의 감시는 계속됩니다. 가려진 화면에 마우스가 들어오거나 뒤쪽 화면 내용이 바뀌면 자동으로 복귀합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
@@ -343,8 +338,8 @@
       <TextBlock Text="화면 캡처는 메모리에서만 비교하며 저장하거나 전송하지 않습니다. 화면 공유에는 검은 오버레이 대신 뒤쪽 내용이 보일 수 있습니다. DRM 영상·독점 전체 화면·보안 화면은 변화 감지가 제한될 수 있습니다. Windows 화면보호기·잠금·절전 중에는 조용히 대기하며, 복귀하면 감시를 재개하고 대기 시간을 처음부터 셉니다. 직접 일시정지하거나 설정 창을 열어 중지한 경우에는 자동 재개하지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="선택한 모니터의 연결이 끊겨도 감시 설정을 기억합니다. 다시 연결되면 자동으로 감시를 재개하고 대기 시간을 처음부터 셉니다. 연결된 다른 모니터의 감시는 계속됩니다. 시작할 때 대상이 없어도 연결을 기다립니다. Windows의 모니터 식별 정보로 대상을 찾으며, 다른 포트로 옮겨 식별 정보가 달라지면 한 번 다시 선택해야 할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
      </StackPanel></Expander></Border>
-     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Expander Header="외형과 글꼴"><StackPanel Margin="0,12,0,0"><TextBlock Text="현재 PC 시간에 맞춰 아침 9시의 흰색·살구빛, 낮의 옅은 세이지, 저녁의 올리브색으로 이어집니다. 일반에서 고정 색상도 선택할 수 있습니다." Style="{StaticResource Caption}" LineHeight="20"/><TextBlock Text="Windows 11 22H2 이상의 Desktop Acrylic으로 실제 창 뒤를 흐리게 비춥니다. 시스템 투명도 효과가 꺼져 있거나 고대비 모드일 때는 단색 배경을 사용합니다. 트레이에 숨겨진 동안에는 외형 갱신을 쉬며, 슬라이더에 마우스를 올리는 것만으로 밝기가 바뀌지는 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/><TextBlock Text="한글은 내장 Pretendard, 숫자는 Manrope를 사용합니다. 창 바탕과 카드 사이에는 실제 배경 블러를 유지하고, 글자가 있는 카드·메뉴에는 불투명한 색상층을 두어 ClearType으로 표시합니다. 일반에서 맑은 고딕도 선택할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0"/><Expander Header="글꼴 라이선스" Margin="0,12,0,0"><TextBlock x:Name="FontLicenses" Style="{StaticResource Caption}" TextWrapping="Wrap"/></Expander></StackPanel></Expander></Border>
-     <Border Style="{StaticResource TextSurfaceStyle}" Padding="24,12" Margin="0,24,0,12"><TextBlock Text="진단" FontWeight="SemiBold"/></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0"><Expander Header="외형과 글꼴"><StackPanel Margin="0,12,0,0"><TextBlock Text="현재 PC 시간에 맞춰 아침 9시의 흰색·살구빛, 낮의 옅은 세이지, 저녁의 올리브색으로 이어집니다. 일반에서 고정 색상도 선택할 수 있습니다." Style="{StaticResource Caption}" LineHeight="20"/><TextBlock Text="Windows 11 22H2 이상에서 실제 창 뒤 배경을 먼저 블러 합성하고 반투명 카드와 글자를 그립니다. 배경은 메모리에서만 처리하며 저장하거나 전송하지 않습니다. 시스템 투명도 효과가 꺼져 있거나 고대비 모드일 때는 단색 배경을 사용합니다. 트레이에 숨겨진 동안에는 외형 갱신을 쉬며, 슬라이더에 마우스를 올리는 것만으로 밝기가 바뀌지는 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/><TextBlock Text="한글은 Pretendard, 숫자는 Manrope를 사용합니다. 카드 투명도를 유지한 합성 배경 위에서 ClearType을 적용합니다. 배경 합성을 사용할 수 없으면 Windows 블러와 그레이스케일 글자로 자동 전환합니다. 일반에서 맑은 고딕도 선택할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0"/><Expander Header="글꼴 라이선스" Margin="0,12,0,0"><TextBlock x:Name="FontLicenses" Style="{StaticResource Caption}" TextWrapping="Wrap"/></Expander></StackPanel></Expander></Border>
+     <TextBlock Text="진단" FontWeight="SemiBold" Margin="0,24,0,12"/>
      <Border Style="{StaticResource CardStyle}"><StackPanel>
       <WrapPanel><Button x:Name="Diagnose" Content="화면 보호 진단" Margin="0,0,8,8"/><Button x:Name="TestLayout" Content="창 배치 진단" Margin="0,0,8,8"/><Button x:Name="BrightnessCapabilities" Content="DDC/CI 지원 정보" Margin="0,0,0,8"/></WrapPanel>
       <TextBlock x:Name="HelpStatus" Style="{StaticResource Caption}" TextWrapping="Wrap"/>

@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.14.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.14.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.15.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.15.0.0")]
 
 namespace MonitorShade
 {
@@ -37,6 +37,7 @@ namespace MonitorShade
             if (args.Length == 2 && args[0] == "--brightness-test") return BrightnessVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--appearance-test") return AppearanceVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--text-test") return TextRasterVerification.Run(args[1]);
+            if (args.Length == 2 && args[0] == "--backdrop-fixture") return TextRasterVerification.Fixture(args[1]);
             if (args.Length == 2 && args[0] == "--recovery-test") return RecoveryVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--reconnect-test") return DisplayRecoveryVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--manual-test") return ManualShadeVerification.Run(args[1], false);
@@ -69,6 +70,7 @@ namespace MonitorShade
                     {
                         form.Show();
                         Application.DoEvents();
+                        if (args[0] == "--ui-test") { form.Hide(); form.Show(); form.Activate(); Application.DoEvents(); }
                         form.ExportPreview(args[1], args[0]);
                     }
                     previewApplication.Shutdown();
