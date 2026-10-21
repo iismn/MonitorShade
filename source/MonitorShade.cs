@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.11.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.11.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.12.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.12.0.0")]
 
 namespace MonitorShade
 {
@@ -58,15 +58,22 @@ namespace MonitorShade
             if (args.Length == 2 && args[0] == "--test") return Verification.Run(args[1]);
             if (args.Length == 2 && (args[0] == "--preview" || args[0] == "--preview-light" || args[0] == "--ui-test"))
             {
-                var previewApplication = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
-                using (SettingsForm form = new SettingsForm(true))
+                try
                 {
-                    form.Show();
-                    Application.DoEvents();
-                    form.ExportPreview(args[1], args[0]);
+                    var previewApplication = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
+                    previewApplication.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e) {
+                        File.WriteAllText(args[1] + ".error.txt", e.Exception.ToString());
+                    };
+                    using (SettingsForm form = new SettingsForm(true))
+                    {
+                        form.Show();
+                        Application.DoEvents();
+                        form.ExportPreview(args[1], args[0]);
+                    }
+                    previewApplication.Shutdown();
+                    return 0;
                 }
-                previewApplication.Shutdown();
-                return 0;
+                catch (Exception e) { File.WriteAllText(args[1] + ".error.txt", e.ToString()); return 1; }
             }
             bool created;
             using (Mutex mutex = new Mutex(true, "Local\\MonitorShade.DesktopUtility.v1", out created))

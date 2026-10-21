@@ -2,7 +2,7 @@
 
 Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니터의 화면 내용이 일정 시간 동안 바뀌지 않으면 해당 화면만 검은 오버레이로 가립니다. 다른 모니터에서의 작업은 계속할 수 있습니다.
 
-현재 소스 버전: **1.11**
+현재 소스 버전: **1.12**
 
 ## 기능
 
@@ -23,6 +23,12 @@ Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니�
 **일반 → 시간별 색상**에서 자동 변화 또는 아침·낮·저녁·밤을 고정할 수 있습니다. 자동 모드는 PC의 현지 시간을 사용합니다. **창 뒤 배경 블러**는 Windows 11 22H2 이상에서 Windows 투명도 효과가 켜져 있을 때 Desktop Acrylic으로 적용됩니다. 이전 Windows나 투명도 효과가 꺼진 환경에서는 같은 색상의 불투명 배경을 사용합니다. 고대비 및 애니메이션 설정도 따릅니다.
 
 밝기 단축키는 **단축키** 탭에, 상세 안내와 글꼴 라이선스는 **도움말**에 있습니다. 글꼴 출처와 라이선스는 [source/fonts/README.md](source/fonts/README.md)를 참고하세요.
+
+상단 창 버튼은 앱 배경에 통합되어 있습니다. 빈 상단 영역을 끌어서 이동하거나 두 번 클릭해 최대화·복원할 수 있고, 가장자리로 크기를 조절할 수 있습니다. 닫기 버튼은 기존처럼 트레이로 숨깁니다.
+
+왼쪽 메뉴는 배경·글자색·선택 표시를 180ms 동안 변화시키며, 본문은 약 270ms에 걸쳐 사라졌다 나타납니다. 빠르게 전환해도 마지막 선택을 따르고 작성 중인 값은 유지합니다. Windows의 애니메이션 끄기와 고대비 설정을 따릅니다.
+
+글자는 실제 내장 Pretendard와 픽셀 정렬을 사용합니다. WPF는 반투명 배경에서 정확한 ClearType 합성을 보장하지 않으므로, 글라스 영역은 그레이스케일 안티앨리어싱으로 표시합니다. 불투명 배경과 입력란은 시스템의 ClearType 설정을 사용합니다. ([Microsoft 렌더링 안내](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.cleartypehint))
 
 ## 실행
 
@@ -101,6 +107,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
 - `source/SettingsForm.cs`, `source/Settings.xaml`: Windows 스타일 설정 UI
 - `source/SettingsWindow.cs`: 네이티브 WPF 창, 트레이 및 메시지 처리 연결
 - `source/Appearance.cs`, `source/BrightnessControls.cs`: 시간별 색상, Desktop Acrylic, 게이지 및 슬라이더 효과
+- `source/UiMotion.cs`: 메뉴 호버, 중단 가능한 페이지 전환, 글자 렌더링
 - `source/WindowLayout.cs`: 창 배치 단축키
 - `source/ManualShade.cs`: 강제 검은 화면
 - `source/Ddc.cs`, `source/Brightness*.cs`: 밝기 조절과 단축키

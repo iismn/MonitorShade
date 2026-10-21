@@ -25,6 +25,7 @@ $arguments += @("$PSScriptRoot\WallpaperRegions.cs", "$PSScriptRoot\WallpaperVer
 $arguments += @("$PSScriptRoot\BrightnessSync.cs", "$PSScriptRoot\ManualShade.cs", "$PSScriptRoot\ManualShadeVerification.cs")
 $arguments += @("$PSScriptRoot\DisplayRecovery.cs", "$PSScriptRoot\DisplayRecoveryVerification.cs")
 $arguments += @("$PSScriptRoot\SettingsWindow.cs", "$PSScriptRoot\Appearance.cs", "$PSScriptRoot\BrightnessControls.cs", "$PSScriptRoot\AppearanceVerification.cs", "/resource:$fontResources,MonitorShade.g.resources")
+$arguments += "$PSScriptRoot\UiMotion.cs"
 & $compiler $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
 Write-Output "Built: $destination\MonitorShade.exe"

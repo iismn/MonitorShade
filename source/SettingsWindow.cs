@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Shell;
+using C = System.Windows.Controls;
 using F = System.Windows.Forms;
 
 namespace MonitorShade
@@ -19,6 +21,35 @@ namespace MonitorShade
         internal bool Visible { get { return IsVisible; } }
         internal string Text { get { return Title; } set { Title = value; } }
         internal void BeginInvoke(Action action) { Dispatcher.BeginInvoke(action); }
+        protected SettingsWindow()
+        {
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.CanResize;
+            UseLayoutRounding = true; SnapsToDevicePixels = true;
+            // Keep an ordinary DWM window: AllowsTransparency would disable native chrome and crisp text.
+            WindowChrome.SetWindowChrome(this, new WindowChrome {
+                CaptionHeight = 40, ResizeBorderThickness = new Thickness(6),
+                GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(0), UseAeroCaptionButtons = false
+            });
+        }
+        protected void ConnectCaption(C.UserControl content)
+        {
+            var minimize = (C.Button)content.FindName("CaptionMinimize");
+            var maximize = (C.Button)content.FindName("CaptionMaximize");
+            var close = (C.Button)content.FindName("CaptionClose");
+            var glyph = (C.TextBlock)content.FindName("CaptionMaximizeGlyph");
+            minimize.Click += delegate { SystemCommands.MinimizeWindow(this); };
+            maximize.Click += delegate { if (WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(this); else SystemCommands.MaximizeWindow(this); };
+            close.Click += delegate { SystemCommands.CloseWindow(this); };
+            Action update = delegate {
+                bool maximized = WindowState == WindowState.Maximized;
+                glyph.Text = maximized ? "\uE923" : "\uE922";
+                maximize.ToolTip = maximized ? "이전 크기로" : "최대화";
+                System.Windows.Automation.AutomationProperties.SetName(maximize, maximized ? "이전 크기로" : "최대화");
+            };
+            StateChanged += delegate { update(); };
+            update();
+        }
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);

@@ -84,6 +84,8 @@ namespace MonitorShade
         private bool exiting, hotkey, settingsHotkey, diagnosing, dark;
         private bool sessionBlocked, powerBlocked;
         private readonly Timer appearanceTimer = new Timer { Interval = 30000 };
+        private PageTransition pageTransition;
+        private bool suppressMotion;
         private readonly Icon trayIcon;
         private AppearancePreferences appearance;
         private double? previewHour;
@@ -113,6 +115,9 @@ namespace MonitorShade
             ignoreWallpaper = Find<C.CheckBox>("IgnoreWallpaper");
             layoutEnabled = Find<C.CheckBox>("LayoutEnabled"); centerPercent = Find<C.TextBox>("CenterPercent");
             Content = ui;
+            ConnectCaption(ui);
+            pageTransition = new PageTransition(Find<C.Grid>("PageHost"), new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }.ToDictionary(name => name, name => Find<C.ScrollViewer>(name + "Page")));
+            StateChanged += delegate { if (IsHandleCreated) BeginInvoke(new Action(delegate { if (!IsDisposed) ApplyTheme(null); })); };
 
             Preferences preferences = File.Exists(preferencesPath) ? Preferences.Read(preferencesPath) : new Preferences { WaitValue = 120, Minutes = false };
             appearance = preferences.Appearance; ApplyTheme(null);
@@ -178,7 +183,7 @@ namespace MonitorShade
             }
             InitializeAppearance();
             appearanceTimer.Tick += delegate { if (IsVisible) ApplyTheme(null); };
-            IsVisibleChanged += delegate { if (IsVisible) { ApplyTheme(null); appearanceTimer.Start(); } else appearanceTimer.Stop(); };
+            IsVisibleChanged += delegate { if (IsVisible) { ApplyTheme(null); appearanceTimer.Start(); } else { appearanceTimer.Stop(); pageTransition.Finish(); } };
             ValidateLayout();
             if (!preview) { IntPtr messageWindow = Handle; SetLayoutHook(); manualShade.Register(); }
             if (!preview) BeginInvoke(new Action(async delegate { await brightnessPage.Refresh(false); }));
@@ -244,7 +249,7 @@ namespace MonitorShade
 
         private void SelectPage(string page)
         {
-            foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) Find<C.ScrollViewer>(name + "Page").Visibility = name == page ? W.Visibility.Visible : W.Visibility.Collapsed;
+            pageTransition.Select(page, !suppressMotion);
         }
         private bool TryGetPercent(out int value) { return int.TryParse(centerPercent.Text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value >= 10 && value <= 100; }
         private void ValidateLayout()
@@ -334,6 +339,7 @@ namespace MonitorShade
             double hour = forceDark.HasValue ? (forceDark.Value ? 20 : 9) : previewHour ?? appearance.Hour(DateTime.Now);
             DayPalette p = DayPalette.At(hour); dark = !p.Light;
             bool glass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur, dark);
+            TextPresentation.Apply(ui, glass);
             string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft" };
             M.Color[] colors = { DayPalette.Alpha(p.Background, (byte)(glass ? 194 : 255)), DayPalette.Alpha(p.Panel, 210), DayPalette.Alpha(p.Raised, 210), p.Panel, p.Panel, DayPalette.Alpha(p.Line, 180), p.Text, p.Muted, p.Accent, p.Ink, p.Raised, p.Soft, p.Accent, p.Soft };
             if (W.SystemParameters.HighContrast)
@@ -351,6 +357,7 @@ namespace MonitorShade
             ui.Resources["AccentColor"] = colors[8];
             ui.FontFamily = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Pretendard");
             ui.Resources["NumberFont"] = new M.FontFamily(new Uri("pack://application:,,,/"), "./fonts/#Manrope");
+            foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) NavigationFeedback.Update(Find<C.RadioButton>("Nav" + name), Find<C.RadioButton>("Nav" + name).IsMouseOver, false);
             var time = Find<C.TextBlock>("ThemeTime"); if (time != null) time.Text = TimeSpan.FromHours(hour).ToString(@"hh\:mm") + (appearance.Theme == "Auto" && !forceDark.HasValue ? " · 자동" : "");
             var label = Find<C.TextBlock>("AppearanceStatus");
             if (label != null) label.Text = !appearance.Blur ? "" : glass ? "" : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
@@ -615,6 +622,7 @@ namespace MonitorShade
                 watcher.Dispose();
                 if (layoutHook != null) layoutHook.Dispose();
                 if (brightnessPage != null) brightnessPage.Dispose();
+                if (pageTransition != null) pageTransition.Dispose();
                 arranger.Dispose();
                 startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose();
                 if (tray != null) { tray.Visible = false; ContextMenuStrip menu = tray.ContextMenuStrip; tray.Dispose(); if (menu != null) menu.Dispose(); }
@@ -644,6 +652,7 @@ namespace MonitorShade
         }
         private void VerifyUi(string path)
         {
+            suppressMotion = true; pageTransition.Finish();
             List<string> results = new List<string>();
             Action<bool, string> check = delegate(bool valid, string name) { if (!valid) throw new Exception("FAIL: " + name); results.Add("PASS: " + name); };
             try
@@ -740,10 +749,65 @@ namespace MonitorShade
                 Find<C.RadioButton>("NavProtection").IsChecked = true;
                 RenderPreview(Path.Combine(Path.GetDirectoryName(path), "MonitorShade-compact.png"), 960, 640);
                 check(start.ActualWidth >= 112 && seconds.ActualWidth == 56 && minutes.ActualWidth == 56, "Compact layout keeps actions and both units usable");
+                VerifyPresentation(check);
                 results.Add("UI rendering and interaction checks completed.");
                 File.WriteAllLines(path, results.ToArray());
             }
             catch (Exception e) { results.Add(e.ToString()); File.WriteAllLines(path, results.ToArray()); Environment.ExitCode = 1; throw; }
+        }
+        private static void PumpFrames(int milliseconds)
+        {
+            var frame = new System.Windows.Threading.DispatcherFrame();
+            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(milliseconds) };
+            timer.Tick += delegate { timer.Stop(); frame.Continue = false; };
+            timer.Start(); System.Windows.Threading.Dispatcher.PushFrame(frame);
+        }
+        private void VerifyPresentation(Action<bool, string> check)
+        {
+            var chrome = W.Shell.WindowChrome.GetWindowChrome(this);
+            check(WindowStyle == W.WindowStyle.None && !AllowsTransparency && chrome.CaptionHeight == 40 && chrome.ResizeBorderThickness.Left >= 5 && !chrome.UseAeroCaptionButtons, "Custom caption replaces the system bar while preserving native resize and drag regions");
+            foreach (string button in new[] { "CaptionMinimize", "CaptionMaximize", "CaptionClose" })
+                check(W.Shell.WindowChrome.GetIsHitTestVisibleInChrome(Find<C.Button>(button)), button + " remains clickable inside the caption");
+            M.GlyphTypeface regular, semibold;
+            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.Normal, W.FontStretches.Normal).TryGetGlyphTypeface(out regular) && regular.FamilyNames.Values.Contains("Pretendard") && regular.CharacterToGlyphMap.ContainsKey('한'), "Embedded Pretendard regular provides Korean glyphs without font fallback");
+            check(new M.Typeface(ui.FontFamily, W.FontStyles.Normal, W.FontWeights.SemiBold, W.FontStretches.Normal).TryGetGlyphTypeface(out semibold) && semibold.FamilyNames.Values.Contains("Pretendard"), "Embedded Pretendard semibold resolves without synthesized weight");
+            check(ui.UseLayoutRounding && ui.SnapsToDevicePixels && M.TextOptions.GetTextFormattingMode(ui) == M.TextFormattingMode.Display && M.TextOptions.GetTextHintingMode(ui) == M.TextHintingMode.Fixed, "Text uses pixel-aligned display metrics and fixed hinting");
+            var surface = new C.Grid(); TextPresentation.Apply(surface, true);
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Grayscale && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Auto, "Transparent glass avoids invalid subpixel ClearType blending");
+            TextPresentation.Apply(surface, false);
+            check(M.TextOptions.GetTextRenderingMode(surface) == M.TextRenderingMode.Auto && M.RenderOptions.GetClearTypeHint(surface) == M.ClearTypeHint.Enabled, "Opaque surfaces permit the system ClearType setting");
+
+            var nav = Find<C.RadioButton>("NavGeneral"); nav.ApplyTemplate();
+            var navSurface = (C.Border)nav.Template.FindName("Surface", nav);
+            var indicator = (C.Border)nav.Template.FindName("Indicator", nav);
+            NavigationFeedback.Update(nav, true, true); PumpFrames(240);
+            check(navSurface.Opacity >= .59 && nav.IsChecked != true && Find<C.ScrollViewer>("ProtectionPage").Visibility == W.Visibility.Visible, "Navigation hover fades its surface without selecting a page");
+            NavigationFeedback.Update(nav, false, true); PumpFrames(240);
+            check(navSurface.Opacity < .01 && indicator.Opacity < .01, "Navigation hover and indicator settle correctly on pointer leave");
+            suppressMotion = false;
+            var first = Find<C.ScrollViewer>("ProtectionPage"); var last = Find<C.ScrollViewer>("GeneralPage");
+            string draft = amount.Text;
+            SelectPage("General");
+            bool animation = W.SystemParameters.ClientAreaAnimation && !W.SystemParameters.HighContrast;
+            check(!animation || (!Find<C.Grid>("PageHost").IsHitTestVisible && first.Visibility == W.Visibility.Visible), "Page fade starts on the outgoing page and suppresses stale clicks");
+            PumpFrames(380);
+            check(last.Visibility == W.Visibility.Visible && first.Visibility == W.Visibility.Collapsed && last.Opacity == 1 && Find<C.Grid>("PageHost").IsHitTestVisible, "Page fade finishes with the new page fully opaque and interactive");
+            SelectPage("Help"); PumpFrames(30); SelectPage("Layout"); PumpFrames(30); SelectPage("Brightness"); PumpFrames(400);
+            check(Find<C.ScrollViewer>("BrightnessPage").Visibility == W.Visibility.Visible && new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }.Count(n => Find<C.ScrollViewer>(n + "Page").Visibility == W.Visibility.Visible) == 1, "Rapid navigation keeps only the last requested page visible");
+            SelectPage("Protection"); PumpFrames(380);
+            check(amount.Text == draft && first.Opacity == 1, "Navigation preserves unsaved form values and restores full text opacity");
+            SelectPage("Help"); pageTransition.Finish(); PumpFrames(350);
+            check(Find<C.ScrollViewer>("HelpPage").Visibility == W.Visibility.Visible && Find<C.Grid>("PageHost").IsHitTestVisible, "Canceling a transition prevents stale callbacks and restores interaction");
+            suppressMotion = true;
+            Find<C.Button>("CaptionMaximize").RaiseEvent(new W.RoutedEventArgs(C.Button.ClickEvent)); PumpFrames(180);
+            check(WindowState == W.WindowState.Maximized && Find<C.TextBlock>("CaptionMaximizeGlyph").Text == "\uE923", "Custom maximize button updates window state and restore glyph");
+            Find<C.Button>("CaptionMaximize").RaiseEvent(new W.RoutedEventArgs(C.Button.ClickEvent)); PumpFrames(180);
+            check(WindowState == W.WindowState.Normal, "Custom restore button restores normal window state");
+            Find<C.Button>("CaptionMinimize").RaiseEvent(new W.RoutedEventArgs(C.Button.ClickEvent)); PumpFrames(180);
+            check(WindowState == W.WindowState.Minimized, "Custom minimize button minimizes the native window");
+            W.SystemCommands.RestoreWindow(this); PumpFrames(120);
+            Find<C.Button>("CaptionClose").RaiseEvent(new W.RoutedEventArgs(C.Button.ClickEvent)); PumpFrames(120);
+            check(IsDisposed, "Custom close button follows the window lifetime and disposes the preview cleanly");
         }
     }
 }
