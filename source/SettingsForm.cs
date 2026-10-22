@@ -787,6 +787,75 @@ namespace MonitorShade
             timer.Tick += delegate { timer.Stop(); frame.Continue = false; };
             timer.Start(); System.Windows.Threading.Dispatcher.PushFrame(frame);
         }
+        private static IEnumerable<C.TextBlock> TextDescendants(W.DependencyObject root)
+        {
+            var text = root as C.TextBlock; if (text != null) yield return text;
+            for (int i = 0; i < M.VisualTreeHelper.GetChildrenCount(root); i++)
+                foreach (var child in TextDescendants(M.VisualTreeHelper.GetChild(root, i))) yield return child;
+        }
+        internal int VerifyLiveText(string path)
+        {
+            var results = new List<string>(); bool failed = false;
+            appearanceTimer.Stop();
+            Find<C.ComboBox>("KoreanFont").SelectedIndex = 1;
+            Find<C.ComboBox>("AppearanceMode").SelectedIndex = 1;
+            suppressMotion = false;
+            foreach (string mode in new[] { "solid-no-fade", "solid", "glass", "glass-rapid", "solid-again", "interrupted" })
+            {
+                suppressMotion = mode == "solid-no-fade";
+                Find<C.ComboBox>("AppearanceMode").SelectedIndex = mode.StartsWith("glass") ? 3 : 1;
+                Find<C.CheckBox>("UseBackdrop").IsChecked = mode.StartsWith("glass");
+                Find<C.RadioButton>("NavProtection").IsChecked = true; PumpFrames(450);
+                if (mode == "glass-rapid")
+                {
+                    Find<C.RadioButton>("NavHelp").IsChecked = true; PumpFrames(30);
+                    Find<C.RadioButton>("NavLayout").IsChecked = true; PumpFrames(30);
+                }
+                if (mode == "interrupted")
+                {
+                    Find<C.RadioButton>("NavGeneral").IsChecked = true; PumpFrames(30);
+                    Hide(); Show(); Activate();
+                }
+                Find<C.RadioButton>("NavGeneral").IsChecked = true; PumpFrames(1000);
+                results.Add("INFO: " + mode + ", composed=" + backdrop.Active + ", error=" + backdrop.Error + ", DPI=" + W.PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11 * 96);
+                if (mode.StartsWith("glass") && !backdrop.Active)
+                { results.Add("FAIL: Composed glass could not be tested: " + backdrop.Error); failed = true; continue; }
+                foreach (string label in new[] { "시간별 색상", "한글 글꼴", "창 뒤 배경 블러", "Pretendard · 기본" })
+                {
+                    var text = TextDescendants(ui).First(t => t.IsVisible && t.Text == label);
+                    var local = text.ReadLocalValue(M.TextOptions.TextRenderingModeProperty);
+                    var effective = M.TextOptions.GetTextRenderingMode(text);
+                    using (var normal = TextRasterVerification.CapturePixels(text, this))
+                    {
+                        M.TextOptions.SetTextRenderingMode(text, M.TextRenderingMode.Grayscale); PumpFrames(150);
+                        using (var gray = TextRasterVerification.CapturePixels(text, this))
+                        {
+                            int edges = 0;
+                            int ink = 0;
+                            for (int y = 0; y < normal.Height; y++) for (int x = 0; x < normal.Width; x++)
+                            {
+                                var a = normal.GetPixel(x, y); var b = gray.GetPixel(x, y);
+                                int r = a.R - b.R, g = a.G - b.G, blue = a.B - b.B;
+                                if (Math.Max(r, Math.Max(g, blue)) - Math.Min(r, Math.Min(g, blue)) > 12) edges++;
+                                if (Math.Abs(a.R - normal.GetPixel(normal.Width - 1, 0).R) > 70) ink++;
+                            }
+                            bool pass = edges > 30 && ink > 30; failed |= !pass;
+                            results.Add((pass ? "PASS: " : "FAIL: ") + mode + " / " + label + ": mode=" + effective + ", subpixel differences=" + edges);
+                            normal.Save(path + "." + mode + "." + label + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                            gray.Save(path + "." + mode + "." + label + ".gray.png", System.Drawing.Imaging.ImageFormat.Png);
+                        }
+                    }
+                    if (local == W.DependencyProperty.UnsetValue)
+                    {
+                        M.TextOptions.SetTextRenderingMode(text, M.TextRenderingMode.Auto);
+                        text.ClearValue(M.TextOptions.TextRenderingModeProperty);
+                    }
+                    else text.SetValue(M.TextOptions.TextRenderingModeProperty, local);
+                    PumpFrames(150);
+                }
+            }
+            File.WriteAllLines(path, results); return failed ? 1 : 0;
+        }
         private void VerifyPresentation(Action<bool, string> check)
         {
             var chrome = W.Shell.WindowChrome.GetWindowChrome(this);

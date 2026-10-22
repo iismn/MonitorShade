@@ -61,13 +61,14 @@ namespace MonitorShade
             app.Run(fixture); timer.Stop(); return 0;
         }
 
-        private static int ColoredPixels(W.FrameworkElement text, W.Window window, string imagePath)
+        internal static Bitmap CapturePixels(W.FrameworkElement text, W.Window window)
         {
             var origin = text.PointToScreen(new W.Point());
             var client = window.PointToScreen(new W.Point());
             var scale = W.PresentationSource.FromVisual(text).CompositionTarget.TransformToDevice;
             int width = (int)Math.Ceiling(text.ActualWidth * scale.M11), height = (int)Math.Ceiling(text.ActualHeight * scale.M22);
-            using (var bitmap = new Bitmap(width, height))
+            var bitmap = new Bitmap(width, height);
+            try
             {
                 using (var graphics = Graphics.FromImage(bitmap))
                 {
@@ -79,9 +80,18 @@ namespace MonitorShade
                     }
                     finally { graphics.ReleaseHdc(destination); if (source != IntPtr.Zero) ReleaseDC(new W.Interop.WindowInteropHelper(window).Handle, source); }
                 }
+                return bitmap;
+            }
+            catch { bitmap.Dispose(); throw; }
+        }
+
+        private static int ColoredPixels(W.FrameworkElement text, W.Window window, string imagePath)
+        {
+            using (var bitmap = CapturePixels(text, window))
+            {
                 bitmap.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
                 int colored = 0, ink = 0;
-                for (int y = 0; y < height; y++) for (int x = 0; x < width; x++)
+                for (int y = 0; y < bitmap.Height; y++) for (int x = 0; x < bitmap.Width; x++)
                 {
                     var p = bitmap.GetPixel(x, y);
                     if (p.R < 180 && p.G < 180 && p.B < 180) ink++;
@@ -90,6 +100,24 @@ namespace MonitorShade
                 if (ink < 30) throw new InvalidOperationException("Text capture contained no usable glyphs; the desktop may be unavailable.");
                 return colored;
             }
+        }
+
+        internal static int RunSettings(string path)
+        {
+            var app = new W.Application { ShutdownMode = W.ShutdownMode.OnExplicitShutdown };
+            try
+            {
+                if (!DesktopAccess.Available()) throw new InvalidOperationException("Interactive desktop is unavailable.");
+                SetThreadExecutionState(0x80000003);
+                using (var window = new SettingsForm(true, false))
+                {
+                    window.Topmost = true; window.Show(); Wait(200);
+                    window.Hide(); window.Show(); ShowWindow(window.Handle, 5); window.Activate(); Wait(300);
+                    return window.VerifyLiveText(path);
+                }
+            }
+            catch (Exception e) { File.WriteAllText(path, "FAIL: " + e); return 1; }
+            finally { SetThreadExecutionState(0x80000000); app.Shutdown(); }
         }
 
         internal static int Run(string path)

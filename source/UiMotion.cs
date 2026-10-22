@@ -124,7 +124,18 @@ namespace MonitorShade
         }
         internal void Finish()
         { ++revision; if (requested != null) { ShowOnly(requested); active = requested; } RestoreText(); host.IsHitTestVisible = true; }
-        private void RestoreText() { foreach (var page in pages.Values) page.ClearValue(M.TextOptions.TextRenderingModeProperty); }
+        private void RestoreText()
+        {
+            foreach (var page in pages.Values)
+            {
+                // WPF stores TextRenderingMode in both the dependency-property tree
+                // and the compositor's Visual tree. ClearValue alone restores the
+                // inherited property but leaves the Visual stuck on Grayscale.
+                // Write Auto locally first so the Visual resumes inheritance too.
+                M.TextOptions.SetTextRenderingMode(page, M.TextRenderingMode.Auto);
+                page.ClearValue(M.TextOptions.TextRenderingModeProperty);
+            }
+        }
         public void Dispose() { Finish(); disposed = true; }
     }
 }
