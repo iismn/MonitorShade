@@ -11,15 +11,14 @@ namespace MonitorShade
     {
         public bool Blur = true;
         public string Theme = "Auto";
-        public string KoreanFont = "Pretendard";
+        public string KoreanFont = "MalgunGothic";
         public int TypographyVersion;
         public void Normalize()
         {
             if (!new[] { "Auto", "Morning", "Day", "Evening", "Night" }.Contains(Theme)) Theme = "Auto";
-            // Version 1.13 defaulted to Malgun Gothic. Restore the design font once,
-            // then preserve explicit font choices made in version 1.14 and later.
-            if (TypographyVersion < 1) { KoreanFont = "Pretendard"; TypographyVersion = 1; }
-            if (KoreanFont != "MalgunGothic" && KoreanFont != "Pretendard") KoreanFont = "Pretendard";
+            // Adopt the requested Windows Korean UI face once, then preserve choices.
+            if (TypographyVersion < 2) { KoreanFont = "MalgunGothic"; TypographyVersion = 2; }
+            if (KoreanFont != "MalgunGothic" && KoreanFont != "Pretendard") KoreanFont = "MalgunGothic";
         }
         internal double Hour(DateTime now)
         { return Theme == "Morning" ? 9 : Theme == "Day" ? 14 : Theme == "Evening" ? 20 : Theme == "Night" ? 0 : now.TimeOfDay.TotalHours; }

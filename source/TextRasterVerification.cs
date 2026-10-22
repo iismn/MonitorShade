@@ -102,7 +102,7 @@ namespace MonitorShade
             }
         }
 
-        internal static int RunSettings(string path)
+        internal static int RunSettings(string path, bool pretendard)
         {
             var app = new W.Application { ShutdownMode = W.ShutdownMode.OnExplicitShutdown };
             try
@@ -113,7 +113,7 @@ namespace MonitorShade
                 {
                     window.Topmost = true; window.Show(); Wait(200);
                     window.Hide(); window.Show(); ShowWindow(window.Handle, 5); window.Activate(); Wait(300);
-                    return window.VerifyLiveText(path);
+                    return window.VerifyLiveText(path, pretendard);
                 }
             }
             catch (Exception e) { File.WriteAllText(path, "FAIL: " + e); return 1; }

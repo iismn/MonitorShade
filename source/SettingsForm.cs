@@ -328,7 +328,7 @@ namespace MonitorShade
             mode.SelectedIndex = Array.IndexOf(values, appearance.Theme);
             Find<C.CheckBox>("UseBackdrop").IsChecked = appearance.Blur;
             var koreanFont = Find<C.ComboBox>("KoreanFont");
-            koreanFont.ItemsSource = new[] { "맑은 고딕 · Windows", "Pretendard · 기본" };
+            koreanFont.ItemsSource = new[] { "맑은 고딕 · 기본", "Pretendard" };
             koreanFont.SelectedIndex = appearance.KoreanFont == "Pretendard" ? 1 : 0;
             Action save = delegate
             {
@@ -793,11 +793,12 @@ namespace MonitorShade
             for (int i = 0; i < M.VisualTreeHelper.GetChildrenCount(root); i++)
                 foreach (var child in TextDescendants(M.VisualTreeHelper.GetChild(root, i))) yield return child;
         }
-        internal int VerifyLiveText(string path)
+        internal int VerifyLiveText(string path, bool pretendard)
         {
             var results = new List<string>(); bool failed = false;
             appearanceTimer.Stop();
-            Find<C.ComboBox>("KoreanFont").SelectedIndex = 1;
+            Find<C.ComboBox>("KoreanFont").SelectedIndex = pretendard ? 1 : 0;
+            results.Add("INFO: Font=" + appearance.KoreanFont);
             Find<C.ComboBox>("AppearanceMode").SelectedIndex = 1;
             suppressMotion = false;
             foreach (string mode in new[] { "solid-no-fade", "solid", "glass", "glass-rapid", "solid-again", "interrupted" })
@@ -820,7 +821,7 @@ namespace MonitorShade
                 results.Add("INFO: " + mode + ", composed=" + backdrop.Active + ", error=" + backdrop.Error + ", DPI=" + W.PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11 * 96);
                 if (mode.StartsWith("glass") && !backdrop.Active)
                 { results.Add("FAIL: Composed glass could not be tested: " + backdrop.Error); failed = true; continue; }
-                foreach (string label in new[] { "시간별 색상", "한글 글꼴", "창 뒤 배경 블러", "Pretendard · 기본" })
+                foreach (string label in new[] { "시간별 색상", "한글 글꼴", "창 뒤 배경 블러", pretendard ? "Pretendard" : "맑은 고딕 · 기본" })
                 {
                     var text = TextDescendants(ui).First(t => t.IsVisible && t.Text == label);
                     var local = text.ReadLocalValue(M.TextOptions.TextRenderingModeProperty);
