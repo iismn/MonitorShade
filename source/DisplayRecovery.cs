@@ -97,7 +97,12 @@ namespace MonitorShade
         internal bool Enabled { get; private set; }
         internal DisplayRecovery(WatchGroup group) { watcher = group; }
         internal void Start(int delay, bool ignore)
-        { watcher.Stop(); seconds = delay; ignoreWallpaper = ignore; Enabled = true; }
+        { watcher.Stop(); Configure(delay, ignore); }
+        internal void Configure(int delay, bool ignore)
+        {
+            if (delay < 1 || delay > 86400) throw new ArgumentOutOfRangeException("delay");
+            seconds = delay; ignoreWallpaper = ignore; Enabled = true;
+        }
         internal void Refresh(ConnectedDisplay[] targets)
         {
             if (!Enabled) return;

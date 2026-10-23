@@ -57,6 +57,15 @@ namespace MonitorShade
                 ConnectedDisplay left = Display("DISPLAY5", "physical-left", -100), right = Display("DISPLAY1", "physical-right", 0);
                 var both = new[] { left, right };
                 var preferences = new Preferences { DeviceNames = new[] { left.DeviceName, right.DeviceName }, WaitValue = 30, Minutes = false };
+                check(preferences.WatchEnabled, "New installations enable automatic monitoring by default");
+                File.WriteAllText(settings, "<Preferences><DeviceName>DISPLAY5</DeviceName><WaitValue>30</WaitValue><Minutes>false</Minutes></Preferences>");
+                check(Preferences.Read(settings).WatchEnabled, "Legacy settings enable automatic monitoring without a migration prompt");
+                preferences.WatchEnabled = false; preferences.Write(settings);
+                var paused = Preferences.Read(settings);
+                check(!paused.WatchEnabled && paused.WaitValue == 30 && paused.SelectedDevices().Length == 2, "Monitoring-off state persists across restart with timeout and monitor selection intact");
+                paused.IgnoreWallpaper = false; paused.Write(settings);
+                check(!Preferences.Read(settings).WatchEnabled, "Saving another protection option does not re-enable monitoring");
+                preferences.WatchEnabled = true;
                 var selection = new DisplaySelection(preferences);
                 check(selection.Resolve(both).Length == 2, "Legacy settings retain both selected monitors");
                 selection.Store(preferences);
@@ -123,6 +132,21 @@ namespace MonitorShade
                     check(s.Failures == 1, "Permanent per-monitor failure is not retried or notified every poll");
                     s.Recovery.Refresh(new[] { right }); s.Recovery.Refresh(both);
                     check(s.Group.RunningCount == 2, "A failed target receives a fresh attempt after unplug and reconnect");
+                }
+                using (var s = new Scenario())
+                {
+                    s.Recovery.Configure(2, true); s.Recovery.Refresh(both); s.Frame(2000);
+                    Surface originalRight = s.Surfaces[1];
+                    s.Recovery.Configure(2, true); s.Recovery.Refresh(new[] { right });
+                    check(s.Group.RunningCount == 1 && s.Group.Covered(right.DeviceName) && !originalRight.Disposed, "Autosaving monitor selection retains the other monitor's existing cover");
+                    s.Time = 3000; s.Recovery.Configure(5, true); s.Recovery.Refresh(new[] { right });
+                    check(originalRight.Disposed && !s.Group.Covered(right.DeviceName), "Changing the timeout replaces the old idle baseline");
+                    s.Frame(7999); check(!s.Group.Covered(right.DeviceName), "New timeout cannot cover early");
+                    s.Frame(8000); check(s.Group.Covered(right.DeviceName), "New timeout takes effect without Start monitoring");
+                    s.Recovery.Configure(5, true); s.Recovery.Refresh(new ConnectedDisplay[0]);
+                    check(s.Recovery.Enabled && s.Group.RunningCount == 0, "Empty selection keeps automatic intent without covering an unintended screen");
+                    s.Time = 9000; s.Recovery.Refresh(new[] { left });
+                    check(s.Group.RunningCount == 1 && !s.Group.Covered(left.DeviceName), "Selecting a monitor resumes protection without a Start command");
                 }
                 lines.Add("Reconnect tests use simulated display changes; no physical monitor settings were changed.");
                 File.WriteAllLines(path, lines.ToArray()); return 0;

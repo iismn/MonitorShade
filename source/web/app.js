@@ -253,6 +253,7 @@
     ['Brightness','밝기 조절','DDC CI 모니터 밝기 brightness','masterRange'],
     ['Brightness','밝기 동기화','함께 조절 동시 sync','BrightnessSync'],
     ['Protection','감시할 모니터','화면 보호 화면보호기 검은 화면 OLED 대상','displayChoices'],
+    ['Protection','자동 감시','항상 감시 자동 시작 켜기 끄기 automatic monitoring protection','WatchEnabled'],
     ['Protection','대기 시간','초 분 시간 타이머 delay','Amount'],
     ['Protection','움직이는 배경화면','Lively 배경 무시','IgnoreWallpaper'],
     ['Protection','강제 검은 화면','F9 F10 가리기','ManualEnabled'],

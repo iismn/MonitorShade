@@ -99,7 +99,6 @@ namespace MonitorShade
             preview = previewMode;
             displayRecovery = new DisplayRecovery(watcher);
             reconnectTimer.Tick += delegate { ReconcileDisplays(); };
-            startupPending = automatic && !preview;
             Text = "MonitorShade";
             Width = 1120; Height = 840; MinWidth = 960; MinHeight = 640;
             WindowStartupLocation = W.WindowStartupLocation.CenterScreen;
@@ -130,6 +129,9 @@ namespace MonitorShade
             StateChanged += delegate { if (IsHandleCreated) BeginInvoke(new Action(delegate { if (!IsDisposed) ApplyTheme(null); })); };
 
             Preferences preferences = File.Exists(preferencesPath) ? Preferences.Read(preferencesPath) : new Preferences { WaitValue = 120, Minutes = false };
+            watchEnabled = preferences.WatchEnabled;
+            Find<C.CheckBox>("WatchEnabled").IsChecked = watchEnabled;
+            startupPending = watchEnabled && !preview;
             appearance = preferences.Appearance; appearance.Normalize(); ApplyTheme(null);
             if (!File.Exists(preferencesPath)) preferences.DeviceNames = Screen.AllScreens.Select(s => s.DeviceName).ToArray();
             displaySelection = new DisplaySelection(preferences);
@@ -159,14 +161,16 @@ namespace MonitorShade
             ignoreWallpaper.IsChecked = preferences.IgnoreWallpaper;
             displays.SelectionChanged += delegate
             {
-                if (!refreshingDisplays) displaySelection.Edit(connectedDisplays, CurrentDevices());
+                if (!refreshingDisplays) { displaySelection.Edit(connectedDisplays, CurrentDevices()); QueueProtectionChanges(); }
                 UpdateDisplay();
             };
             map.SizeChanged += delegate { DrawMap(); };
             RefreshDisplays();
-            amount.TextChanged += delegate { ValidateWait(); };
-            seconds.Checked += delegate { ValidateWait(); };
-            minutes.Checked += delegate { ValidateWait(); };
+            amount.TextChanged += delegate { ValidateWait(); QueueProtectionChanges(); };
+            seconds.Checked += delegate { ValidateWait(); QueueProtectionChanges(); };
+            minutes.Checked += delegate { ValidateWait(); QueueProtectionChanges(); };
+            ignoreWallpaper.Checked += delegate { QueueProtectionChanges(); };
+            ignoreWallpaper.Unchecked += delegate { QueueProtectionChanges(); };
             amount.PreviewTextInput += delegate(object sender, System.Windows.Input.TextCompositionEventArgs e) { e.Handled = e.Text.Any(c => c < '0' || c > '9'); };
             start.Click += delegate { StartWatching(); };
             Find<C.Button>("Exit").Click += delegate { ExitApplication(); };
@@ -201,6 +205,7 @@ namespace MonitorShade
             ValidateLayout();
             if (!preview) { IntPtr messageWindow = Handle; SetLayoutHook(); manualShade.Register(); }
             if (!preview) BeginInvoke(new Action(async delegate { await brightnessPage.Refresh(false); }));
+            InitializeProtection();
             if (startupPending)
             {
                 IntPtr window = Handle; // Hidden message window for tray, hotkey and startup retry timer.
@@ -220,7 +225,6 @@ namespace MonitorShade
             if (startupAttempts < 3) return;
             try
             {
-                if (displaySelection.Count == 0) throw new InvalidOperationException("저장된 감시 설정을 확인해 주세요.");
                 RefreshDisplays();
                 if (!StartWatching(true)) throw new InvalidOperationException("대기 시간 설정을 확인해 주세요.");
                 CancelAutomaticStart();
@@ -244,7 +248,7 @@ namespace MonitorShade
                     SavePreferences();
                 }
                 StartupRegistration.SetEnabled(enable);
-                status.Text = enable ? "로그인 시 자동 실행 및 감시 켜짐" : "자동 실행 꺼짐";
+                status.Text = enable ? "로그인 시 자동 실행 켜짐" : "자동 실행 꺼짐";
             }
             catch (Exception e)
             {
@@ -258,7 +262,7 @@ namespace MonitorShade
         {
             Preferences saved = Preferences.Read(preferencesPath);
             displaySelection.Store(saved);
-            saved.WaitValue = int.Parse(amount.Text, CultureInfo.InvariantCulture); saved.Minutes = minutes.IsChecked == true; saved.IgnoreWallpaper = ignoreWallpaper.IsChecked == true; saved.LayoutEnabled = appliedLayoutEnabled; saved.CenterPercent = appliedCenterPercent; saved.LayoutShortcuts = LayoutBindings.Copy(appliedLayoutShortcuts); saved.Write(preferencesPath);
+            saved.WaitValue = int.Parse(amount.Text, CultureInfo.InvariantCulture); saved.Minutes = minutes.IsChecked == true; saved.IgnoreWallpaper = ignoreWallpaper.IsChecked == true; saved.WatchEnabled = watchEnabled; saved.LayoutEnabled = appliedLayoutEnabled; saved.CenterPercent = appliedCenterPercent; saved.LayoutShortcuts = LayoutBindings.Copy(appliedLayoutShortcuts); saved.Write(preferencesPath);
             savedSelectionRevision = displaySelection.Revision;
         }
 
@@ -514,30 +518,14 @@ namespace MonitorShade
         }
         private bool StartWatching(bool quiet = false)
         {
-            if (preview) { status.Text = "디자인 미리보기 · 실제 감시와 밝기는 변경하지 않습니다."; return false; }
-            if (diagnosing) return false;
-            int delay;
-            if (!TryGetSeconds(out delay)) { ValidateWait(); if (!quiet) amount.Focus(); return false; }
-            if (displaySelection.Count == 0) return false;
-            try
-            {
-                RefreshDisplays();
-                SavePreferences();
-                if (!quiet && !ApplyLayoutSettings()) return false;
-                if (!quiet && !brightnessPage.ApplySettings()) return false;
-                if (!quiet && !manualShade.Apply()) return false;
-                displayRecovery.Start(delay, ignoreWallpaper.IsChecked == true);
-                ReconcileDisplays();
-                reconnectTimer.Start();
-                UpdateWatchingStatus();
-                Hide(); if (!quiet) tray.ShowBalloonTip(2500, UiText.Translate("MonitorShade 감시 중"), UiText.Translate("트레이 아이콘을 두 번 클릭하면 설정을 엽니다."), ToolTipIcon.Info);
-                return true;
-            }
-            catch (Exception e) { if (quiet) throw; Pause(e.Message); MessageBox.Show(this, UiText.Translate(e.Message), UiText.Translate("시작할 수 없습니다"), MessageBoxButtons.OK, MessageBoxIcon.Warning); return false; }
+            SetWatchIntent(true);
+            return CommitProtectionChanges();
         }
         public void Pause(string message)
         {
             CancelAutomaticStart();
+            protectionTimer.Stop();
+            SetWatchIntent(false);
             reconnectTimer.Stop();
             displayRecovery.Stop();
             if (manualShade != null) manualShade.Controller.Clear();
@@ -547,6 +535,7 @@ namespace MonitorShade
         }
         private void Diagnose()
         {
+            bool resume = watchEnabled;
             Pause("진단 중"); diagnosing = true; SetLayoutHook();
             try
             {
@@ -571,19 +560,21 @@ namespace MonitorShade
                 status.Text = code == 0 ? "동작 진단 통과" : "진단 실패 · 결과 파일 확인";
                 Find<C.TextBlock>("HelpStatus").Text = status.Text;
             }
-            finally { diagnosing = false; SetLayoutHook(); Show(); Activate(); }
+            finally { diagnosing = false; SetLayoutHook(); if (resume) { SetWatchIntent(true); CommitProtectionChanges(); } Show(); Activate(); }
         }
-        private void Toggle() { if (displayRecovery.Enabled || startupPending || manualShade.Controller.Count > 0) Pause("일시정지됨"); else StartWatching(); }
-        private void OpenSettings() { Pause("일시정지됨"); Show(); WindowState = W.WindowState.Normal; Activate(); }
+        private void Toggle() { ChangeMonitoring(!watchEnabled && manualShade.Controller.Count == 0); }
+        private void OpenSettings() { Show(); WindowState = W.WindowState.Normal; Activate(); }
         private void Dispatch(Action action) { if (!IsDisposed && IsHandleCreated) try { BeginInvoke(action); } catch (InvalidOperationException) { } }
         private void UpdateWatchingStatus()
         {
             int waiting = watcher.WaitingCount, active = watcher.RunningCount - waiting;
             status.Text = watcher.Running ? (waiting == 0 ? "감시 중" : active == 0 ? "화면 전환 대기 중" : active + "대 감시 · " + waiting + "대 대기") : "감시 중지";
             if (displayRecovery.Enabled && disconnectedCount > 0) status.Text = active + "대 감시 · " + disconnectedCount + "대 연결 대기";
+            if (watchEnabled && displaySelection.Count == 0) status.Text = "모니터를 선택하세요.";
+            if (!watchEnabled) status.Text = "자동 감시 꺼짐";
             tray.Text = UiText.Translate("MonitorShade · " + active + "대 감시" + (waiting > 0 ? " · " + waiting + "대 대기" : ""));
             if (displayRecovery.Enabled && disconnectedCount > 0) tray.Text = UiText.Translate("MonitorShade · " + status.Text);
-            pauseItem.Text = UiText.Translate(displayRecovery.Enabled ? "감시 일시정지" : "감시 시작 / 다시 시작");
+            pauseItem.Text = UiText.Translate(watchEnabled ? "감시 일시정지" : "감시 시작 / 다시 시작");
             if (manualShade.Controller.Count > 0) { status.Text = manualShade.Controller.Count + "대 강제 가림 중"; tray.Text = UiText.Translate("MonitorShade · " + status.Text); }
         }
         private void DisplayChanged(object sender, EventArgs e)
@@ -658,7 +649,7 @@ namespace MonitorShade
             if (m.Msg == 0x031E && IsHandleCreated) ApplyTheme(null);
             base.WndProc(ref m);
         }
-        protected override void OnFormClosing(FormClosingEventArgs e) { if (!preview && !exiting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); return; } base.OnFormClosing(e); }
+        protected override void OnFormClosing(FormClosingEventArgs e) { if (protectionTimer.Enabled) CommitProtectionChanges(); if (!preview && !exiting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); return; } base.OnFormClosing(e); }
         private void ExitApplication() { exiting = true; Close(); }
         internal void AllowSystemExit() { exiting = true; }
         protected override void Dispose(bool disposing)
@@ -682,7 +673,7 @@ namespace MonitorShade
                 if (backdrop != null) backdrop.Dispose();
                 if (webUi != null) webUi.Dispose();
                 arranger.Dispose();
-                startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose();
+                startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose(); protectionTimer.Dispose();
                 if (tray != null) { tray.Visible = false; ContextMenuStrip menu = tray.ContextMenuStrip; tray.Dispose(); if (menu != null) menu.Dispose(); }
                 if (trayIcon != null) trayIcon.Dispose();
             }

@@ -206,6 +206,7 @@
    <Grid x:Name="PageHost">
     <ScrollViewer x:Name="ProtectionPage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
      <TextBlock Text="화면 보호" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="자동 감시" VerticalAlignment="Center"/><CheckBox x:Name="WatchEnabled" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="자동 감시"/></Grid></Border>
      <Border Background="{DynamicResource Map}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="8" Padding="20,12,20,16">
       <Grid><Grid.RowDefinitions><RowDefinition Height="156"/><RowDefinition Height="36"/></Grid.RowDefinitions>
        <Canvas x:Name="Map" ClipToBounds="True" Focusable="False"/>
@@ -314,7 +315,7 @@
       <TextBlock Text="마우스가 있는 화면은 가리지 않으며, 다른 화면의 감시는 계속됩니다. 가려진 화면에 마우스가 들어오거나 뒤쪽 화면 내용이 바뀌면 자동으로 복귀합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="‘배경화면 움직임 무시’를 켜면 앱 창 영역만 비교합니다. 작은 창 주위에 보이는 Lively 배경과 바탕 화면 아이콘·작업표시줄의 변화는 무시하며, 앱 창의 내용·위치·크기·열림·닫힘은 감지합니다. 앱이 없는 화면도 대기 시간 후 검게 가립니다. 배경 애니메이션만으로는 다시 켜지지 않으며 마우스가 들어오면 바로 복귀합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="앱 내부 영상은 계속 변화로 감지합니다. 반투명 앱을 통해 배경이 비치는 경우에는 감지가 계속될 수 있습니다. 창 그림자와 둥근 모서리의 작은 영역은 비교에서 제외합니다. 옵션을 끄면 배경을 포함한 화면 전체를 비교합니다. Lively 재생이나 설정은 변경하지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
-      <TextBlock Text="설정 창을 열면 화면 보호가 일시정지합니다. ‘저장하고 감시’를 누르면 설정을 저장하고 트레이로 돌아갑니다. 창 배치와 밝기 단축키는 화면 보호를 일시정지해도 사용할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
+      <TextBlock Text="자동 감시를 켜면 앱 실행과 함께 감시합니다. 설정 창을 열거나 닫아도 감시는 계속되며 모니터와 대기 시간은 자동 저장됩니다. 토글을 끄면 다음 실행에도 꺼진 상태를 유지합니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="강제 검은 화면은 Ctrl + Alt + F9 / F10으로 켜고 끕니다. ‘화면 보호’에서 각 키의 대상 모니터를 고른 뒤 ‘적용’을 누르세요. 기본 대상은 각각 모니터 1 / 2이며, 자동 감시를 중지해도 사용할 수 있습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="강제 가림은 앱·배경의 움직임을 무시하며, 마우스가 해당 화면으로 들어오거나 같은 단축키를 다시 누르면 해제됩니다. 시작할 때 마우스가 이미 그 화면에 있었다면 밖으로 나갔다가 다시 들어올 때 해제됩니다. 해제 후에는 자동 감시의 대기 시간을 처음부터 셉니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>
       <TextBlock Text="Ctrl + Alt + F11로 설정을 열거나 Ctrl + Alt + F12로 일시정지하면 모든 강제 가림이 해제됩니다. 잠금·절전·화면 접근 중단·모니터 구성 변경 시에도 해제되며 자동으로 다시 강제 가리지 않습니다." Style="{StaticResource Caption}" Margin="0,10,0,0" LineHeight="20"/>

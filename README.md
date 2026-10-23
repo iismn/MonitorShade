@@ -7,11 +7,11 @@
 
 <br><br>
 
-<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.3 for Windows" width="260" height="56"></a>
+<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.4 for Windows" width="260" height="56"></a>
 
-**1.18.3 · Windows 10 / 11 · x64**
+**1.18.4 · Windows 10 / 11 · x64**
 
-[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.3) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
+[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.4) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
 
 [Brightness](#brightness) · [OLED Protection](#oled-protection) · [Window Layout](#window-layout)
 
@@ -32,6 +32,8 @@
 ![Independent screen protection: the left display is covered while the right display remains in use](docs/images/screen-protection.svg)
 
 Per-monitor black overlay. Restores on mouse entry or screen changes. Supports animated wallpaper exclusion.
+
+Automatic monitoring starts with the app and continues while settings are open. Use the toggle in **OLED Protection** to turn it off. Monitor selection and wait time save automatically.
 
 <br>
 
@@ -76,10 +78,10 @@ WebView2 is included with Windows 11 and already installed on most Windows 10 PC
 - Brightness control requires DDC/CI support.
 - Desktop blur requires Windows 11 22H2+ with transparency effects enabled.
 
-1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) to a writable folder.
+1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe) to a writable folder.
 2. Run the EXE. It starts in the system tray.
 3. Press **Ctrl + Alt + F11** to open settings.
-4. Select monitors and a timeout, then start monitoring.
+4. Select monitors and a timeout. **Automatic monitoring** is on by default.
 
 Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, exit from the tray, replace the EXE, and keep the settings file.
 
@@ -99,6 +101,6 @@ Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, ex
 
 ---
 
-[Download 1.18.3](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
+[Download 1.18.4](https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
 
 [Fonts](source/fonts/README.md) · [WebView2 notices](source/licenses) · [Demo recording source](docs/tools/README.md)

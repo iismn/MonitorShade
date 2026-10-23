@@ -15,10 +15,10 @@ namespace MonitorShade
         private WebUi webUi;
         private bool webGlass;
         private string webLicenses;
-        private static readonly string[] WebChecks = { "BrightnessSync", "IgnoreWallpaper", "ManualEnabled", "LayoutEnabled", "BrightnessHotkeys", "UseBackdrop", "AutoStart", "Seconds", "Minutes" };
+        private static readonly string[] WebChecks = { "WatchEnabled", "BrightnessSync", "IgnoreWallpaper", "ManualEnabled", "LayoutEnabled", "BrightnessHotkeys", "UseBackdrop", "AutoStart", "Seconds", "Minutes" };
         private static readonly string[] WebNumbers = { "Amount", "CenterPercent", "BrightnessStep" };
         private static readonly string[] WebCombos = { "ManualFirst", "ManualSecond", "BrightnessModifier", "BrightnessDown", "BrightnessUp", "BrightnessTarget", "AppearanceMode", "KoreanFont", "Language" };
-        private static readonly string[] WebButtons = { "Start", "Exit", "Refresh", "ApplyManual", "ApplyLayout", "ApplyCenter", "ApplyBrightness", "RefreshBrightness", "Diagnose", "TestLayout", "BrightnessCapabilities", "MasterMinus", "MasterPlus" };
+        private static readonly string[] WebButtons = { "Exit", "Refresh", "ApplyManual", "ApplyLayout", "ApplyCenter", "ApplyBrightness", "RefreshBrightness", "Diagnose", "TestLayout", "BrightnessCapabilities", "MasterMinus", "MasterPlus" };
         private static readonly string[] WebMessages = { "Status", "Validation", "CenterValidation", "CenterStatus", "ManualStatus", "LayoutStatus", "BrightnessStatus", "ShortcutsStatus", "AppearanceStatus", "KoreanFontStatus", "HelpStatus", "DdcStatus" };
         internal WebUi BrowserUi { get { return webUi; } }
         private void InitializeWebUi()
@@ -48,7 +48,7 @@ namespace MonitorShade
             bool highContrast = SystemParameters.HighContrast;
             webUi.PaintResizeBand(p.Background, webGlass, highContrast);
             return new {
-                version = "1.18.3", language = appearance.Language, translations = UiText.English,
+                version = "1.18.4", language = appearance.Language, translations = UiText.English,
                 masterWarmth = DayPalette.MasterWarmthAt(hour),
                 appliedCenterPercent = appliedCenterPercent,
                 layoutShortcuts = draftLayoutShortcuts.Select(b => new { action = b.Action, modifiers = b.Modifiers, key = b.Key }).ToArray(),

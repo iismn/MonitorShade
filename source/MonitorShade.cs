@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.18.3.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.18.3.0")]
+[assembly: System.Reflection.AssemblyVersion("1.18.4.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.18.4.0")]
 
 namespace MonitorShade
 {
@@ -159,6 +159,7 @@ namespace MonitorShade
         public decimal WaitValue = 2;
         public bool Minutes = true;
         public bool IgnoreWallpaper = true;
+        public bool WatchEnabled = true;
         public bool LayoutEnabled = true;
         public int CenterPercent = 65;
         public LayoutShortcut[] LayoutShortcuts = LayoutBindings.Defaults();

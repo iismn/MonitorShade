@@ -33,7 +33,7 @@ namespace MonitorShade
             if (tray == null) return;
             tray.ContextMenuStrip.Items[0].Text = UiText.Translate("설정 열기");
             tray.ContextMenuStrip.Items[3].Text = UiText.Translate("종료");
-            pauseItem.Text = UiText.Translate(displayRecovery.Enabled ? "감시 일시정지" : "감시 시작 / 다시 시작");
+            pauseItem.Text = UiText.Translate(watchEnabled ? "감시 일시정지" : "감시 시작 / 다시 시작");
             tray.Text = "MonitorShade";
         }
     }

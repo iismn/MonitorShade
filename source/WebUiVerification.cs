@@ -49,6 +49,12 @@ namespace MonitorShade
                     WebLiveVerification.CheckResizeEdges(form, report, false);
                     await check("document.querySelectorAll('.monitor-card').length===2", "Two preview monitors are rendered");
                     await check("document.querySelectorAll('.nav').length===6", "All six settings pages are available");
+                    await check("!!document.querySelector('#WatchEnabled.switch') && !document.querySelector('[data-button=Start]')", "Automatic monitoring toggle replaces the Start button");
+                    await core.ExecuteScriptAsync("document.querySelector('#WatchEnabled').checked=false;document.querySelector('#WatchEnabled').dispatchEvent(new Event('change'))");
+                    await check("monitorShadeState.fields.WatchEnabled===false", "Automatic monitoring toggle reaches the native controller");
+                    await core.ExecuteScriptAsync("document.querySelector('#WatchEnabled').checked=true;document.querySelector('#WatchEnabled').dispatchEvent(new Event('change'))");
+                    await check("monitorShadeState.fields.WatchEnabled===true", "Monitoring can be re-enabled without leaving settings");
+                    await form.VerifyAutoProtection((ok, message) => { if (!ok) throw new Exception("FAIL: " + message); report.Add("PASS: " + message); });
                     await core.ExecuteScriptAsync("document.querySelector('#masterRange').value=65;document.querySelector('#masterRange').dispatchEvent(new Event('input',{bubbles:true}))");
                     await Task.Delay(350);
                     await check("monitorShadeState.monitors.every(m=>m.percent===65)", "Chromium slider reaches the existing brightness controller and syncs absolute values");
@@ -91,6 +97,7 @@ namespace MonitorShade
                         await core.ExecuteScriptAsync("monitorShadeNavigate('" + page + "')"); await Task.Delay(400);
                         await check("!document.querySelector('#" + page + "').hidden && !window.monitorShadeError", page + " page renders");
                         await check("document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth+1", page + " page fits without horizontal clipping");
+                        if (page == "Protection") using (var image = File.Create(path + ".protection.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, image);
                         if (page == "Layout") {
                             await check("document.querySelector('.scale-feature').textContent.includes('Backspace') && document.querySelector('.scale-feature').textContent.includes('70%')", "Monitor-ratio resize cycle is discoverable on the layout page");
                         }
