@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace MonitorShade
 {
@@ -12,57 +11,94 @@ namespace MonitorShade
     // Neither fixture nor capture is used by the shipping settings window.
     internal static class WebLiveVerification
     {
-        private static Color Pixel(BitmapSource image)
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hwnd, int command);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+        [System.Runtime.InteropServices.DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
+        private static void CopyScreen(System.Drawing.Graphics graphics, int x, int y, int width, int height)
         {
-            byte[] bytes = new byte[4]; image.CopyPixels(new Int32Rect((int)(image.PixelWidth * .92), (int)(image.PixelHeight * .85), 1, 1), bytes, 4, 0);
-            return Color.FromRgb(bytes[2], bytes[1], bytes[0]);
+            IntPtr source = Native.GetDC(IntPtr.Zero), destination = graphics.GetHdc();
+            try {
+                if (source == IntPtr.Zero || !Native.BitBlt(destination, 0, 0, width, height, source, x, y, 0x40CC0020))
+                    throw new InvalidOperationException("Cannot read the composed desktop pixels.");
+            } finally { graphics.ReleaseHdc(destination); if (source != IntPtr.Zero) Native.ReleaseDC(IntPtr.Zero, source); }
+        }
+        private static Color ScreenPixel(Window window, double x = .92, double y = .85)
+        {
+            var point = window.PointToScreen(new Point(window.ActualWidth * x, window.ActualHeight * y));
+            using (var image = new System.Drawing.Bitmap(1, 1))
+            using (var graphics = System.Drawing.Graphics.FromImage(image)) {
+                CopyScreen(graphics, (int)point.X, (int)point.Y, 1, 1);
+                var color = image.GetPixel(0, 0); return Color.FromRgb(color.R, color.G, color.B);
+            }
+        }
+        private static void SaveScreen(Window window, string path)
+        {
+            var origin = window.PointToScreen(new Point(0, 0));
+            var bottom = window.PointToScreen(new Point(window.ActualWidth, window.ActualHeight));
+            using (var image = new System.Drawing.Bitmap((int)(bottom.X - origin.X), (int)(bottom.Y - origin.Y)))
+            using (var graphics = System.Drawing.Graphics.FromImage(image)) {
+                CopyScreen(graphics, (int)origin.X, (int)origin.Y, image.Width, image.Height);
+                image.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+            }
         }
         internal static int Run(string path)
         {
             var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
             var report = new List<string>(); int result = 1;
-            Window fixture = null; SettingsForm form = null; BackdropCapture capture = null;
+            Window fixture = null; SettingsForm form = null;
             app.Startup += async delegate {
                 try {
                     if (!DesktopAccess.Available()) throw new InvalidOperationException("Interactive desktop unavailable; live blur verification requires an unlocked desktop.");
                     if (!DesktopBackdrop.TransparencyEnabled) throw new InvalidOperationException("Windows Acrylic transparency is unavailable.");
                     fixture = new Window { Title = "MonitorShade native blur test fixture", WindowStyle = WindowStyle.None, ShowInTaskbar = false, Left = 100, Top = 100, Width = 1300, Height = 950, Background = Brushes.Red };
-                    fixture.Show();
-                    form = new SettingsForm(true, false) { WindowStartupLocation = WindowStartupLocation.Manual, Left = 140, Top = 140, Topmost = true };
+                    var fixtureContent = new System.Windows.Controls.Border();
+                    fixtureContent.SetBinding(System.Windows.Controls.Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { Source = fixture });
+                    fixture.Content = fixtureContent;
+                    fixture.Show(); await Task.Delay(150); fixture.Hide(); fixture.Show();
+                    // The test process is launched with STARTUPINFO's hidden-window flag.
+                    // A second explicit ShowWindow makes the fixture visible as intended.
+                    ShowWindow(new System.Windows.Interop.WindowInteropHelper(fixture).Handle, 5);
+                    fixture.Activate(); await Task.Delay(150);
+                    var fixtureColor = ScreenPixel(fixture);
+                    if (fixtureColor.R < 240 || fixtureColor.B > 15 || fixtureColor.G > 15) throw new InvalidOperationException("The background fixture is not visible.");
+                    report.Add("PASS: Color fixture is visible on the interactive desktop");
+                    form = new SettingsForm(true, false) { WindowStartupLocation = WindowStartupLocation.Manual, Left = 140, Top = 140 };
                     form.Show(); form.Activate();
+                    SetWindowPos(new System.Windows.Interop.WindowInteropHelper(fixture).Handle, form.Handle, 0, 0, 0, 0, 0x13);
                     for (int i = 0; i < 150 && !form.BrowserUi.Ready && form.BrowserUi.Error == null; i++) await Task.Delay(100);
                     if (!form.BrowserUi.Ready) throw new InvalidOperationException(form.BrowserUi.Error ?? "Renderer timeout");
                     form.WebCommand(new Dictionary<string, object> { { "action", "field" }, { "name", "AppearanceMode" }, { "value", 3 } });
-                    await Task.Delay(1200);
-                    BitmapSource frame = null; string error = null;
-                    capture = new BackdropCapture(form.Handle, image => { frame = image; }, message => { error = message; });
-                    for (int i = 0; i < 60 && frame == null && error == null; i++) await Task.Delay(100);
-                    if (frame == null) throw new InvalidOperationException(error ?? "No captured frame");
-                    var red = Pixel(frame);
+                    await Task.Delay(2500);
+                    // Window-only WGC / browser captures omit the DWM backdrop. Sample
+                    // the final desktop pixels inside our unobscured test window.
+                    var red = ScreenPixel(form);
+                    var fixtureRed = ScreenPixel(fixture, .01, .01);
                     fixture.Background = Brushes.Blue;
                     await Task.Delay(1000);
-                    var blue = Pixel(frame);
-                    report.Add("INFO: Native background red=" + red + ", blue=" + blue);
+                    var blue = ScreenPixel(form);
+                    var fixtureBlue = ScreenPixel(fixture, .01, .01);
+                    int actualBackdrop; DwmGetWindowAttribute(form.Handle, 38, out actualBackdrop, 4);
+                    report.Add("INFO: Screen background red=" + red + ", blue=" + blue + ", active=" + form.IsActive + ", backdrop=" + actualBackdrop);
+                    report.Add("INFO: Fixture=" + fixtureRed + "/" + fixtureBlue + ", desktop=" + DesktopAccess.Available());
+                    if (fixtureRed.R < 240 || fixtureBlue.B < 240 || !DesktopAccess.Available()) throw new InvalidOperationException("The color fixture or interactive desktop was obscured during the test.");
                     if (red.R <= blue.R + 2 || blue.B <= red.B + 2) throw new InvalidOperationException("Native Acrylic did not transmit the changing background.");
                     report.Add("PASS: Chromium transparent surface transmits native DWM Acrylic background changes");
-                    var originalLeft = form.Left;
                     form.Left += 90; form.Top += 20; await Task.Delay(500);
                     fixture.Background = Brushes.Red; await Task.Delay(500);
-                    var moved = Pixel(frame);
+                    var moved = ScreenPixel(form);
                     if (moved.R <= blue.R + 2) throw new InvalidOperationException("Background stopped updating after movement");
                     report.Add("PASS: Native background remains live after moving the settings window");
                     var field = typeof(SettingsForm).GetField("backdrop", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     if (field.GetValue(form) != null) throw new InvalidOperationException("Legacy capture compositor was created");
                     report.Add("PASS: No Magnifier capture helper or legacy compositor is constructed");
                     fixture.Background = new SolidColorBrush(Color.FromRgb(37, 59, 72)); await Task.Delay(600);
-                    var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(frame)); using (var file = File.Create(path + ".png")) png.Save(file);
-                    capture.Dispose(); capture = null;
+                    SaveScreen(form, path + ".png");
                     form.Hide(); await Task.Delay(400); form.Show(); form.Activate(); await Task.Delay(500);
                     if (await form.BrowserUi.Core.ExecuteScriptAsync("Boolean(window.monitorShadeState && !window.monitorShadeError)") != "true") throw new InvalidOperationException("Renderer failed to resume");
                     report.Add("PASS: Chromium resumes correctly after hiding and reopening");
                     result = 0;
                 } catch (Exception e) { report.Add("FAIL: " + e); }
-                finally { if (capture != null) capture.Dispose(); if (form != null) form.Dispose(); if (fixture != null) fixture.Close(); File.WriteAllLines(path, report); app.Shutdown(); }
+                finally { if (form != null) form.Dispose(); if (fixture != null) fixture.Close(); File.WriteAllLines(path, report); app.Shutdown(); }
             };
             app.Run(); return result;
         }

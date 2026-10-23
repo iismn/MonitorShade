@@ -50,6 +50,15 @@ namespace MonitorShade
             StateChanged += delegate { update(); };
             update();
         }
+        protected void SetBackdropFrame(bool enabled)
+        {
+            // WindowChrome reapplies DWM margins on size/activation changes. Keep its
+            // own frame setting in sync rather than only calling DWM behind its back.
+            var chrome = WindowChrome.GetWindowChrome(this);
+            var thickness = new Thickness(enabled ? -1 : 0);
+            if (chrome != null && chrome.GlassFrameThickness != thickness) chrome.GlassFrameThickness = thickness;
+            if (source != null && enabled) source.CompositionTarget.BackgroundColor = Colors.Transparent;
+        }
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);

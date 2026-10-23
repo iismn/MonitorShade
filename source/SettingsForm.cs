@@ -354,6 +354,7 @@ namespace MonitorShade
             double hour = forceDark.HasValue ? (forceDark.Value ? 20 : 9) : previewHour ?? appearance.Hour(DateTime.Now);
             DayPalette p = DayPalette.At(hour); dark = !p.Light;
             bool composed = backdrop != null && backdrop.Apply(appearance.Blur, dark);
+            SetBackdropFrame(appearance.Blur && !composed && DesktopBackdrop.TransparencyEnabled);
             bool nativeGlass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur && !composed, dark);
             bool glass = composed || nativeGlass;
             if (backdrop != null) TextPresentation.Apply(backdrop.Root, glass, composed);
