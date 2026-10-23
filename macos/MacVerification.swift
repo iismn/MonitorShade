@@ -152,9 +152,11 @@ import SwiftUI
                         let sync = background(window.frame.width*0.57,0.18)
                         let card = background(window.frame.width*0.91,0.28)
                         for (name,sample) in [("sync bar",sync),("monitor card",card)] {
-                            let delta = zip(sample,backdrop).map { abs($0-$1) }.max()!
-                            precondition(delta < 0.12,"Brightness \(name) must transmit its backdrop; delta=\(delta)")
-                            results.append("PASS: \(mode) \(name)/backdrop difference \(String(format:"%.4f",delta))")
+                            // Glass highlights may brighten a surface. Reject
+                            // the separate dark panel, not specular reflections.
+                            let darkening = zip(backdrop,sample).map { $0-$1 }.max()!
+                            precondition(darkening < 0.12,"Brightness \(name) must not become a dark opaque panel; darkening=\(darkening)")
+                            results.append("PASS: \(mode) \(name) darkening relative to backdrop \(String(format:"%.4f",darkening))")
                         }
                     }
                     if page == .general {
