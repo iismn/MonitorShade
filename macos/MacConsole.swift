@@ -223,17 +223,19 @@ struct BrightnessConsolePage: View {
             Toggle("밝기 동기화",isOn:$store.linkedBrightness).labelsHidden().toggleStyle(.switch).controlSize(.small)
         }.padding(.horizontal,20).padding(.vertical,15).consoleGlass()
         HStack(alignment:.top,spacing:18) {
-            VStack(spacing:16) {
+            VStack(spacing:14) {
                 VStack(spacing:8) {
                     Text("LINKED DISPLAYS").font(.system(size:10,weight:.medium)).tracking(2).opacity(0.75)
                     Text("함께 조절").font(.system(size:19,weight:.semibold))
                 }.foregroundStyle(Color(red:0.13,green:0.25,blue:0.19))
-                Spacer(minLength:24)
-                Image(systemName:"sun.max").font(.system(size:21,weight:.light))
-                DotPercent(percent:Int(store.groupPercent.rounded()))
-                Text("전체 밝기").font(.system(size:12,weight:.medium)).opacity(0.9)
-                BrightnessTicks(value:store.groupPercent).padding(.horizontal,8)
-                Spacer(minLength:24)
+                Spacer(minLength:8)
+                VStack(spacing:8) {
+                    Image(systemName:"sun.max").font(.system(size:21,weight:.light))
+                    DotPercent(percent:Int(store.groupPercent.rounded()))
+                    Text("전체 밝기").font(.system(size:12,weight:.medium)).opacity(0.9)
+                    BrightnessTicks(value:store.groupPercent).padding(.horizontal,8).padding(.top,8)
+                }
+                Spacer(minLength:8)
                 VStack(spacing:8) {
                     Slider(value:$store.groupPercent,in:0...100,step:1,onEditingChanged:{if !$0 { store.changeGroupBrightness() }})
                         .tint(.white).disabled(disabled).accessibilityLabel("전체 밝기")
@@ -298,7 +300,7 @@ struct MonitorBrightnessCard: View {
                 .onHover { hovering = $0 }.animation(.easeInOut(duration:0.35),value:hovering)
             if !state.supported { Text(state.message).font(.caption2).foregroundStyle(.secondary) }
             HStack { Text("0%"); Spacer(); Text("100%") }.font(.caption2).foregroundStyle(.secondary).padding(.top,-8)
-        }.consoleCard()
+        }.frame(minHeight:172,alignment:.top).consoleCard()
     }
 }
 
