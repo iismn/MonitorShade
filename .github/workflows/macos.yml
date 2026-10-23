@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: macos-26
@@ -22,7 +26,7 @@ jobs:
           mkdir -p dist
           zsh macos/build.command "$PWD/dist/Monitor Shade.app" 2>&1 | tee dist/build.txt
           file "dist/Monitor Shade.app/Contents/MacOS/MonitorShade"
-          xcrun lipo -verify_arch arm64 x86_64 "dist/Monitor Shade.app/Contents/MacOS/MonitorShade"
+          xcrun lipo "dist/Monitor Shade.app/Contents/MacOS/MonitorShade" -verify_arch arm64 x86_64
           plutil -lint "dist/Monitor Shade.app/Contents/Info.plist"
       - name: Render settings pages with preview monitors
         run: |

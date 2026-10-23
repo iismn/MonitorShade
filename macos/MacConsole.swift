@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import CoreGraphics
 
 struct ConsoleTheme {
     var light: Bool

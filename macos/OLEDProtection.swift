@@ -70,6 +70,7 @@ final class OLEDProtection {
     private var forced = Set<CGDirectDisplayID>()
     private var needsPointerExit = Set<CGDirectDisplayID>()
     private var settingsVisible = false
+    private var running = false
     private var idle = DisplayIdleTimers()
     private var screens: [CGDirectDisplayID: NSScreen] = [:]
     private var shields: [CGDirectDisplayID: OLEDShieldPanel] = [:]
@@ -83,6 +84,7 @@ final class OLEDProtection {
 
     func start() {
         guard timer == nil else { return }
+        running = true
         reset()
         content.onFrame = { [weak self] id, changed in
             guard let self, changed else { return }
@@ -125,6 +127,7 @@ final class OLEDProtection {
         observers.append((center, token))
     }
     func stop() {
+        running = false
         content.stop()
         timer?.invalidate(); timer = nil
         if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
@@ -141,7 +144,7 @@ final class OLEDProtection {
                   CGDisplayIsBuiltin(id) == 0, CGDisplayIsInMirrorSet(id) == 0 else { continue }
             if let selection = settings.selectedUUIDs {
                 guard let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue(),
-                      selection.contains(CFUUIDCreateString(nil,uuid) as String) else { continue }
+                      selection.contains(CFUUIDCreateString(nil,uuid)! as String) else { continue }
             }
             screens[id] = screen
         }
@@ -163,7 +166,7 @@ final class OLEDProtection {
         else { idle.reset(Array(screens.keys),at:ProcessInfo.processInfo.systemUptime); updateCapture() }
     }
     private func updateCapture() {
-        if enabled && settings.mode == "content" && !suspended && !settingsVisible {
+        if running && enabled && settings.mode == "content" && !suspended && !settingsVisible {
             content.start(ids:Set(screens.keys),ignoreWallpaper:settings.ignoreWallpaper)
         } else { content.stop() }
     }
@@ -211,7 +214,7 @@ final class OLEDProtection {
         let point = NSEvent.mouseLocation
         lastPointer = point
         let id = displayUnderPointer()
-        for waiting in needsPointerExit where waiting != id { needsPointerExit.remove(waiting) }
+        for waiting in Array(needsPointerExit) where waiting != id { needsPointerExit.remove(waiting) }
         let clicked = event.map { [.leftMouseDown,.rightMouseDown,.otherMouseDown].contains($0.type) } ?? false
         idle.pointerActivity(on:id,clicked:clicked,at:ProcessInfo.processInfo.systemUptime)
         guard let id else { return }

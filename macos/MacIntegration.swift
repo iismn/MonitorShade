@@ -80,11 +80,11 @@ struct MacShortcut: Codable, Equatable, Identifiable {
     }
     static var defaults: [MacShortcut] {
         let window = UInt32(controlKey | optionKey)
-        return [(.left,123,window),(.right,124,window),(.up,126,window),(.down,125,window),
+        let mappings: [(ShortcutAction,UInt32,UInt32)] = [(.left,123,window),(.right,124,window),(.up,126,window),(.down,125,window),
                 (.center,117,window),(.resize,51,window),(.dim,120,UInt32(optionKey)),
                 (.brighten,99,UInt32(optionKey)),(.shadeFirst,101,window),(.shadeSecond,109,window),
                 (.settings,103,UInt32(controlKey | optionKey | cmdKey))]
-            .map { MacShortcut(action:$0.0,key:UInt32($0.1),modifiers:$0.2) }
+        return mappings.map { MacShortcut(action:$0.0,key:$0.1,modifiers:$0.2) }
     }
     static func validate(_ values: [MacShortcut]) throws {
         guard values.count == ShortcutAction.allCases.count,
@@ -239,7 +239,7 @@ struct WindowPlacement {
         InstallEventHandler(GetApplicationEventTarget(), { _, event, context -> OSStatus in
             guard let event, let context else { return OSStatus(eventNotHandledErr) }
             var identifier = EventHotKeyID()
-            let result = GetEventParameter(event,EventParamName(kEventParamDirectObject),EventParamType(typeEventHotKeyID),nil,MemoryLayout<EventHotKeyID>.size,nil,&identifier)
+            let result = GetEventParameter(event,EventParamName(kEventParamDirectObject),EventParamType(typeEventHotKeyID),nil,UInt32(MemoryLayout<EventHotKeyID>.size),nil,&identifier)
             guard result == noErr, identifier.signature == 0x4d534844 else { return OSStatus(eventNotHandledErr) }
             let keys = Unmanaged<GlobalShortcuts>.fromOpaque(context).takeUnretainedValue()
             let id = identifier.id
@@ -314,7 +314,7 @@ struct WindowPlacement {
                 }
                 let amount = pendingBrightness * store.preferences.brightnessStep; pendingBrightness = 0
                 let targets = store.brightnessTargets
-                let values = targets.compactMap { store.brightness[$0.uuid]?.percent }
+                let values = targets.compactMap { self.store.brightness[$0.uuid]?.percent }
                 if !values.isEmpty {
                     let anchor = amount > 0 ? values.max()! : values.min()!
                     if store.linkedBrightness {
