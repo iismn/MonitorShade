@@ -10,7 +10,7 @@
 
 <br><br>
 
-[**Download for macOS**](https://github.com/iismn/MonitorShade/releases/download/mac-v1.18.2/MonitorShade-macOS.zip)
+[**Download for macOS**](https://github.com/iismn/MonitorShade/releases/download/mac-v1.18.3/MonitorShade-macOS.zip)
 
 **macOS 14+ · Apple silicon / Intel · Native app**
 
@@ -68,7 +68,7 @@ Edit all bindings in **Shortcuts**. Window control needs Accessibility permissio
 | :---: | :---: |
 | ![Morning native Mac UI](docs/images/macos-morning-brightness.png) | ![Evening native Mac UI](docs/images/macos-evening-brightness.png) |
 
-A shared desktop backdrop across the sidebar and content, time palettes and a compact glowing dot readout. Native Liquid Glass brightness controls on macOS 26 or later. Earlier systems use standard materials. No separate browser runtime.
+A shared desktop backdrop across the sidebar and content, time palettes and a compact glowing dot readout. Clear Liquid Glass controls and translucent cards on macOS 26 or later. Earlier systems use translucent surfaces. No separate browser runtime.
 
 <br>
 
