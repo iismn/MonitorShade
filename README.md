@@ -1,94 +1,104 @@
 <div align="center">
 
-<img src="docs/images/hero.gif" alt="MonitorShade — layered app windows change colors through the day" width="1280">
+[Windows](https://github.com/iismn/MonitorShade/tree/window) · **macOS**
+
+# MonitorShade
+
+<img src="docs/images/macos-evening-brightness.png" alt="MonitorShade for macOS — brightness sync and monitor controls" width="1120">
+
+<sub>Native app UI with preview monitors.</sub>
 
 <br><br>
 
-<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.3 for Windows" width="260" height="56"></a>
+[**Download for macOS**](https://github.com/iismn/MonitorShade/releases/download/mac-v1.18.0/MonitorShade-macOS.zip)
 
-**1.18.3 · Windows 10 / 11 · x64**
+**macOS 14+ · Apple silicon / Intel · Native app**
 
-[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.3) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
-
-[Brightness](#brightness) · [OLED Protection](#oled-protection) · [Window Layout](#window-layout)
+[Build and source notes](macos/README.md) · [Validation](macos/VALIDATION.md) · [Mac build](https://github.com/iismn/MonitorShade/actions/workflows/macos.yml?query=branch%3Amac) · [Issues](https://github.com/iismn/MonitorShade/issues)
 
 </div>
 
 <br>
 
+## Display Setups
+
+![Saved monitor setup and display arrangement](docs/images/macos-evening-displays.png)
+
+Save display arrangement, primary display, resolution, refresh rate, rotation, mirroring and brightness. Save separate setups for each monitor combination. Reconnect the same monitors to restore a matching setup.
+
+Existing Monitor Shade / Dock Monitor profiles are loaded from `~/Library/Application Support/DockMonitor`. The previous single-profile format is migrated. A profile backup is kept before each write.
+
+<br>
+
 ## Brightness
 
-![Linked brightness sliders and dot readout in MonitorShade 1.18.2](docs/images/brightness-demo.gif)
+Built-in brightness and external DDC/CI controls. Brightness sync applies the same percentage to supported monitors. Configure brightness keys and step size in **Shortcuts**.
 
-<sub>Recorded in the app with demo monitors.</sub>
+External DDC/CI uses the supplied app's Apple silicon transport. Adapters, HDR modes and Intel hardware can limit external brightness control.
 
 <br>
 
 ## OLED Protection
 
-![Independent screen protection: the left display is covered while the right display remains in use](docs/images/screen-protection.svg)
+Choose per-display input idle or screen-content changes. Set the delay in seconds and select external displays. The pointer's display stays visible. Manual blanking also wakes on mouse entry.
 
-Per-monitor black overlay. Restores on mouse entry or screen changes. Supports animated wallpaper exclusion.
+Screen-content mode needs Screen Recording permission. Wallpaper exclusion compares application windows and ignores the background around them. Frames stay in memory. Built-in and mirrored displays are excluded from OLED protection.
 
 <br>
 
 ## Window Layout
 
-![Window layout settings in MonitorShade 1.18.2](docs/images/window-layout.png)
+![Window layout and resize settings](docs/images/macos-evening-layout.png)
 
-| Default shortcut | Cycle |
+| Default shortcut | Action |
 | --- | --- |
-| **Win + Backspace** | Centered 50% → 70% → maximized |
-| **Win + Arrow** | Directional ½ → ⅔ → maximized |
-| **Win + Delete** | Centered 16:9 → maximized |
+| **Control + Option + Arrow** | Directional ½ → ⅔ → work area |
+| **Control + Option + Forward Delete** | Centered 16:9 → work area |
+| **Control + Option + Backspace** | Centered 50% → 70% → work area |
+| **Option + F2 / F3** | Brightness down / up |
+| **Control + Option + F9 / F10** | Black overlay on external display 1 / 2 |
 
-<sub>Percentages apply to work-area width and height. The 16:9 window width is configurable.</sub>
-
-Change each binding in **Shortcuts → Window layout and resizing**. Select modifiers and a key, then click **Save**.
+Edit all bindings in **Shortcuts**. Window control needs Accessibility permission. The work area excludes the Dock and menu bar. Window minimum sizes and native full-screen Spaces can limit placement.
 
 <br>
 
 ## Appearance
 
-Choose **KO** or **EN** in **General → Language**.
-
-![MonitorShade changes its UI colors through a full day](docs/images/appearance-demo.gif)
-
-
-| 09:00 | 14:00 |
+| Morning | Evening |
 | :---: | :---: |
-| ![Morning UI](docs/images/appearance-morning.png) | ![Day UI](docs/images/appearance-day.png) |
-| **20:00** | **00:00** |
-| ![Evening UI](docs/images/appearance-evening.png) | ![Night UI](docs/images/appearance-night.png) |
+| ![Morning native Mac UI](docs/images/macos-morning-brightness.png) | ![Evening native Mac UI](docs/images/macos-evening-brightness.png) |
+
+Live macOS blur, time palettes, warm evening cards and a glowing dot readout. No Edge, WebView2, .NET or separate browser runtime.
 
 <br>
 
 <details>
-<summary><strong>Requirements and setup</strong></summary>
+<summary><strong>Install and update</strong></summary>
 
-Windows 10 2004+ or Windows 11, x64, and .NET Framework 4.8.
+1. Download and extract `MonitorShade-macOS.zip`.
+2. Quit the previous Monitor Shade app.
+3. Move **Monitor Shade.app** into **Applications** and open it.
+4. Open settings from the display icon in the menu bar.
+5. Grant Accessibility permission for window control. Grant Screen Recording only if you use screen-content detection.
 
-WebView2 is included with Windows 11 and already installed on most Windows 10 PCs. Run the EXE first. [Install WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) only if the app reports that it is missing. [Microsoft deployment details](https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution).
+The app starts in the menu bar. Change **General → Start hidden** to show settings at launch. Login startup and automatic setup restoration are available in General. macOS may require approval for a login item.
 
-- Brightness control requires DDC/CI support.
-- Desktop blur requires Windows 11 22H2+ with transparency effects enabled.
-
-1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) to a writable folder.
-2. Run the EXE. It starts in the system tray.
-3. Press **Ctrl + Alt + F11** to open settings.
-4. Select monitors and a timeout, then start monitoring.
-
-Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, exit from the tray, replace the EXE, and keep the settings file.
+The download is ad-hoc signed and is not Apple notarized. macOS may require first-launch approval in **System Settings → Privacy & Security**. Saved monitor profiles remain in the existing app's storage location. No personal profiles or monitor diagnostics are included in the download.
 
 </details>
 
 <details>
-<summary><strong>Limitations</strong></summary>
+<summary><strong>Build and validation</strong></summary>
 
-- The black overlay does not turn off the monitor. Screen sharing may show the content behind it.
-- HDR and some monitor modes can restrict DDC/CI brightness control.
-- Protected video, exclusive fullscreen apps, and secure desktops can restrict change detection.
-- Elevated apps and windows with minimum-size constraints may not accept the requested layout.
+Build from the repository root on a Mac with Xcode 26+:
+
+```sh
+zsh macos/build.command
+```
+
+Output: `dist/Monitor Shade.app`. The build creates arm64 and x86_64 slices, checks the ad-hoc signature and runs hardware-free self-tests. GitHub Actions also renders every settings page with preview monitors and creates a downloadable ZIP.
+
+The supplied native app's profile and hardware code is retained. New regression checks cover window geometry, shortcut validation, settings migration, content-change comparison and the daily card palette. CI cannot verify DDC/CI compatibility, cable reconnection or actual multi-monitor permissions on the user's Mac.
 
 </details>
 
@@ -96,6 +106,4 @@ Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, ex
 
 ---
 
-[Download 1.18.3](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
-
-[Fonts](source/fonts/README.md) · [WebView2 notices](source/licenses) · [Demo recording source](docs/tools/README.md)
+[Windows branch](https://github.com/iismn/MonitorShade/tree/window) · [macOS source](macos) · [Third-party notices](macos/ThirdPartyLicenses.txt)
