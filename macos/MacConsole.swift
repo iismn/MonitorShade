@@ -40,23 +40,32 @@ struct ConsoleView: View {
         TimelineView(.periodic(from:.now,by:30)) { timeline in
             let theme = ConsoleTheme.at(timeline.date,mode:preferences.appearance)
             NavigationSplitView {
-                VStack(alignment:.leading,spacing:18) {
-                    Text("MonitorShade").font(.system(size:22,weight:.semibold)).padding(.horizontal,12)
-                    TextField("설정 검색",text:$search).textFieldStyle(.roundedBorder).padding(.horizontal,8)
+                VStack(alignment:.leading,spacing:14) {
+                    HStack(spacing:8) {
+                        Image(systemName:"magnifyingglass").foregroundStyle(.secondary)
+                        TextField("설정 검색",text:$search).textFieldStyle(.plain)
+                        if !search.isEmpty {
+                            Button { search = "" } label: { Image(systemName:"xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("검색 지우기")
+                        }
+                    }.padding(.horizontal,12).padding(.vertical,10).consoleGlass(corner:20).padding(.horizontal,12)
                     List(selection:$preferences.page) {
                         ForEach(ConsolePage.allCases.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }) { page in
-                            Label(page.title,systemImage:page.symbol).padding(.vertical,7).tag(page)
+                            Label {
+                                Text(page.title).fontWeight(preferences.page == page ? .semibold : .regular)
+                            } icon: {
+                                Image(systemName:page.symbol).foregroundStyle(theme.tint).symbolRenderingMode(.hierarchical)
+                            }.padding(.vertical,7).tag(page)
                         }
                     }.listStyle(.sidebar).scrollContentBackground(.hidden)
-                    Text("macOS · 1.18.0").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
-                }.padding(.top,18).padding(.bottom,12).navigationSplitViewColumnWidth(min:190,ideal:208,max:250)
+                    Text("macOS · 1.18.1").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
+                }.padding(.top,12).padding(.bottom,12).navigationSplitViewColumnWidth(min:190,ideal:208,max:250)
             } detail: {
                 VStack(spacing:0) {
                     HStack {
-                        Text(preferences.page.title).font(.system(size:30,weight:.semibold))
+                        Text(preferences.page.title).font(.system(size:28,weight:.semibold))
                         Spacer()
-                        Text(timeline.date,style:.time).font(.caption).foregroundStyle(.secondary)
-                        Button(action:store.reload) { Image(systemName:"arrow.clockwise") }.buttonStyle(.plain).help("새로 고침")
+                        Text(timeline.date,style:.time).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Button(action:store.reload) { Image(systemName:"arrow.clockwise").frame(width:20,height:20) }.glassCommand().buttonBorderShape(.circle).help("새로 고침")
                     }.padding(.horizontal,28).padding(.top,22).padding(.bottom,18)
                     ScrollView {
                         VStack(alignment:.leading,spacing:18) {
@@ -76,7 +85,8 @@ struct ConsoleView: View {
             .background {
                 if preferences.blur { LiveWindowBackground().ignoresSafeArea() }
                 else { Color(nsColor:.windowBackgroundColor).ignoresSafeArea() }
-                theme.aura.opacity(preferences.blur ? 0.28 : 0.12).ignoresSafeArea()
+                theme.aura.opacity(preferences.blur ? 0.18 : 0.12).ignoresSafeArea()
+                RadialGradient(colors:[theme.aura.opacity(0.18),.clear],center:.topTrailing,startRadius:0,endRadius:650).ignoresSafeArea().allowsHitTesting(false)
             }
             .tint(theme.tint).preferredColorScheme(theme.light ? .light : .dark)
             .sheet(isPresented:$store.showSaveDialog) { SaveProfileView(store:store) }
@@ -101,8 +111,68 @@ struct ConsoleView: View {
 
 extension View {
     func consoleCard() -> some View {
-        padding(22).background(.thinMaterial,in:RoundedRectangle(cornerRadius:20))
-            .overlay(RoundedRectangle(cornerRadius:20).strokeBorder(.primary.opacity(0.07)))
+        modifier(ConsoleCardSurface())
+    }
+    @ViewBuilder func consoleGlass(corner: CGFloat = 20, interactive: Bool = false) -> some View {
+        if #available(macOS 26.0, *) {
+            glassEffect(.regular.interactive(interactive),in:.rect(cornerRadius:corner))
+        } else {
+            background(.regularMaterial,in:RoundedRectangle(cornerRadius:corner))
+                .overlay(RoundedRectangle(cornerRadius:corner).strokeBorder(.primary.opacity(0.08)))
+        }
+    }
+}
+
+private struct ConsoleCardSurface: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    func body(content: Content) -> some View {
+        content.padding(22).frame(maxWidth:.infinity,alignment:.leading)
+            .background {
+                if reduceTransparency { RoundedRectangle(cornerRadius:20).fill(Color(nsColor:.controlBackgroundColor)) }
+                else { RoundedRectangle(cornerRadius:20).fill(.thinMaterial) }
+            }
+            .overlay(RoundedRectangle(cornerRadius:20).strokeBorder(
+                LinearGradient(colors:[.white.opacity(scheme == .light ? 0.78 : 0.22),.primary.opacity(contrast == .increased ? 0.3 : 0.06)],startPoint:.topLeading,endPoint:.bottomTrailing)))
+            .shadow(color:.black.opacity(scheme == .light ? 0.035 : 0.06),radius:16,x:0,y:6)
+    }
+}
+
+// Liquid Glass is reserved for navigation and controls. Colorful dashboard
+// cards use standard material, keeping their content on a separate layer.
+private struct BrightnessAmbient: View {
+    var warmth: Double
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                Rectangle().fill(.regularMaterial)
+                LinearGradient(colors:[Color(red:0.52,green:0.63,blue:0.40),Color(red:0.21,green:0.48,blue:0.27)],startPoint:.topLeading,endPoint:.bottomTrailing).opacity(0.88)
+                RadialGradient(colors:[Color(red:0.95,green:0.87,blue:0.59).opacity(0.85),.clear],center:UnitPoint(x:0.28,y:0),startRadius:0,endRadius:geometry.size.width*0.85)
+                RadialGradient(colors:[Color(red:0.09,green:0.48,blue:0.18).opacity(0.8),.clear],center:.bottomLeading,startRadius:0,endRadius:geometry.size.width*0.85)
+                ZStack {
+                    Color(red:0.70,green:0.74,blue:0.79)
+                    RadialGradient(colors:[Color(red:1,green:0.49,blue:0.12),Color(red:1,green:0.56,blue:0.22).opacity(0.80),.clear],center:UnitPoint(x:0.42,y:0.51),startRadius:0,endRadius:geometry.size.width*0.72)
+                    RadialGradient(colors:[Color(red:0.97,green:0.46,blue:0.65).opacity(0.87),.clear],center:UnitPoint(x:1,y:0.38),startRadius:0,endRadius:geometry.size.width*0.8)
+                    RadialGradient(colors:[.white.opacity(0.75),.clear],center:.topLeading,startRadius:0,endRadius:geometry.size.width*0.72)
+                }.opacity(warmth)
+                LinearGradient(colors:[.white.opacity(0.10),.clear,.black.opacity(0.10)],startPoint:.top,endPoint:.bottom)
+            }
+        }.allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
+
+private struct BrightnessTicks: View {
+    var value: Double
+    var body: some View {
+        Canvas { context,size in
+            for index in 0..<41 {
+                let x = CGFloat(index)*size.width/40
+                let height: CGFloat = index.isMultiple(of:5) ? 12 : 5
+                let rect = CGRect(x:x,y:(size.height-height)/2,width:1,height:height)
+                context.fill(Path(roundedRect:rect,cornerRadius:0.5),with:.color(.white.opacity(Double(index)/40 <= value/100 ? 0.65 : 0.20)))
+            }
+        }.frame(height:18).accessibilityHidden(true)
     }
 }
 
@@ -146,44 +216,52 @@ struct BrightnessConsolePage: View {
     @State private var hovering = false
     private var disabled: Bool { store.busy || store.brightnessBusy || store.brightnessReading || store.brightnessTargets.isEmpty }
     var body: some View {
-        HStack {
-            Label("밝기 동기화",systemImage:"link")
+        HStack(spacing:12) {
+            Image(systemName:"link").font(.system(size:15,weight:.medium)).foregroundStyle(theme.tint)
+            Text("밝기 동기화").font(.system(size:14,weight:.medium))
             Spacer()
             Toggle("밝기 동기화",isOn:$store.linkedBrightness).labelsHidden().toggleStyle(.switch).controlSize(.small)
-        }.consoleCard()
+        }.padding(.horizontal,20).padding(.vertical,15).consoleGlass()
         HStack(alignment:.top,spacing:18) {
-            VStack(spacing:18) {
-                Text("LINKED DISPLAYS").font(.system(size:10,weight:.medium)).tracking(2).opacity(0.65)
-                Text("함께 조절").font(.title3.weight(.semibold))
-                Spacer(minLength:28)
-                Image(systemName:"sun.max").font(.title3)
-                DotPercent(percent:Int(store.groupPercent.rounded()))
-                Text("전체 밝기").font(.caption).opacity(0.85)
-                Spacer(minLength:28)
-                Slider(value:$store.groupPercent,in:0...100,step:1,onEditingChanged:{if !$0 { store.changeGroupBrightness() }})
-                    .tint(.white).disabled(disabled).accessibilityLabel("전체 밝기")
-                    .shadow(color:.white.opacity(hovering ? 0.7 : 0),radius:hovering ? 14 : 0)
-                    .onHover { hovering = $0 }.animation(.easeInOut(duration:0.35),value:hovering)
-                HStack { Text("0%"); Spacer(); Text("100%") }.font(.caption2).opacity(0.8)
-                HStack(spacing:16) {
-                    Button { integration.stepBrightness(-1) } label: { Image(systemName:"minus") }.buttonStyle(.bordered).clipShape(Circle())
-                    Text("\(Int(store.groupPercent.rounded()))").font(.title3).monospacedDigit().frame(width:56)
-                    Button { integration.stepBrightness(1) } label: { Image(systemName:"plus") }.buttonStyle(.bordered).clipShape(Circle())
-                }.disabled(disabled).padding(.top,10)
-            }.padding(26).frame(minWidth:240,maxWidth:.infinity,minHeight:430)
-                .foregroundStyle(.white)
-                .background {
-                    RoundedRectangle(cornerRadius:20).fill(LinearGradient(colors:[Color(red:0.69,green:0.72,blue:0.44),Color(red:0.19,green:0.47,blue:0.23),Color(red:0.26,green:0.43,blue:0.29)],startPoint:.topLeading,endPoint:.bottomTrailing))
-                    RoundedRectangle(cornerRadius:20).fill(LinearGradient(colors:[Color(red:0.84,green:0.89,blue:0.88),Color(red:1,green:0.57,blue:0.19),Color(red:0.91,green:0.55,blue:0.68)],startPoint:.topLeading,endPoint:.bottomTrailing)).opacity(theme.warmth)
-                }
-                .overlay(RoundedRectangle(cornerRadius:20).strokeBorder(.white.opacity(0.3)))
             VStack(spacing:16) {
+                VStack(spacing:8) {
+                    Text("LINKED DISPLAYS").font(.system(size:10,weight:.medium)).tracking(2).opacity(0.75)
+                    Text("함께 조절").font(.system(size:19,weight:.semibold))
+                }.foregroundStyle(Color(red:0.13,green:0.25,blue:0.19))
+                Spacer(minLength:24)
+                Image(systemName:"sun.max").font(.system(size:21,weight:.light))
+                DotPercent(percent:Int(store.groupPercent.rounded()))
+                Text("전체 밝기").font(.system(size:12,weight:.medium)).opacity(0.9)
+                BrightnessTicks(value:store.groupPercent).padding(.horizontal,8)
+                Spacer(minLength:24)
+                VStack(spacing:8) {
+                    Slider(value:$store.groupPercent,in:0...100,step:1,onEditingChanged:{if !$0 { store.changeGroupBrightness() }})
+                        .tint(.white).disabled(disabled).accessibilityLabel("전체 밝기")
+                        .shadow(color:.white.opacity(hovering ? 0.7 : 0),radius:hovering ? 14 : 0)
+                        .onHover { hovering = $0 }.animation(.easeInOut(duration:0.35),value:hovering)
+                    HStack { Text("0%"); Spacer(); Text("100%") }.font(.caption2).opacity(0.85)
+                }
+                adjustmentControls.padding(.top,4)
+            }.padding(26).frame(minWidth:240,maxWidth:.infinity,minHeight:448)
+                .foregroundStyle(.white)
+                .background { BrightnessAmbient(warmth:theme.warmth) }
+                .clipShape(RoundedRectangle(cornerRadius:20))
+                .overlay(RoundedRectangle(cornerRadius:20).strokeBorder(LinearGradient(colors:[.white.opacity(0.70),.white.opacity(0.10)],startPoint:.topLeading,endPoint:.bottomTrailing)))
+                .shadow(color:theme.aura.opacity(0.18),radius:22,x:0,y:8)
+            VStack(spacing:18) {
                 ForEach(monitorsInRoleOrder(store.monitors)) { monitor in
                     MonitorBrightnessCard(store:store,monitor:monitor)
                 }
                 if store.monitors.isEmpty { Text("연결된 모니터가 없습니다.").consoleCard() }
             }.frame(minWidth:250,maxWidth:.infinity)
         }
+    }
+    private var adjustmentControls: some View {
+        HStack(spacing:0) {
+            Button { integration.stepBrightness(-1) } label: { Image(systemName:"minus").frame(width:36,height:30).contentShape(Rectangle()) }.buttonStyle(.plain).help("밝기 낮추기")
+            Text("\(Int(store.groupPercent.rounded()))%").font(.system(size:16,weight:.medium)).monospacedDigit().frame(width:72,height:34)
+            Button { integration.stepBrightness(1) } label: { Image(systemName:"plus").frame(width:36,height:30).contentShape(Rectangle()) }.buttonStyle(.plain).help("밝기 높이기")
+        }.padding(5).consoleGlass(corner:24,interactive:true).environment(\.colorScheme,.dark).disabled(disabled)
     }
 }
 
@@ -195,7 +273,9 @@ struct MonitorBrightnessCard: View {
     var body: some View {
         VStack(alignment:.leading,spacing:18) {
             HStack(spacing:12) {
-                Image(systemName:monitor.builtIn ? "laptopcomputer" : "display").font(.title2)
+                Image(systemName:monitor.builtIn ? "laptopcomputer" : "display")
+                    .font(.system(size:21,weight:.light)).foregroundStyle(.tint)
+                    .frame(width:42,height:42).background(.tint.opacity(0.07),in:RoundedRectangle(cornerRadius:12))
                 VStack(alignment:.leading,spacing:4) {
                     Text(monitor.label(in:store.monitors)).font(.headline)
                     Text(monitor.name).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
@@ -203,7 +283,10 @@ struct MonitorBrightnessCard: View {
                 Spacer()
             }
             HStack(alignment:.firstTextBaseline) {
-                Text(monitor.builtIn ? "내장 화면" : "DDC/CI").font(.caption).foregroundStyle(.secondary)
+                HStack(spacing:5) {
+                    Circle().fill(state.supported ? Color.accentColor : .secondary).frame(width:5,height:5)
+                    Text(monitor.builtIn ? "내장 화면" : "DDC/CI").font(.caption).foregroundStyle(.secondary)
+                }
                 Spacer()
                 Text(state.supported ? "\(Int(state.percent.rounded()))%" : "—")
                     .font(.system(size:30,weight:.light)).monospacedDigit().contentTransition(.numericText())
@@ -214,6 +297,7 @@ struct MonitorBrightnessCard: View {
                 .shadow(color:Color.accentColor.opacity(hovering ? 0.5 : 0),radius:hovering ? 12 : 0)
                 .onHover { hovering = $0 }.animation(.easeInOut(duration:0.35),value:hovering)
             if !state.supported { Text(state.message).font(.caption2).foregroundStyle(.secondary) }
+            HStack { Text("0%"); Spacer(); Text("100%") }.font(.caption2).foregroundStyle(.secondary).padding(.top,-8)
         }.consoleCard()
     }
 }
