@@ -7,11 +7,11 @@
 
 <br><br>
 
-<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.4 for Windows" width="260" height="56"></a>
+<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.5/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.5 for Windows" width="260" height="56"></a>
 
-**1.18.4 · Windows 10 / 11 · x64**
+**1.18.5 · Windows 10 / 11 · x64**
 
-[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.4) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
+[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.5) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
 
 [Brightness](#brightness) · [OLED Protection](#oled-protection) · [Window Layout](#window-layout)
 
@@ -78,10 +78,12 @@ WebView2 is included with Windows 11 and already installed on most Windows 10 PC
 - Brightness control requires DDC/CI support.
 - Desktop blur requires Windows 11 22H2+ with transparency effects enabled.
 
-1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe) to a writable folder.
+1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.5/MonitorShade.exe) to a writable folder.
 2. Run the EXE. It starts in the system tray.
 3. Press **Ctrl + Alt + F11** to open settings.
 4. Select monitors and a timeout. **Automatic monitoring** is on by default.
+
+Hover over the sidebar to show menu labels. Click the magnifier or press **Ctrl + F** to search settings. Press **Esc** to close search.
 
 Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, exit from the tray, replace the EXE, and keep the settings file.
 
@@ -101,6 +103,6 @@ Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, ex
 
 ---
 
-[Download 1.18.4](https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
+[Download 1.18.5](https://github.com/iismn/MonitorShade/releases/download/v1.18.5/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
 
 [Fonts](source/fonts/README.md) · [WebView2 notices](source/licenses) · [Demo recording source](docs/tools/README.md)

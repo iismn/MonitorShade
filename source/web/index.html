@@ -3,8 +3,8 @@
 <body>
 <div class="ambient" aria-hidden="true"></div>
 <header id="caption"><span>MonitorShade</span><div class="caption-actions"><button data-caption="minimize" aria-label="최소화"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button data-caption="maximize" aria-label="최대화"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx=".5"/></svg></button><button data-caption="close" class="close" aria-label="닫기"><svg viewBox="0 0 16 16"><path d="m3.5 3.5 9 9m0-9-9 9"/></svg></button></div></header>
-<div class="app-shell"><aside><div class="brand">MonitorShade<span class="edition">DISPLAY CONTROL</span></div>
-<div class="sidebar-search"><i data-icon="search"></i><input id="settingsSearch" type="search" placeholder="설정 검색" aria-label="설정 검색" aria-controls="searchResults" autocomplete="off" spellcheck="false"><button id="clearSearch" aria-label="검색 지우기" hidden>×</button></div>
+<div class="app-shell"><aside id="settingsSidebar"><div class="brand"><i data-icon="monitor" aria-hidden="true"></i><div class="brand-copy">MonitorShade<span class="edition">DISPLAY CONTROL</span></div></div>
+<div class="sidebar-search"><button id="openSearch" aria-label="설정 검색" aria-expanded="false" aria-controls="settingsSearch navigation"><i data-icon="search"></i></button><input id="settingsSearch" type="search" placeholder="설정 검색" aria-label="설정 검색" aria-controls="searchResults" autocomplete="off" spellcheck="false" inert><button id="clearSearch" aria-label="검색 지우기" hidden>×</button></div>
 <div id="searchResults" hidden aria-label="설정 검색 결과"></div><span id="searchAnnouncement" class="sr-only" role="status"></span>
 <nav id="navigation" aria-label="설정">
 <button class="nav active" data-page="Brightness" aria-current="page"><i data-icon="sun"></i><span>밝기</span></button>
@@ -13,7 +13,7 @@
 <button class="nav" data-page="Shortcuts"><i data-icon="keyboard"></i><span>단축키</span></button>
 <button class="nav" data-page="General"><i data-icon="settings"></i><span>일반</span></button>
 <button class="nav help-nav" data-page="Help"><i data-icon="help"></i><span>도움말</span></button>
-</nav><div class="side-footer"><span id="version">1.18.4</span><button data-button="Exit">종료 <span aria-hidden="true">↗</span></button></div></aside>
+</nav><div class="side-footer"><span id="version">1.18.5</span><button data-button="Exit" aria-label="종료"><i data-icon="exit" aria-hidden="true"></i><span class="exit-label">종료</span></button></div></aside>
 <main id="main">
 <section id="Brightness" class="page active" aria-labelledby="BrightnessTitle">
 <div class="page-heading"><h1 id="BrightnessTitle">밝기</h1><div class="heading-tools"><span id="themeTime"></span><button class="icon-button" data-button="RefreshBrightness" aria-label="밝기 새로고침"><i data-icon="refresh"></i></button></div></div>

@@ -11,7 +11,8 @@
     help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.5 8.5a2.5 2.5 0 0 1 5 .5c0 2-2.5 2-2.5 4m0 3v.1"/>',
     link: '<path d="M9 7H7a5 5 0 0 0 0 10h2m6-10h2a5 5 0 0 1 0 10h-2M8 12h8"/>',
     refresh: '<path d="M20 4v6h-6M20 10a8 8 0 1 0-.5 7"/>',
-    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>'
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>',
+    exit: '<path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5m4-13 5 5-5 5M8 12h11"/>'
   };
   $$('[data-icon]').forEach(e => { e.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icons[e.dataset.icon] + '</svg>'; });
   const host = window.chrome?.webview;
@@ -272,6 +273,54 @@
   ];
   const pageNames = {Brightness:'밝기',Protection:'화면 보호',Layout:'창 배치',Shortcuts:'단축키',General:'일반',Help:'도움말'};
   const searchInput = $('#settingsSearch'), results = $('#searchResults');
+  const sidebar = $('#settingsSidebar'), searchButton = $('#openSearch');
+  let sidebarHovered = false, sidebarKeyboard = false, searchOpen = false, sidebarLeaveTimer, dismissedFocus;
+  function updateSidebar() {
+    const expanded = sidebarHovered || sidebarKeyboard || searchOpen;
+    sidebar.classList.toggle('sidebar-expanded', expanded);
+    searchButton.setAttribute('aria-expanded', String(expanded));
+    searchInput.inert = !expanded;
+  }
+  function openSearch() {
+    searchOpen = true; updateSidebar(); searchInput.focus({preventScroll:true}); searchInput.select();
+  }
+  function closeSearch(returnFocus = false) {
+    searchOpen = false; clearSearch();
+    if (returnFocus) {
+      // Escape closes the rail even if the pointer is still over it.
+      searchButton.focus({preventScroll:true}); dismissedFocus = searchButton; sidebarHovered = false; sidebarKeyboard = false;
+    }
+    updateSidebar();
+  }
+  sidebar.addEventListener('pointerenter', e => {
+    if (e.pointerType === 'touch') return;
+    clearTimeout(sidebarLeaveTimer); sidebarHovered = true; updateSidebar();
+  });
+  sidebar.addEventListener('pointerleave', () => {
+    clearTimeout(sidebarLeaveTimer);
+    sidebarLeaveTimer = setTimeout(() => { sidebarHovered = false; updateSidebar(); }, 100);
+  });
+  sidebar.addEventListener('focusin', e => {
+    dismissedFocus = null;
+    sidebarKeyboard = e.target.matches(':focus-visible'); updateSidebar();
+  });
+  sidebar.addEventListener('focusout', () => queueMicrotask(() => {
+    sidebarKeyboard = document.activeElement !== dismissedFocus && sidebar.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
+    if (!sidebar.contains(document.activeElement)) closeSearch();
+    else updateSidebar();
+  }));
+  searchButton.addEventListener('click', openSearch);
+  searchInput.addEventListener('focus', () => { searchOpen = true; updateSidebar(); });
+  document.addEventListener('pointerdown', e => {
+    if (!sidebar.contains(e.target)) {
+      sidebarHovered = false; sidebarKeyboard = false;
+      if (sidebar.contains(document.activeElement)) document.activeElement.blur();
+      closeSearch();
+    }
+  });
+  sidebar.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !e.isComposing) { closeSearch(true); e.preventDefault(); e.stopPropagation(); }
+  });
   const normalizeSearch = text => text.toLocaleLowerCase().replace(/[\s+·/:-]/g, '');
   function clearSearch() { searchInput.value = ''; updateSearch(); }
   function updateSearch() {
@@ -285,7 +334,7 @@
       const button = document.createElement('button'), name = document.createElement('span'), section = document.createElement('small');
       button.className = 'search-result'; name.textContent = t(title); section.textContent = t(pageNames[page]); button.append(name,section);
       button.addEventListener('click', async () => {
-        clearSearch(); await selectPage(page);
+        closeSearch(); await selectPage(page);
         const target = document.getElementById(id); if (!target) return;
         if (!target.matches('input,select,button,[tabindex]')) target.tabIndex = -1;
         target.scrollIntoView({block:'center',behavior:'instant'}); target.focus({preventScroll:true});
@@ -296,17 +345,15 @@
   searchInput.addEventListener('input', updateSearch);
   $('#clearSearch').addEventListener('click', () => { clearSearch(); searchInput.focus(); });
   searchInput.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { clearSearch(); e.preventDefault(); }
     if (e.key === 'ArrowDown') { $('button',results)?.focus(); e.preventDefault(); }
     if (e.key === 'Enter' && !e.isComposing) { $('button',results)?.click(); e.preventDefault(); }
   });
   results.addEventListener('keydown', e => {
     const buttons = $$('button',results), i = buttons.indexOf(document.activeElement);
-    if (e.key === 'Escape') { clearSearch(); searchInput.focus(); e.preventDefault(); }
     if (e.key === 'ArrowDown') { buttons[Math.min(buttons.length-1,i+1)]?.focus(); e.preventDefault(); }
     if (e.key === 'ArrowUp') { (i > 0 ? buttons[i-1] : searchInput).focus(); e.preventDefault(); }
   });
-  document.addEventListener('keydown', e => { if(e.ctrlKey && !e.altKey && e.key.toLowerCase()==='f'){searchInput.focus();searchInput.select();e.preventDefault();} });
+  document.addEventListener('keydown', e => { if(e.ctrlKey && !e.altKey && e.key.toLowerCase()==='f'){openSearch();e.preventDefault();} });
   $$('[data-page]').forEach(b => b.addEventListener('click', () => selectPage(b.dataset.page)));
   $$('[data-button]').forEach(b => b.addEventListener('click', () => send({ action: 'button', name: b.dataset.button })));
   $$('[data-caption]').forEach(b => b.addEventListener('click', () => send({ action: 'caption', value: b.dataset.caption })));

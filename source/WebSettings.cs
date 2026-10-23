@@ -48,7 +48,7 @@ namespace MonitorShade
             bool highContrast = SystemParameters.HighContrast;
             webUi.PaintResizeBand(p.Background, webGlass, highContrast);
             return new {
-                version = "1.18.4", language = appearance.Language, translations = UiText.English,
+                version = "1.18.5", language = appearance.Language, translations = UiText.English,
                 masterWarmth = DayPalette.MasterWarmthAt(hour),
                 appliedCenterPercent = appliedCenterPercent,
                 layoutShortcuts = draftLayoutShortcuts.Select(b => new { action = b.Action, modifiers = b.Modifiers, key = b.Key }).ToArray(),

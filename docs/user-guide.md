@@ -2,9 +2,9 @@
 
 MonitorShade는 Windows용 모니터 관리 프로그램입니다. 화면 보호, DDC/CI 밝기 조절, 창 배치 기능을 제공합니다.
 
-현재 소스 버전: **1.18.4** · 공개 릴리즈: **1.18.4**
+현재 소스 버전: **1.18.5** · 공개 릴리즈: **1.18.5**
 
-[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.18.4/MonitorShade.exe) · [릴리즈 정보](https://github.com/iismn/MonitorShade/releases/tag/v1.18.4)
+[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.18.5/MonitorShade.exe) · [릴리즈 정보](https://github.com/iismn/MonitorShade/releases/tag/v1.18.5)
 
 ## 실행 조건
 
@@ -31,6 +31,8 @@ WebView2 Runtime은 Windows 11에 기본 포함되며 Windows 10도 대부분 �
 8. **자동 감시**가 켜져 있는지 확인하세요. 기본값은 켜짐입니다.
 
 프로그램은 기본적으로 창 없이 트레이에서 시작합니다. 트레이 아이콘을 두 번 클릭해도 설정 창을 열 수 있습니다.
+
+왼쪽 메뉴는 아이콘으로 표시됩니다. 마우스를 올리거나 키보드 Tab으로 이동하면 메뉴명이 나타납니다. 돋보기를 누르거나 `Ctrl + F`를 누르면 설정을 검색할 수 있습니다. 검색 중에는 메뉴가 펼쳐진 상태로 유지되며, 결과를 선택하거나 메뉴 밖을 누르면 접힙니다. `Esc`로 검색을 닫을 수도 있습니다.
 
 자동 감시가 켜져 있으면 앱 실행 후 저장된 설정으로 감시합니다. 설정 창을 열거나 닫아도 감시는 계속됩니다. 대상 모니터, 대기 시간, 배경화면 제외 옵션은 변경 후 자동 저장됩니다. 자동 감시를 끄면 다음 실행에도 꺼진 상태를 유지합니다. 로그인할 때 앱도 자동 실행하려면 **일반 → 로그인 시 자동 실행**을 켜세요.
 

@@ -201,12 +201,65 @@ namespace MonitorShade
                     await core.ExecuteScriptAsync("monitorShadeNavigate('Layout')"); await Task.Delay(450);
                     await core.ExecuteScriptAsync("document.activeElement.blur()");
                     using (var output = File.Create(path + ".layout.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await VerifySidebar(core, path, check);
                     report.Add("INFO: No DDC writes, hotkey registrations or preferences changes in preview mode");
                     result = 0;
                 } catch (Exception e) { report.Add(e.ToString()); }
                 finally { File.WriteAllLines(path, report); form.AllowSystemExit(); form.Close(); app.Shutdown(); }
             };
             form.Show(); app.Run(); return result;
+        }
+
+        private static async Task VerifySidebar(CoreWebView2 core, string path, Func<string, string, Task> check)
+        {
+            // Chromium input only: no physical cursor movement or hardware monitor changes.
+            Func<string, bool, Task> pointer = async (selector, click) => {
+                string json = new JavaScriptSerializer().Deserialize<string>(await core.ExecuteScriptAsync(
+                    "(()=>{const r=document.querySelector('" + selector + "').getBoundingClientRect();return JSON.stringify({type:'mouseMoved',x:r.right-16,y:r.top+12})})()"));
+                await core.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent", json);
+                if (click) {
+                    await core.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent", json.Replace("mouseMoved", "mousePressed").Replace("}", ",\"button\":\"left\",\"clickCount\":1}"));
+                    await core.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent", json.Replace("mouseMoved", "mouseReleased").Replace("}", ",\"button\":\"left\",\"clickCount\":1}"));
+                }
+                await Task.Delay(450);
+            };
+            await core.ExecuteScriptAsync("monitorShadeNavigate('Brightness')"); await Task.Delay(350);
+            await pointer("#main", true);
+            await check("document.querySelector('#settingsSidebar').clientWidth===80 && getComputedStyle(document.querySelector('.nav>span')).opacity==='0' && document.querySelector('#settingsSearch').inert", "Idle sidebar shows icons and keeps its hidden search field out of the tab order");
+            await core.ExecuteScriptAsync("window.sidebarMainRect=JSON.stringify(document.querySelector('#main').getBoundingClientRect().toJSON())");
+            using (var output = File.Create(path + ".sidebar-collapsed.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+            await pointer(".nav[data-page=Brightness]", false);
+            await check("document.querySelector('#settingsSidebar').clientWidth===244 && getComputedStyle(document.querySelector('.nav>span')).opacity==='1' && JSON.stringify(document.querySelector('#main').getBoundingClientRect().toJSON())===window.sidebarMainRect", "Hover reveals menu labels without moving or resizing the settings page");
+            using (var output = File.Create(path + ".sidebar-expanded.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+            await pointer("#main", false);
+            await check("document.querySelector('#settingsSidebar').clientWidth===80 && getComputedStyle(document.querySelector('.nav>span')).opacity==='0'", "Leaving the menu returns to icons without requiring a click");
+            await pointer("#openSearch", true);
+            await pointer("#main", false);
+            await check("document.activeElement.id==='settingsSearch' && document.querySelector('#settingsSidebar').clientWidth===244", "Clicking the magnifier focuses search and holds the sidebar open after pointer exit");
+            await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='Backspace';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
+            using (var output = File.Create(path + ".sidebar-search.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+            await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))"); await Task.Delay(550);
+            await check("document.activeElement.id==='resizeFeature' && !document.querySelector('#Layout').hidden && document.querySelector('#settingsSidebar').clientWidth===80", "Search selection focuses the target setting and releases the expanded sidebar");
+            await core.ExecuteScriptAsync("document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',ctrlKey:true,bubbles:true}))");
+            await check("document.activeElement.id==='settingsSearch' && document.querySelector('#openSearch').getAttribute('aria-expanded')==='true'", "Ctrl+F opens search from a collapsed sidebar");
+            await core.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", "{\"type\":\"keyDown\",\"key\":\"Escape\",\"code\":\"Escape\",\"windowsVirtualKeyCode\":27}");
+            await core.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", "{\"type\":\"keyUp\",\"key\":\"Escape\",\"code\":\"Escape\",\"windowsVirtualKeyCode\":27}");
+            await check("document.activeElement.id==='openSearch' && document.querySelector('#openSearch').getAttribute('aria-expanded')==='false' && !document.querySelector('#navigation').hidden", "Escape closes search, restores the categories, and returns focus to the magnifier");
+            await core.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", "{\"type\":\"keyDown\",\"key\":\"Tab\",\"code\":\"Tab\",\"windowsVirtualKeyCode\":9}");
+            await core.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent", "{\"type\":\"keyUp\",\"key\":\"Tab\",\"code\":\"Tab\",\"windowsVirtualKeyCode\":9}");
+            await check("document.activeElement.classList.contains('nav') && document.querySelector('#openSearch').getAttribute('aria-expanded')==='true'", "Keyboard Tab skips collapsed search and reveals the focused navigation label");
+            await pointer("#openSearch", true);
+            await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='font';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
+            await pointer("#main", true);
+            await check("document.querySelector('#settingsSidebar').clientWidth===80 && document.querySelector('#settingsSearch').value==='' && !document.querySelector('#navigation').hidden", "An outside click clears search and restores the compact icon rail");
+            await core.ExecuteScriptAsync("document.querySelector('#Language').value='1';document.querySelector('#Language').dispatchEvent(new Event('change'))");
+            await pointer(".nav[data-page=General]", false);
+            await check("document.querySelector('#openSearch').getAttribute('aria-label')==='Search settings' && [...document.querySelectorAll('.nav>span')].every(e=>e.getBoundingClientRect().right<e.parentElement.getBoundingClientRect().right-20)", "English menu labels fit the expanded rail and the magnifier has a localized accessible name");
+            await core.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[{\"name\":\"prefers-reduced-motion\",\"value\":\"reduce\"}]}");
+            await check("getComputedStyle(document.querySelector('#settingsSidebar')).transitionDuration.split(',').every(t=>parseFloat(t)===0)", "Reduced motion disables sidebar expansion animation");
+            await core.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
+            await core.ExecuteScriptAsync("document.querySelector('#Language').value='0';document.querySelector('#Language').dispatchEvent(new Event('change'))");
+            await pointer("#main", true);
         }
     }
 }
