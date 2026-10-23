@@ -1125,7 +1125,7 @@ final class AppDelegate: NSObject,NSApplicationDelegate,NSWindowDelegate {
         window.backgroundColor = .clear
         window.titlebarAppearsTransparent = true
         window.toolbarStyle = .unified
-        window.minSize = NSSize(width:880,height:680)
+        window.minSize = NSSize(width:920,height:680)
         window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration))
         window.delegate = self
         if let visible = NSScreen.main?.visibleFrame {

@@ -103,7 +103,27 @@ import SwiftUI
                     guard let bitmap = view.bitmapImageRepForCachingDisplay(in:view.bounds) else { fatalError("Cannot render settings view") }
                     view.cacheDisplay(in:view.bounds,to:bitmap)
                     guard let png = bitmap.representation(using:.png,properties:[:]) else { fatalError("Cannot encode settings preview") }
-                    try! png.write(to:directory.appendingPathComponent("\(mode)-\(page.rawValue).png"))
+                    let imageURL = directory.appendingPathComponent("\(mode)-\(page.rawValue).png")
+                    try! png.write(to:imageURL)
+                    // AppKit's view cache omits vibrancy-hosted sidebar content.
+                    // Capture this test app's own window through the compositor.
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath:"/usr/sbin/screencapture")
+                    capture.arguments = ["-x","-l",String(window.windowNumber),imageURL.path]
+                    do { try capture.run(); capture.waitUntilExit() }
+                    catch { fatalError("Native window capture failed: \(error)") }
+                    precondition(capture.terminationStatus == 0,"Native test-window capture must succeed")
+                    let rendered = NSBitmapImageRep(data:try! Data(contentsOf:imageURL))!
+                    var minimum = 1.0, maximum = 0.0
+                    for y in stride(from:Int(Double(rendered.pixelsHigh)*0.18),to:Int(Double(rendered.pixelsHigh)*0.65),by:4) {
+                        for x in stride(from:Int(Double(rendered.pixelsWide)*0.04),to:Int(Double(rendered.pixelsWide)*0.18),by:4) {
+                            if let color = rendered.colorAt(x:x,y:y)?.usingColorSpace(.deviceRGB) {
+                                let level = (color.redComponent+color.greenComponent+color.blueComponent)/3
+                                minimum = min(minimum,level); maximum = max(maximum,level)
+                            }
+                        }
+                    }
+                    precondition(maximum-minimum > 0.12,"Sidebar text and controls must be visible in the native window")
                     precondition(bitmap.pixelsWide >= 900 && bitmap.pixelsHigh >= 600)
                     results.append("PASS: \(mode)/\(page.rawValue) settings page rendered")
                 }
