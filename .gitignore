@@ -10,6 +10,7 @@
 /MonitorShade.diagnostics.txt
 *.log
 *.tmp
+__pycache__/
 
 # Local editor files
 .vs/

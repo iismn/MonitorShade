@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="docs/images/hero.svg" alt="MonitorShade — Brightness, OLED Protection, Window Layout" width="1280">
+<img src="docs/images/hero.gif" alt="MonitorShade — layered app windows change colors through the day" width="1280">
 
 <br><br>
 
-<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.2 for Windows" width="260" height="56"></a>
+<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.3 for Windows" width="260" height="56"></a>
 
-**1.18.2 · Windows 10 / 11 · x64**
+**1.18.3 · Windows 10 / 11 · x64**
 
-[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.2) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
+[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.3) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
 
 [Brightness](#brightness) · [OLED Protection](#oled-protection) · [Window Layout](#window-layout)
 
@@ -73,7 +73,7 @@ WebView2 is included with Windows 11 and already installed on most Windows 10 PC
 - Brightness control requires DDC/CI support.
 - Desktop blur requires Windows 11 22H2+ with transparency effects enabled.
 
-1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe) to a writable folder.
+1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) to a writable folder.
 2. Run the EXE. It starts in the system tray.
 3. Press **Ctrl + Alt + F11** to open settings.
 4. Select monitors and a timeout, then start monitoring.
@@ -96,6 +96,6 @@ Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, ex
 
 ---
 
-[Download 1.18.2](https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
+[Download 1.18.3](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
 
 [Fonts](source/fonts/README.md) · [WebView2 notices](source/licenses) · [Demo recording source](docs/tools/README.md)

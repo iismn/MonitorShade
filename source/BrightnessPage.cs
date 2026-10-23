@@ -375,21 +375,80 @@ namespace MonitorShade
     }
     internal sealed class BrightnessToast : PassiveWindow
     {
-        private readonly Label title, detail;
+        private const TextFormatFlags TextFlags = TextFormatFlags.NoPrefix | TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl;
+        private string heading = "", value = "";
+        private Font headingFont, valueFont;
+        private Rectangle headingBounds, valueBounds, workArea;
+        private bool arranging;
         private readonly Timer hide = new Timer { Interval = 1600 };
         internal BrightnessToast() : base(new Rectangle(0, 0, 340, 78), Color.FromArgb(32, 32, 32))
         {
-            title = new Label { Bounds = new Rectangle(16, 12, 308, 22), ForeColor = Color.White, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
-            detail = new Label { Bounds = new Rectangle(16, 40, 308, 24), ForeColor = Color.FromArgb(96, 205, 255), Font = new Font("Segoe UI", 10) }; Controls.Add(title); Controls.Add(detail);
+            DoubleBuffered = true;
             hide.Tick += delegate { Hide(); hide.Stop(); };
         }
         internal void Display(string heading, string value)
         {
             Native.Point cursor;
             if (!Native.GetCursorPos(out cursor)) return;
-            title.Text = heading; detail.Text = value; Rectangle area = Screen.FromPoint(new Point(cursor.X, cursor.Y)).WorkingArea;
-            Location = new Point(area.X + (area.Width - Width) / 2, area.Bottom - Height - 32); Show(); hide.Stop(); hide.Start();
+            Rectangle area = Screen.FromPoint(new Point(cursor.X, cursor.Y)).WorkingArea;
+            this.heading = heading ?? ""; this.value = value ?? ""; workArea = area;
+            // Move the HWND onto the target monitor before querying its effective DPI.
+            // Fixed pixel Label heights clipped Hangul when the font scaled at 150%+.
+            Location = new Point(area.X + (area.Width - Width) / 2, area.Bottom - Height - 32);
+            Arrange(heading, value, Math.Max(96, (int)GetDpiForWindow(Handle)), area);
+            Show(); hide.Stop(); hide.Start();
         }
-        protected override void Dispose(bool disposing) { if (disposing) hide.Dispose(); base.Dispose(disposing); }
+        internal void Arrange(string title, string detail, int dpi, Rectangle area)
+        {
+            if (arranging) return;
+            arranging = true;
+            try
+            {
+                heading = title ?? ""; value = detail ?? ""; workArea = area;
+                float scale = dpi / 96f;
+                // Pixel fonts make measurement and painting independent of the DC's
+                // DPI. We scale them once using the actual destination monitor.
+                if (headingFont != null) headingFont.Dispose();
+                if (valueFont != null) valueFont.Dispose();
+                headingFont = new Font("Segoe UI", 11f * 96f / 72f * scale, FontStyle.Bold, GraphicsUnit.Pixel);
+                valueFont = new Font("Segoe UI", 10f * 96f / 72f * scale, FontStyle.Regular, GraphicsUnit.Pixel);
+                int padding = (int)Math.Ceiling(16 * scale), vertical = (int)Math.Ceiling(12 * scale);
+                int gap = (int)Math.Ceiling(5 * scale), safety = (int)Math.Ceiling(3 * scale);
+                int available = Math.Max(1, area.Width - 2 * padding);
+                int maxWidth = Math.Min(available, (int)Math.Ceiling(560 * scale));
+                int natural = Math.Max(TextRenderer.MeasureText(heading, headingFont).Width, TextRenderer.MeasureText(value, valueFont).Width) + 2 * padding;
+                int width = Math.Min(maxWidth, Math.Max((int)Math.Ceiling(340 * scale), natural));
+                int content = Math.Max(1, width - 2 * padding);
+                var proposal = new Size(content, int.MaxValue);
+                int titleHeight = TextRenderer.MeasureText(heading, headingFont, proposal, TextFlags).Height + safety;
+                int detailHeight = TextRenderer.MeasureText(value, valueFont, proposal, TextFlags).Height + safety;
+                headingBounds = new Rectangle(padding, vertical, content, titleHeight);
+                valueBounds = new Rectangle(padding, headingBounds.Bottom + gap, content, detailHeight);
+                ClientSize = new Size(width, valueBounds.Bottom + vertical);
+                Location = new Point(area.X + (area.Width - Width) / 2, Math.Max(area.Top, area.Bottom - Height - (int)Math.Ceiling(32 * scale)));
+                Invalidate();
+            }
+            finally { arranging = false; }
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            if (headingFont == null) return;
+            TextRenderer.DrawText(e.Graphics, heading, headingFont, headingBounds, Color.White, BackColor, TextFlags);
+            TextRenderer.DrawText(e.Graphics, value, valueFont, valueBounds, Color.FromArgb(96, 205, 255), BackColor, TextFlags);
+        }
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == 0x02E0 && !arranging && workArea.Width > 0) // WM_DPICHANGED
+                Arrange(heading, value, (int)(m.WParam.ToInt64() & 0xffff), workArea);
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint GetDpiForWindow(IntPtr window);
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) { hide.Dispose(); if (headingFont != null) headingFont.Dispose(); if (valueFont != null) valueFont.Dispose(); }
+            base.Dispose(disposing);
+        }
     }
 }

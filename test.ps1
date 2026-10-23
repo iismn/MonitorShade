@@ -8,7 +8,7 @@ if (-not (Test-Path -LiteralPath $executable)) {
 }
 $reports = Join-Path $PSScriptRoot 'tests'
 New-Item -ItemType Directory -Path $reports -Force | Out-Null
-$checks = @('reconnect', 'recovery', 'manual', 'brightness', 'wallpaper', 'logic', 'layout', 'appearance')
+$checks = @('reconnect', 'recovery', 'manual', 'brightness', 'toast', 'wallpaper', 'logic', 'layout', 'appearance')
 if ($IncludeUi) { $checks += 'web-ui' }
 
 foreach ($check in $checks) {

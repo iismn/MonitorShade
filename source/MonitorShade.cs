@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.18.2.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.18.2.0")]
+[assembly: System.Reflection.AssemblyVersion("1.18.3.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.18.3.0")]
 
 namespace MonitorShade
 {
@@ -46,6 +46,7 @@ namespace MonitorShade
             }
             if (args.Length == 3 && args[0] == "--ddc-worker") return DdcWorker.Run(args[1], args[2]);
             if (args.Length == 2 && args[0] == "--brightness-test") return BrightnessVerification.Run(args[1]);
+            if (args.Length == 2 && args[0] == "--toast-test") return BrightnessToastVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--appearance-test") return AppearanceVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--text-test") return TextRasterVerification.Run(args[1]);
             if (args.Length == 2 && args[0] == "--settings-text-test") return TextRasterVerification.RunSettings(args[1], false);

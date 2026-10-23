@@ -41,6 +41,7 @@ $arguments += @("$PSScriptRoot\BrightnessSync.cs", "$PSScriptRoot\ManualShade.cs
 $arguments += @("$PSScriptRoot\DisplayRecovery.cs", "$PSScriptRoot\DisplayRecoveryVerification.cs")
 $arguments += @("$PSScriptRoot\SettingsWindow.cs", "$PSScriptRoot\Appearance.cs", "$PSScriptRoot\BrightnessControls.cs", "$PSScriptRoot\AppearanceVerification.cs", "/resource:$fontResources,MonitorShade.g.resources")
 $arguments += @('UiMotion.cs', 'LayoutBindings.cs', 'UiText.cs') | ForEach-Object { Join-Path $PSScriptRoot $_ }
+$arguments += Join-Path $PSScriptRoot 'BrightnessToastVerification.cs'
 $arguments += "/resource:$PSScriptRoot\web\en.json,MonitorShade.Web.en.json"
 $arguments += "$PSScriptRoot\TextRasterVerification.cs"
 $arguments += @("$PSScriptRoot\BackdropCapture.cs", "$PSScriptRoot\CompositedBackdrop.cs")

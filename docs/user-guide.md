@@ -2,9 +2,9 @@
 
 MonitorShade는 Windows용 모니터 관리 프로그램입니다. 화면 보호, DDC/CI 밝기 조절, 창 배치 기능을 제공합니다.
 
-현재 소스 버전: **1.18.2** · 공개 릴리즈: **1.18.2**
+현재 소스 버전: **1.18.3** · 공개 릴리즈: **1.18.3**
 
-[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe) · [릴리즈 정보](https://github.com/iismn/MonitorShade/releases/tag/v1.18.2)
+[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.18.3/MonitorShade.exe) · [릴리즈 정보](https://github.com/iismn/MonitorShade/releases/tag/v1.18.3)
 
 ## 실행 조건
 

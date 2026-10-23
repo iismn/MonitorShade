@@ -1,8 +1,8 @@
 # README recordings
 
-The GIFs are recordings of MonitorShade 1.18.2's WebView2 settings UI.
+The app frames are recordings of MonitorShade 1.18.2's WebView2 settings UI.
 The recorder loads the released EXE in its existing preview mode.
-No replacement UI, generated animation frames, or image crossfades are used.
+The brightness and appearance GIFs show these frames directly. The animated cover places the same frames into the two tilted panels of `hero.svg`. No replacement UI or image crossfades are used.
 
 - Captures use the English interface.
 - Brightness changes pass through the normal UI event and native controller.
@@ -26,6 +26,14 @@ The encoder requires Pillow. Intermediate frames and validation results stay in
 `.build/readme-recordings`. The GIFs, four appearance stills, and window-layout screenshot are published.
 
 Run `python docs/tools/build-readme-hero.py` after updating the screenshots to rebuild the SVG cover. It embeds the morning and evening screenshots and needs no remote assets, scripts, or custom README CSS.
+
+## Animated cover
+
+```powershell
+python docs/tools/build-readme-hero-animation.py .\.build\readme-recordings
+```
+
+Requires Pillow, Node.js, and sharp. Use `--node` for a Node executable and `--sharp` for an absolute sharp package directory if they are not on the default paths. The script keeps the layered panel positions and uses 80 captured app frames in a 40-second loop. The rear panel uses a different time in the same recording. The static backdrop uses fixed palette entries to prevent flicker; the app panels have a palette per frame to retain their gradients. Output: `docs/images/hero.gif`. Intermediate files and validation stay in `.build/hero-animation`.
 
 Source EXE SHA-256:
 
