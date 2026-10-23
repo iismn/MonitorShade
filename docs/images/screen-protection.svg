@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-labelledby="title description">
+  <title id="title">한쪽 화면을 가리는 동안 다른 화면에서 작업</title>
+  <desc id="description">왼쪽 모니터는 검은 오버레이를 표시합니다. 오른쪽 모니터는 앱 창을 계속 표시합니다. 동작을 설명하는 그림입니다.</desc>
+  <defs>
+    <linearGradient id="canvas" x2="1" y2="1"><stop stop-color="#f5f1e9"/><stop offset="1" stop-color="#e8eee4"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#c7dfae" stop-opacity=".65"/><stop offset="1" stop-color="#c7dfae" stop-opacity="0"/></radialGradient>
+    <linearGradient id="desktop" x2="1" y2="1"><stop stop-color="#dfeacb"/><stop offset=".5" stop-color="#9cb999"/><stop offset="1" stop-color="#728b80"/></linearGradient>
+  </defs>
+  <rect width="1200" height="450" rx="24" fill="url(#canvas)"/>
+  <ellipse cx="780" cy="250" rx="400" ry="195" fill="url(#glow)"/>
+  <g font-family="Segoe UI, Malgun Gothic, sans-serif">
+    <text x="48" y="52" fill="#687761" font-size="12" letter-spacing="2.5">INDEPENDENT DISPLAY PROTECTION</text>
+    <g transform="translate(150 94)">
+      <rect x="0" y="0" width="192" height="252" rx="13" fill="#363e36"/>
+      <rect x="7" y="7" width="178" height="238" rx="8" fill="#060706"/>
+      <path d="M96 253v25m-36 0h72" fill="none" stroke="#687361" stroke-width="7" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(463 113)">
+      <rect width="566" height="227" rx="14" fill="#363e36"/>
+      <rect x="7" y="7" width="552" height="213" rx="9" fill="url(#desktop)"/>
+      <path d="M283 228v30m-57 0h114" fill="none" stroke="#687361" stroke-width="7" stroke-linecap="round"/>
+      <rect x="40" y="30" width="308" height="166" rx="9" fill="#f7f7ef"/>
+      <path d="M40 59h308" stroke="#e0e5d7"/>
+      <circle cx="56" cy="45" r="3" fill="#a5b39a"/><circle cx="68" cy="45" r="3" fill="#c4ceba"/><circle cx="80" cy="45" r="3" fill="#c4ceba"/>
+      <rect x="54" y="74" width="67" height="107" rx="5" fill="#e8edde"/>
+      <path d="M139 84h97m-97 17h166m-166 17h143m-143 17h154m-154 17h94m-94 17h121" stroke="#a0af97" stroke-width="5" stroke-linecap="round"/>
+      <rect x="366" y="30" width="159" height="166" rx="9" fill="#edf4e3" fill-opacity=".8"/>
+      <rect x="380" y="44" width="131" height="67" rx="5" fill="#b9cda8"/>
+      <path d="M383 129h110m-110 17h89m-89 17h100" stroke="#97ad8c" stroke-width="5" stroke-linecap="round"/>
+      <path d="m272 146 0 24 7-7 6 13 5-3-6-12 10-1Z" fill="#fff" stroke="#40543e" stroke-width="1.5"/>
+    </g>
+    <g text-anchor="middle">
+      <rect x="164" y="384" width="164" height="34" rx="17" fill="#e2e8db"/>
+      <text x="246" y="406" fill="#46583e" font-size="14" font-weight="600">멈춘 화면은 검게</text>
+      <rect x="658" y="384" width="176" height="34" rx="17" fill="#d5e8c0"/>
+      <text x="746" y="406" fill="#355336" font-size="14" font-weight="600">다른 화면은 작업 계속</text>
+    </g>
+  </g>
+</svg>

@@ -1,137 +1,150 @@
+<div align="center">
+
 # MonitorShade
 
-MonitorShade는 Windows용 모니터 관리 프로그램입니다. 화면 보호, DDC/CI 밝기 조절, 창 배치 기능을 제공합니다.
+### 밝기, 화면 보호, 창 배치를 한곳에서.
 
-현재 버전: **1.17.0**
+모니터 밝기는 함께 맞추고, 멈춘 화면은 검게 가리고.<br>
+작업 창은 단축키 한 번으로 원하는 자리에 놓으세요.
 
-[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe) · [릴리즈 정보](https://github.com/iismn/MonitorShade/releases/tag/v1.17)
+<a href="https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Windows용 MonitorShade 1.17 다운로드" width="260" height="56"></a>
 
-## 실행 조건
+**1.17 · Windows 10 / 11 · x64**<br>
+[릴리즈 노트](https://github.com/iismn/MonitorShade/releases/tag/v1.17) · [사용 가이드](docs/user-guide.md) · [문제 보고](https://github.com/iismn/MonitorShade/issues)
 
-| 항목 | 조건 |
+</div>
+
+<br>
+
+![MonitorShade 1.17 — 밝기 동기화 카드와 모니터별 밝기 조절 화면](docs/images/brightness-morning.png)
+
+<p align="center"><sub>MonitorShade 1.17 설정 UI · 09:00 아침 색상</sub></p>
+
+<table>
+<tr>
+<td width="33%" valign="top">
+<h3>밝기는 함께</h3>
+<p>각 모니터의 밝기를 조절하거나, 선택한 모니터를 같은 값으로 맞춥니다.</p>
+</td>
+<td width="33%" valign="top">
+<h3>화면 보호는 따로</h3>
+<p>변화가 없는 화면만 검게 가립니다. 다른 화면에서는 작업을 계속합니다.</p>
+</td>
+<td width="33%" valign="top">
+<h3>창 배치는 빠르게</h3>
+<p>방향 배치, 중앙 정렬, 크기 변경을 Windows 키 조합으로 전환합니다.</p>
+</td>
+</tr>
+</table>
+
+<br>
+
+## 모니터 두 대. 밝기는 한 번에.
+
+모니터 버튼을 누르지 않고 **DDC/CI**로 밝기를 조절합니다. 슬라이더를 움직이거나, **오른쪽 Alt + F2 / F3**을 누르세요.
+
+**함께 조절**을 켜면 선택한 모니터에 같은 밝기를 적용합니다. 서로 다른 밝기에서도 한 번에 같은 값으로 맞춰집니다.
+
+| 현재 밝기 | 조작 | 적용 후 |
+| :---: | :---: | :---: |
+| 40% · 60% | 5% 높이기 | **65% · 65%** |
+| 40% · 60% | 5% 낮추기 | **35% · 35%** |
+
+모니터별 조절도 가능합니다. 밝기 단축키와 변경 간격은 **단축키**에서 바꿀 수 있습니다.
+
+<br>
+
+## 멈춘 화면만, 잠시 검게.
+
+![동작 예시 — 왼쪽 모니터는 검은 오버레이로 가리고, 오른쪽 모니터의 작업은 계속합니다](docs/images/screen-protection.svg)
+
+선택한 화면의 내용이 설정한 시간 동안 바뀌지 않으면 검은 오버레이를 띄웁니다. **마우스가 들어오거나 화면 내용이 바뀌면 자동으로 돌아옵니다.**
+
+- **모니터마다 독립 감시** — 여러 모니터를 선택하고 대기 시간을 초 또는 분으로 지정합니다.
+- **움직이는 배경 제외** — Lively 배경화면과 앱 창 밖에 보이는 배경 영역을 감시에서 제외할 수 있습니다.
+- **연결되면 다시 감시** — 저장한 모니터가 돌아오면 감시를 재개합니다. 직접 일시정지한 상태는 유지합니다.
+- **바로 가리기** — 지정한 단축키로 한쪽 모니터에 검은 화면을 띄웁니다. 마우스가 들어오면 해제합니다.
+
+<sub>위 그림은 동작 설명입니다. 검은 오버레이는 모니터의 전원이나 입력 신호를 끄지 않습니다.</sub>
+
+<br>
+
+## 작업 창을 원하는 크기와 위치로.
+
+![방향 배치와 50%·70%·최대화 순환을 설정하는 창 배치 화면](docs/images/window-layout.png)
+
+| 단축키 | 누를 때마다 바뀌는 배치 |
 | --- | --- |
-| 운영체제 | Windows 10 2004 이상 또는 Windows 11 |
-| 시스템 | x64 |
-| .NET | .NET Framework 4.8 |
-| 설정 화면 | Microsoft Edge WebView2 Runtime |
-| 창 뒤 배경 블러 | Windows 11 22H2 이상. Windows 투명도 효과를 켜야 합니다. |
-| 모니터 밝기 조절 | 모니터가 DDC/CI 밝기 명령을 지원해야 합니다. |
+| **Win + Backspace** | 중앙 50% → 70% → 최대화 |
+| **Win + 방향키** | 해당 방향의 ½ → ⅔ → 최대화 |
+| **Win + Delete** | 중앙 16:9 창 → 최대화 |
 
-WebView2 Runtime이 없으면 [Microsoft 배포 페이지](https://developer.microsoft.com/microsoft-edge/webview2/)에서 Evergreen Runtime을 설치하세요.
+50%와 70%는 작업 표시줄을 제외한 영역의 **가로·세로 각각**에 적용합니다. 중앙 16:9 창의 기본 너비는 65%이며, 설정에서 변경할 수 있습니다.
 
-## 처음 실행
+<br>
 
-1. 위 링크에서 `MonitorShade.exe`를 다운로드하세요.
-2. 파일을 쓰기 가능한 폴더에 저장하세요.
-3. `MonitorShade.exe`를 실행하세요.
-4. `Ctrl + Alt + F11`을 눌러 설정 창을 여세요.
-5. **화면 보호**를 선택하세요.
-6. 감시할 모니터를 선택하세요.
-7. 대기 시간과 단위를 설정하세요.
-8. **감시 시작**을 누르세요.
+## 아침의 살구색에서, 저녁의 올리브색으로.
 
-프로그램은 기본적으로 창 없이 트레이에서 시작합니다. 트레이 아이콘을 두 번 클릭해도 설정 창을 열 수 있습니다.
+![MonitorShade의 20시 저녁 색상 — 올리브색 화면과 초록빛 밝기 카드](docs/images/brightness-evening.png)
 
-## 업데이트
+PC의 시간에 따라 화면 색상이 바뀝니다. 아침은 흰색과 살구색, 낮은 세이지, 저녁은 올리브, 밤은 슬레이트 계열로 이어집니다. 원하는 시간대의 색상으로 고정할 수도 있습니다.
+
+**창 뒤 배경 블러**, 반투명 카드, 마우스를 올리면 은은하게 밝아지는 슬라이더를 함께 사용합니다. 마우스를 올리는 효과는 모니터의 실제 밝기를 바꾸지 않습니다.
+
+<sub>스크린샷은 실제 설정 UI에 테스트용 모니터 정보를 넣어 촬영했습니다. 이미지에는 고정 배경색을 사용했으며, Windows의 실시간 배경 블러는 포함하지 않았습니다.</sub>
+
+<br>
+
+## 내려받고, 설정하고, 트레이로.
+
+1. **[MonitorShade.exe 다운로드](https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe)** 후 쓰기 가능한 폴더에 저장하세요.
+2. EXE를 실행하세요. 기본적으로 창 없이 트레이에서 시작합니다.
+3. **Ctrl + Alt + F11** 또는 트레이 아이콘 두 번 클릭으로 설정을 여세요.
+4. **화면 보호**에서 모니터와 대기 시간을 선택한 다음 **감시 시작**을 누르세요.
+
+**일반 → 로그인 시 자동 실행**을 켜면 다음 로그인부터 저장된 설정으로 시작합니다. 설정 검색은 **Ctrl + F**로 열 수 있습니다.
+
+### 실행 조건
+
+Windows 10 2004 이상 또는 Windows 11의 **x64 환경**, **.NET Framework 4.8**, **Microsoft Edge WebView2 Runtime**이 필요합니다. WebView2가 없으면 [Microsoft 공식 배포처](https://developer.microsoft.com/microsoft-edge/webview2/)에서 Evergreen Runtime을 설치하세요.
+
+밝기 조절에는 모니터의 DDC/CI 지원이 필요합니다. 창 뒤 배경 블러는 Windows 11 22H2 이상에서 Windows 투명도 효과를 켰을 때 적용됩니다.
+
+<details>
+<summary><strong>업데이트와 설정 보관</strong></summary>
 
 1. 기존 프로그램의 트레이 메뉴에서 **종료**를 선택하세요.
 2. 기존 `MonitorShade.exe`를 새 파일로 교체하세요.
-3. 새 `MonitorShade.exe`를 실행하세요.
+3. 새 EXE를 실행하세요.
 
-설정은 EXE와 같은 폴더의 `MonitorShade.settings.xml`에 저장됩니다. 기존 설정을 사용하려면 이 파일을 유지하세요.
+설정은 EXE와 같은 폴더의 `MonitorShade.settings.xml`에 저장됩니다. 이 파일을 유지하면 기존 설정을 사용합니다. EXE 경로를 변경했다면 로그인 시 자동 실행을 다시 설정하세요.
 
-자동 실행을 등록한 뒤 EXE 경로를 변경했다면 **일반 → 로그인 시 자동 실행**을 다시 설정하세요.
+</details>
 
-## 기능
+<details>
+<summary><strong>사용 전 알아둘 사항</strong></summary>
 
-| 기능 | 동작 |
-| --- | --- |
-| 자동 화면 보호 | 선택한 모니터의 화면 내용이 대기 시간 동안 바뀌지 않으면 검은 오버레이를 표시합니다. |
-| 자동 복귀 | 자동으로 가린 화면에 마우스가 들어오거나 화면 내용이 바뀌면 오버레이를 해제합니다. |
-| 여러 모니터 감시 | 선택한 모니터를 각각 감시합니다. 다른 모니터에서 작업을 계속할 수 있습니다. |
-| 배경화면 제외 | Lively 등 움직이는 배경화면을 감시에서 제외합니다. 앱 창 밖에 노출된 배경 영역도 제외합니다. |
-| 재연결 복구 | 저장한 모니터가 다시 연결되면 감시를 재개합니다. 직접 일시정지한 상태에서는 재개하지 않습니다. |
-| 강제 화면 보호 | 단축키로 지정한 모니터를 가립니다. 마우스가 들어오거나 같은 단축키를 다시 누르면 해제합니다. |
-| 밝기 조절 | DDC/CI로 모니터 밝기를 조절합니다. 슬라이더와 단축키를 지원합니다. |
-| 밝기 동기화 | 선택한 모니터에 같은 밝기 값을 적용합니다. |
-| 창 배치 | 방향 배치, 중앙 16:9 배치, 모니터 비율에 따른 크기 조절을 지원합니다. |
-| 설정 검색 | 설정 이름이나 관련 단축키로 검색합니다. `Ctrl + F`로 검색 입력란을 선택합니다. |
-| 자동 실행 | Windows 로그인 시 창 없이 시작하고 저장된 설정으로 감시합니다. |
-
-밝기 동기화에서 밝기를 높이면 가장 밝은 모니터를 기준으로 계산합니다. 밝기가 40%와 60%일 때 5% 높이면 두 모니터 모두 65%가 됩니다.
-
-밝기를 낮추면 가장 어두운 모니터를 기준으로 계산합니다. 같은 조건에서 5% 낮추면 두 모니터 모두 35%가 됩니다.
-
-## 단축키
-
-| 단축키 | 동작 |
-| --- | --- |
-| Win + Backspace | 현재 모니터 작업 영역의 50% → 70% → 최대화 순환 |
-| Win + 방향키 | 해당 방향의 ½ → ⅔ → 최대화 순환 |
-| Win + Delete | 중앙 16:9 창 → 최대화 순환 |
-| 오른쪽 Alt + F2 | 밝기 낮추기 |
-| 오른쪽 Alt + F3 | 밝기 높이기 |
-| Ctrl + Alt + F9 / F10 | 지정한 모니터의 강제 검은 화면 켜기 / 끄기 |
-| Ctrl + Alt + F11 | 설정 열기 |
-| Ctrl + Alt + F12 | 자동 감시 일시정지 / 재시작 |
-
-작업 영역은 작업 표시줄을 제외한 화면 영역입니다.
-
-`Win + Backspace`의 50%와 70%는 작업 영역의 가로·세로 각각에 적용됩니다. 창은 중앙에 배치됩니다. 최대화 상태에서 다시 누르면 50%로 돌아갑니다.
-
-`Win + Delete`의 기본 너비는 작업 영역의 65%입니다. **창 배치 → 중앙 창 너비**에서 값을 변경하세요.
-
-**창 배치**에서 기능을 끄면 Windows 기본 단축키 동작으로 돌아갑니다. 밝기 단축키와 변경 간격은 **단축키**에서 설정하세요.
-
-## 설정 화면
-
-- **일반 → 시간별 색상**에서 자동 또는 고정 색상을 선택합니다.
-- **일반 → 창 뒤 배경 블러**에서 블러를 켜거나 끕니다.
-- 설정 창의 가장자리와 모서리를 드래그하면 창 크기가 바뀝니다.
-- 설정 창을 여는 동안 자동 감시를 일시정지합니다. 감시를 재개하려면 **감시 시작**을 누르세요.
-- 닫기 버튼은 설정 창을 트레이로 숨깁니다. 프로그램을 종료하려면 트레이 메뉴에서 **종료**를 선택하세요.
-
-화면 예시: [밝기](docs/images/brightness-morning.png) · [저녁 색상](docs/images/brightness-evening.png) · [창 배치](docs/images/window-layout.png)
-
-화면 예시는 테스트용 모니터 정보로 촬영했습니다. 예시 이미지의 배경에는 고정 색상을 사용했습니다.
-
-## 제한 사항
-
-- 검은 오버레이는 모니터 전원이나 입력 신호를 끄지 않습니다.
-- 화면 공유에는 검은 오버레이 뒤의 내용이 보일 수 있습니다.
+- 검은 오버레이는 모니터 전원을 끄지 않습니다. 화면 공유에는 오버레이 뒤의 내용이 보일 수 있습니다.
+- 화면 비교는 메모리에서 처리합니다. 감시 중인 화면 내용을 저장하거나 전송하지 않습니다.
 - DRM 영상, 독점 전체 화면, 보안 화면에서는 변화 감지가 제한될 수 있습니다.
-- 모니터 설정에서 DDC/CI를 켜야 합니다. HDR이나 일부 화면 모드에서는 밝기 조절이 제한될 수 있습니다.
-- DDC/CI 쓰기는 표준 밝기 명령 `0x10`에 한정합니다.
+- DDC/CI 쓰기는 표준 밝기 명령 `0x10`에 한정합니다. HDR이나 일부 모니터 화면 모드에서는 밝기 조절이 제한될 수 있습니다.
 - 관리자 권한 앱이나 최소 크기 제한이 있는 창에는 요청한 배치를 적용하지 못할 수 있습니다.
 - 배경 블러를 지원하지 않는 환경에서는 단색 배경을 사용합니다.
 
-화면 비교는 메모리에서 처리합니다. 프로그램은 감시 중인 화면 내용을 저장하거나 전송하지 않습니다.
+</details>
 
-## 소스 빌드
+<br>
 
-저장소 폴더에서 다음 명령을 실행하세요.
+---
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\source\build.ps1
-```
+<div align="center">
 
-명령을 실행하면 저장소 루트에 `MonitorShade.exe`가 생성됩니다. 첫 빌드는 공식 NuGet에서 고정 버전의 WebView2 SDK를 받습니다. 다운로드한 SDK는 SHA-256으로 검증합니다.
+### MonitorShade 1.17
 
-HTML, CSS, JavaScript, 글꼴, SDK는 EXE에 포함됩니다. 시스템의 WebView2 Runtime은 별도로 필요합니다.
+[**Windows용 EXE 다운로드 →**](https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe)
 
-## 검증
+[전체 사용법과 단축키](docs/user-guide.md) · [빌드 및 기술 가이드](docs/technical-guide.md) · [문제 보고 · 기능 제안](https://github.com/iismn/MonitorShade/issues)
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
-```
+[글꼴 라이선스](source/fonts/README.md) · [WebView2 고지](source/licenses)
 
-이 명령은 기존 로직과 Chromium 설정 화면을 검사합니다. 결과는 `tests/` 폴더에 저장됩니다. 실제 모니터 밝기와 사용자 설정은 변경하지 않습니다.
-
-실제 케이블 재연결과 모니터별 DDC/CI 호환성은 별도로 확인해야 합니다.
-
-## 참고 자료
-
-- [기술 가이드와 추가 진단 명령](docs/technical-guide.md)
-- [글꼴 출처 및 라이선스](source/fonts/README.md)
-- [WebView2 고지](source/licenses)
-- [문제 보고](https://github.com/iismn/MonitorShade/issues)
+</div>
