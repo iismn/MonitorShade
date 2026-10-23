@@ -48,20 +48,26 @@ internal static class RecordUiDemos
                 if (!(bool)ui.GetType().GetProperty("Ready", Instance).GetValue(ui, null)) throw new Exception("WebView2 did not become ready.");
                 core = (CoreWebView2)ui.GetType().GetProperty("Core", Instance).GetValue(ui, null);
                 await Task.Delay(1000);
-                await Script("document.querySelector('#AppearanceMode').value='1';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'));document.querySelector('#masterRange').value=45;document.querySelector('#masterRange').dispatchEvent(new Event('input',{bubbles:true}))");
+                await Script("document.querySelector('#Language').value='1';document.querySelector('#Language').dispatchEvent(new Event('change'));document.querySelector('#AppearanceMode').value='1';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'));document.querySelector('#masterRange').value=45;document.querySelector('#masterRange').dispatchEvent(new Event('input',{bubbles:true}))");
                 // WebView2 captures do not contain the DWM surface. Use the app's
                 // own background variable as the base, exactly as in its UI tests.
                 await Script("document.documentElement.style.background='rgb(var(--background))'");
                 await Task.Delay(1500);
                 await Check("monitorShadeState.preview && monitorShadeState.monitors.length===2", "Released app UI is in preview mode.");
+                await Check("document.documentElement.lang==='en'", "README captures use the English interface.");
                 await Check("monitorShadeState.monitors.every(m=>m.percent===45)", "Native brightness controller synchronized both demo monitors.");
                 await RecordBrightness();
                 await RecordTime();
                 foreach (var sample in new[] { new { Name = "morning", Hour = 9.0 }, new { Name = "day", Hour = 14.0 }, new { Name = "evening", Hour = 20.0 }, new { Name = "night", Hour = 0.0 } }) {
                     SetHour(sample.Hour); await Task.Delay(1500);
                     await Capture(Path.Combine(output, "appearance-" + sample.Name + ".png"));
+                    await Check("monitorShadeState.masterWarmth===" + (sample.Hour == 9 || sample.Hour == 14 ? "0" : "1"), sample.Name + " card uses the expected time-based colors.");
                 }
+                SetHour(9); await Script("monitorShadeNavigate('Layout')"); await Task.Delay(1500);
+                await Capture(Path.Combine(output, "window-layout.png"));
+                await Check("!document.querySelector('#Layout #layoutShortcutEditor') && !!document.querySelector('#Shortcuts #layoutShortcutEditor')", "Window bindings are in Shortcuts.");
                 await Check("!window.monitorShadeError", "No renderer errors during recording.");
+                report.Add("Source application: " + assembly.GetName().Version);
                 report.Add("Captured from the released EXE; preview monitors; accelerated local clock; DWM not included.");
                 result = 0;
             } catch (Exception error) { report.Add(error.ToString()); }

@@ -1,9 +1,10 @@
 # README recordings
 
-The GIFs are recordings of MonitorShade 1.17's WebView2 settings UI.
+The GIFs are recordings of MonitorShade 1.18.2's WebView2 settings UI.
 The recorder loads the released EXE in its existing preview mode.
 No replacement UI, generated animation frames, or image crossfades are used.
 
+- Captures use the English interface.
 - Brightness changes pass through the normal UI event and native controller.
 - The monitors are preview devices. Recording does not send DDC/CI commands.
 - The appearance recording advances the app's preview clock through 24 hours.
@@ -22,10 +23,10 @@ python .\docs\tools\encode-demos.py .\.build\readme-recordings .\docs\images
 ```
 
 The encoder requires Pillow. Intermediate frames and validation results stay in
-`.build/readme-recordings`. Only the GIFs and four appearance stills are published.
+`.build/readme-recordings`. The GIFs, four appearance stills, and window-layout screenshot are published.
 
 Source EXE SHA-256:
 
 ```text
-6ae603e4ac3064e0bd08527969efd3b307e15ce1dea378591101b6a6b39dbac0
+a3abe50cfe6c70faf5b00792feedb12d36bb6de7e34eb069d5ed2cd9e965f11a
 ```

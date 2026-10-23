@@ -2,11 +2,11 @@
 
 # MonitorShade
 
-<a href="https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.17 for Windows" width="260" height="56"></a>
+<a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.2 for Windows" width="260" height="56"></a>
 
-**1.17 · Windows 10 / 11 · x64**
+**1.18.2 · Windows 10 / 11 · x64**
 
-[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.17) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
+[Release notes](https://github.com/iismn/MonitorShade/releases/tag/v1.18.2) · [User guide](docs/user-guide.md) · [Issues](https://github.com/iismn/MonitorShade/issues)
 
 [Brightness](#brightness) · [OLED Protection](#oled-protection) · [Window Layout](#window-layout)
 
@@ -16,7 +16,7 @@
 
 ## Brightness
 
-![Linked brightness sliders and dot readout in MonitorShade 1.17](docs/images/brightness-demo.gif)
+![Linked brightness sliders and dot readout in MonitorShade 1.18.2](docs/images/brightness-demo.gif)
 
 <sub>Recorded in the app with demo monitors.</sub>
 
@@ -32,7 +32,7 @@ Per-monitor black overlay. Restores on mouse entry or screen changes. Supports a
 
 ## Window Layout
 
-![Window layout settings in MonitorShade 1.17](docs/images/window-layout.png)
+![Window layout settings in MonitorShade 1.18.2](docs/images/window-layout.png)
 
 | Default shortcut | Cycle |
 | --- | --- |
@@ -69,7 +69,7 @@ Windows 10 2004+ or Windows 11, x64, .NET Framework 4.8, and [Microsoft Edge Web
 - Brightness control requires DDC/CI support.
 - Desktop blur requires Windows 11 22H2+ with transparency effects enabled.
 
-1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe) to a writable folder.
+1. [Download MonitorShade.exe](https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe) to a writable folder.
 2. Run the EXE. It starts in the system tray.
 3. Press **Ctrl + Alt + F11** to open settings.
 4. Select monitors and a timeout, then start monitoring.
@@ -92,6 +92,6 @@ Settings are stored beside the EXE in `MonitorShade.settings.xml`. To update, ex
 
 ---
 
-[Download 1.17](https://github.com/iismn/MonitorShade/releases/download/v1.17/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
+[Download 1.18.2](https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe) · [User guide (Korean)](docs/user-guide.md) · [Build guide (Korean)](docs/technical-guide.md) · [Report an issue](https://github.com/iismn/MonitorShade/issues)
 
 [Fonts](source/fonts/README.md) · [WebView2 notices](source/licenses) · [Demo recording source](docs/tools/README.md)

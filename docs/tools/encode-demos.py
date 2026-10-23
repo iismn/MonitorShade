@@ -28,7 +28,12 @@ for name, expected in (("brightness", 104), ("appearance", 160)):
         palette = frames[0].quantize(colors=256, method=Image.Quantize.MEDIANCUT)
         encoded = [frame.quantize(palette=palette, dither=Image.Dither.FLOYDSTEINBERG) for frame in frames]
     else:
-        encoded = [frame.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE) for frame in frames]
+        # Remap to each frame's palette with dithering. Direct quantization makes
+        # the large orange/pink light field break into visible color bands.
+        encoded = []
+        for frame in frames:
+            palette = frame.quantize(colors=256, method=Image.Quantize.MEDIANCUT)
+            encoded.append(frame.quantize(palette=palette, dither=Image.Dither.FLOYDSTEINBERG))
     path = args.destination / f"{name}-demo.gif"
     encoded[0].save(
         path, save_all=True, append_images=encoded[1:], loop=0,
@@ -45,8 +50,8 @@ for name, expected in (("brightness", 104), ("appearance", 160)):
         assert check.n_frames > 20, (name, check.n_frames)
         print(f"{path.name}: {check.n_frames} frames, {duration} ms, {path.stat().st_size / 1048576:.2f} MiB")
 
-for name in ("morning", "day", "evening", "night"):
-    with Image.open(args.frames / f"appearance-{name}.png") as source:
+for name in ("appearance-morning", "appearance-day", "appearance-evening", "appearance-night", "window-layout"):
+    with Image.open(args.frames / f"{name}.png") as source:
         image = source.convert("RGB")
         image = image.resize((1000, round(image.height * 1000 / image.width)), Image.Resampling.LANCZOS)
-        image.save(args.destination / f"appearance-{name}.png", optimize=True)
+        image.save(args.destination / f"{name}.png", optimize=True)
