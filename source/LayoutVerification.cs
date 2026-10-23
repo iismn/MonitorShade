@@ -37,12 +37,20 @@ namespace MonitorShade
                 Rectangle wide = new Rectangle(0, 0, 3840, 2160);
                 check(LayoutGeometry.Bounds(wide, LayoutDirection.Center, 0, 65).Width == 2496, "65 percent means work area width");
                 check(LayoutGeometry.Bounds(wide, LayoutDirection.Center, 1, 65) == wide, "Center second press fills work area");
+                foreach (Rectangle work in new[] { area, wide, new Rectangle(-3441, 25, 3441, 1399), new Rectangle(0, 0, 1, 1) })
+                    for (int step = 0; step < 3; step++)
+                    {
+                        Rectangle scaled = LayoutGeometry.Bounds(work, LayoutDirection.Scale, step, 65);
+                        double fraction = step == 0 ? .5 : step == 1 ? .7 : 1;
+                        check(scaled.Width == Math.Max(1, (int)Math.Round(work.Width * fraction)) && scaled.Height == Math.Max(1, (int)Math.Round(work.Height * fraction)), "Scale uses both work-area dimensions at " + fraction + " on " + work.Size);
+                        check(work.Contains(scaled) && Math.Abs(scaled.Left * 2 + scaled.Width - work.Left * 2 - work.Width) <= 1 && Math.Abs(scaled.Top * 2 + scaled.Height - work.Top * 2 - work.Height) <= 1, "Scale stays centered within portrait/landscape/negative bounds");
+                    }
                 foreach (int win in new[] { 0x5B, 0x5C })
-                    foreach (int key in new[] { 0x25, 0x26, 0x27, 0x28, 0x2E })
+                    foreach (int key in new[] { 0x25, 0x26, 0x27, 0x28, 0x2E, 0x08 })
                     {
                         LayoutKeys keys = new LayoutKeys(); LayoutDirection? command;
                         check(!keys.Process(win, true, true, out command), "Win key alone passes through: " + win);
-                        check(keys.Process(key, true, true, out command) && command == (key == 0x2E ? LayoutDirection.Center : (LayoutDirection)(key - 0x25)), "Exact shortcut dispatched: " + win + "/" + key);
+                        check(keys.Process(key, true, true, out command) && command == (key == 0x2E ? LayoutDirection.Center : key == 0x08 ? LayoutDirection.Scale : (LayoutDirection)(key - 0x25)), "Exact shortcut dispatched: " + win + "/" + key);
                         check(keys.Process(key, true, true, out command) && !command.HasValue, "Held shortcut does not repeatedly cycle");
                         keys.Process(win, false, true, out command);
                         check(keys.Process(key, false, false, out command) && !command.HasValue, "Consumed key-up stays consumed after Win release or feature disable");
@@ -52,6 +60,7 @@ namespace MonitorShade
                     LayoutKeys keys = new LayoutKeys(); LayoutDirection? command;
                     keys.Process(0x5B, true, true, out command); keys.Process(modifier, true, true, out command);
                     check(!keys.Process(0x25, true, true, out command) && !command.HasValue, "Extra modifier preserves Windows shortcut: " + modifier);
+                    check(!keys.Process(0x08, true, true, out command) && !command.HasValue, "Modified Win + Backspace passes through: " + modifier);
                 }
                 {
                     LayoutKeys keys = new LayoutKeys(); LayoutDirection? command;
@@ -59,6 +68,9 @@ namespace MonitorShade
                     keys.Process(0x5B, true, true, out command);
                     check(!keys.Process(0x25, true, false, out command), "Disabled feature or ineligible window passes shortcut through");
                     check(!keys.Process(0x45, true, true, out command), "Unrelated Win shortcut passes through");
+                    check(!keys.Process(0x08, true, false, out command), "Disabled Win + Backspace passes through");
+                    keys.Process(0x08, false, false, out command); keys.Process(0x5B, false, true, out command);
+                    check(!keys.Process(0x08, true, true, out command) && !command.HasValue, "Backspace alone remains normal text editing");
                 }
                 string temporary = Path.Combine(Path.GetDirectoryName(path), "layout-preferences-test.xml");
                 try
@@ -91,12 +103,14 @@ namespace MonitorShade
             using (Form sample = new Form { Text = "MonitorShade 창 배치 진단", StartPosition = FormStartPosition.Manual, AutoScaleMode = AutoScaleMode.None, MinimumSize = new Size(80, 60), Size = new Size(640, 400) })
             {
                 string error = null; arranger.Failed += delegate(string message) { error = message; };
-                sample.Show(); Application.DoEvents();
+                sample.Show();
+                // STARTUPINFO may suppress the first window when the CLI runner is hidden.
+                LayoutNative.ShowWindowAsync(sample.Handle, 5); Application.DoEvents();
                 check(LayoutNative.CanArrange(sample.Handle), "Resizable test window accepted");
                 foreach (Screen screen in Screen.AllScreens)
                 {
                     sample.WindowState = FormWindowState.Normal; sample.Bounds = new Rectangle(screen.WorkingArea.X + 40, screen.WorkingArea.Y + 40, 640, 400); Application.DoEvents();
-                    foreach (LayoutDirection direction in new[] { LayoutDirection.Left, LayoutDirection.Up, LayoutDirection.Right, LayoutDirection.Down, LayoutDirection.Center })
+                    foreach (LayoutDirection direction in new[] { LayoutDirection.Left, LayoutDirection.Up, LayoutDirection.Right, LayoutDirection.Down, LayoutDirection.Center, LayoutDirection.Scale })
                     {
                         arranger.Reset();
                         int maximum = direction == LayoutDirection.Center ? 2 : 3;

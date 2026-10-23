@@ -46,8 +46,9 @@ namespace MonitorShade
             foreach (string name in WebMessages) { var text = Find<TextBlock>(name); messages[name] = text.Visibility == Visibility.Collapsed ? "" : text.Text; }
             var enabled = WebButtons.ToDictionary(name => name, name => Find<Button>(name).IsEnabled);
             bool highContrast = SystemParameters.HighContrast;
+            webUi.PaintResizeBand(p.Background, webGlass, highContrast);
             return new {
-                version = "1.16.0", preview = preview, glass = webGlass, highContrast = highContrast,
+                version = "1.17.0", preview = preview, glass = webGlass, highContrast = highContrast,
                 maximized = WindowState == WindowState.Maximized,
                 palette = new { background = Css(p.Background), panel = Css(p.Panel), raised = Css(p.Raised), line = Css(p.Line), soft = Css(p.Soft), accent = Css(p.Accent), ink = Css(p.Ink), text = Css(p.Text), muted = Css(p.Muted), aura = Css(p.Aura), light = p.Light },
                 font = appearance.KoreanFont, time = Find<TextBlock>("ThemeTime").Text,

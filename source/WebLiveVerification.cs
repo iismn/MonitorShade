@@ -14,6 +14,29 @@ namespace MonitorShade
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hwnd, int command);
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
         [System.Runtime.InteropServices.DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(System.Drawing.Point point);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ScreenToClient(IntPtr hwnd, ref System.Drawing.Point point);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr ChildWindowFromPointEx(IntPtr hwnd, System.Drawing.Point point, uint flags);
+        internal static void CheckResizeEdges(SettingsForm form, List<string> report, bool visible)
+        {
+            double w = form.ActualWidth, h = form.ActualHeight;
+            var points = new[] { new Point(3, h / 2), new Point(w - 3, h / 2), new Point(w / 2, 3), new Point(w / 2, h - 3), new Point(5, 5), new Point(w - 5, 5), new Point(5, h - 5), new Point(w - 5, h - 5) };
+            int[] expected = { 10, 11, 12, 15, 13, 14, 16, 17 };
+            for (int i = 0; i < points.Length; i++) {
+                var p = form.PointToScreen(points[i]);
+                var physical = new System.Drawing.Point((int)p.X, (int)p.Y);
+                var client = physical; ScreenToClient(form.Handle, ref client);
+                IntPtr hitWindow = visible ? WindowFromPoint(physical) : ChildWindowFromPointEx(form.Handle, client, 0);
+                int packed = (physical.X & 0xffff) | ((physical.Y & 0xffff) << 16);
+                int hit = SendMessage(hitWindow, 0x84, IntPtr.Zero, new IntPtr(packed)).ToInt32();
+                if (hitWindow != form.Handle || hit != expected[i]) {
+                    var name = new System.Text.StringBuilder(256); LayoutNative.GetClassName(hitWindow, name, name.Capacity);
+                    throw new InvalidOperationException("Native resize edge " + i + " at " + physical + " hit=" + hit + ", class=" + name + ", expected hwnd=" + form.Handle + ", actual=" + hitWindow + ", active=" + form.IsActive + ", visible=" + form.IsVisible);
+                }
+            }
+            report.Add("PASS: All four edges and four corners reach native Windows resize hit testing");
+        }
         private static void CopyScreen(System.Drawing.Graphics graphics, int x, int y, int width, int height)
         {
             IntPtr source = Native.GetDC(IntPtr.Zero), destination = graphics.GetHdc();
@@ -50,7 +73,7 @@ namespace MonitorShade
                 try {
                     if (!DesktopAccess.Available()) throw new InvalidOperationException("Interactive desktop unavailable; live blur verification requires an unlocked desktop.");
                     if (!DesktopBackdrop.TransparencyEnabled) throw new InvalidOperationException("Windows Acrylic transparency is unavailable.");
-                    fixture = new Window { Title = "MonitorShade native blur test fixture", WindowStyle = WindowStyle.None, ShowInTaskbar = false, Left = 100, Top = 100, Width = 1300, Height = 950, Background = Brushes.Red };
+                    fixture = new Window { Title = "MonitorShade native blur test fixture", WindowStyle = WindowStyle.None, ShowInTaskbar = false, Topmost = true, Left = 100, Top = 100, Width = 1300, Height = 950, Background = Brushes.Red };
                     var fixtureContent = new System.Windows.Controls.Border();
                     fixtureContent.SetBinding(System.Windows.Controls.Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { Source = fixture });
                     fixture.Content = fixtureContent;
@@ -58,17 +81,19 @@ namespace MonitorShade
                     // The test process is launched with STARTUPINFO's hidden-window flag.
                     // A second explicit ShowWindow makes the fixture visible as intended.
                     ShowWindow(new System.Windows.Interop.WindowInteropHelper(fixture).Handle, 5);
-                    fixture.Activate(); await Task.Delay(150);
+                    fixture.Activate(); await Task.Delay(500);
                     var fixtureColor = ScreenPixel(fixture);
-                    if (fixtureColor.R < 240 || fixtureColor.B > 15 || fixtureColor.G > 15) throw new InvalidOperationException("The background fixture is not visible.");
+                    if (fixtureColor.R < 240 || fixtureColor.B > 15 || fixtureColor.G > 15) throw new InvalidOperationException("The background fixture is not visible: " + fixtureColor);
                     report.Add("PASS: Color fixture is visible on the interactive desktop");
                     form = new SettingsForm(true, false) { WindowStartupLocation = WindowStartupLocation.Manual, Left = 140, Top = 140 };
-                    form.Show(); form.Activate();
+                    fixture.Topmost = false;
+                    form.Show(); ShowWindow(form.Handle, 5); form.Activate();
                     SetWindowPos(new System.Windows.Interop.WindowInteropHelper(fixture).Handle, form.Handle, 0, 0, 0, 0, 0x13);
                     for (int i = 0; i < 150 && !form.BrowserUi.Ready && form.BrowserUi.Error == null; i++) await Task.Delay(100);
                     if (!form.BrowserUi.Ready) throw new InvalidOperationException(form.BrowserUi.Error ?? "Renderer timeout");
                     form.WebCommand(new Dictionary<string, object> { { "action", "field" }, { "name", "AppearanceMode" }, { "value", 3 } });
                     await Task.Delay(2500);
+                    CheckResizeEdges(form, report, true);
                     // Window-only WGC / browser captures omit the DWM backdrop. Sample
                     // the final desktop pixels inside our unobscured test window.
                     var red = ScreenPixel(form);
@@ -96,6 +121,12 @@ namespace MonitorShade
                     form.Hide(); await Task.Delay(400); form.Show(); form.Activate(); await Task.Delay(500);
                     if (await form.BrowserUi.Core.ExecuteScriptAsync("Boolean(window.monitorShadeState && !window.monitorShadeError)") != "true") throw new InvalidOperationException("Renderer failed to resume");
                     report.Add("PASS: Chromium resumes correctly after hiding and reopening");
+                    CheckResizeEdges(form, report, true);
+                    form.WindowState = WindowState.Maximized; await Task.Delay(350);
+                    if (form.BrowserUi.Core == null) throw new InvalidOperationException("Renderer lost after maximizing");
+                    form.WindowState = WindowState.Normal; await Task.Delay(600);
+                    CheckResizeEdges(form, report, true);
+                    report.Add("PASS: Native resize edges survive maximize and restore");
                     result = 0;
                 } catch (Exception e) { report.Add("FAIL: " + e); }
                 finally { if (form != null) form.Dispose(); if (fixture != null) fixture.Close(); File.WriteAllLines(path, report); app.Shutdown(); }

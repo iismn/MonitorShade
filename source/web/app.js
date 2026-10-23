@@ -10,7 +10,8 @@
     settings: '<path d="M12 2 9 3l-.5 2-2 .9-2-.5L2 9l1.5 1.5v3L2 15l2.5 3.6 2-.5 2 .9L9 21l3 1 3-1 .5-2 2-.9 2 .5L22 15l-1.5-1.5v-3L22 9l-2.5-3.6-2 .5-2-.9L15 3Z"/><circle cx="12" cy="12" r="3.5"/>',
     help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.5 8.5a2.5 2.5 0 0 1 5 .5c0 2-2.5 2-2.5 4m0 3v.1"/>',
     link: '<path d="M9 7H7a5 5 0 0 0 0 10h2m6-10h2a5 5 0 0 1 0 10h-2M8 12h8"/>',
-    refresh: '<path d="M20 4v6h-6M20 10a8 8 0 1 0-.5 7"/>'
+    refresh: '<path d="M20 4v6h-6M20 10a8 8 0 1 0-.5 7"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>'
   };
   $$('[data-icon]').forEach(e => { e.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icons[e.dataset.icon] + '</svg>'; });
   const host = window.chrome?.webview;
@@ -30,25 +31,41 @@
     cancelAnimationFrame(e._frame);
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const start = performance.now();
-    const frame = now => { const t = reduced ? 1 : Math.min(1, (now - start) / 190); e._value = from + (target - from) * (1 - Math.pow(1 - t, 3)); safeText(e, Math.round(e._value)); if (t < 1) e._frame = requestAnimationFrame(frame); };
+    const frame = now => { const t = reduced ? 1 : Math.min(1, (now - start) / 190); e._value = from + (target - from) * (1 - Math.pow(1 - t, 3)); safeText(e, Math.round(e._value)); if (e.id === 'masterPercent') drawDotNumber(Math.round(e._value)); if (t < 1) e._frame = requestAnimationFrame(frame); };
     e._frame = requestAnimationFrame(frame);
   }
   const ns = 'http://www.w3.org/2000/svg';
-  for (let i = 0; i <= 50; i++) {
-    const theta = Math.PI + i / 50 * Math.PI;
-    const tick = document.createElementNS(ns, 'line');
-    tick.setAttribute('x1', 180 + Math.cos(theta) * 166); tick.setAttribute('y1', 180 + Math.sin(theta) * 166);
-    tick.setAttribute('x2', 180 + Math.cos(theta) * (i % 5 === 0 ? 176 : 172)); tick.setAttribute('y2', 180 + Math.sin(theta) * (i % 5 === 0 ? 176 : 172));
-    $('#gaugeTicks').append(tick);
+  // Original 5×7 dot glyphs: no remote font or image, sharp at every Windows DPI.
+  const dotGlyphs = {
+    '0':['01110','10001','10001','10001','10001','10001','01110'],
+    '1':['00100','01100','00100','00100','00100','00100','01110'],
+    '2':['01110','10001','00001','00010','00100','01000','11111'],
+    '3':['11110','00001','00001','01110','00001','00001','11110'],
+    '4':['00010','00110','01010','10010','11111','00010','00010'],
+    '5':['11111','10000','10000','11110','00001','00001','11110'],
+    '6':['01110','10000','10000','11110','10001','10001','01110'],
+    '7':['11111','00001','00010','00100','01000','01000','01000'],
+    '8':['01110','10001','10001','01110','10001','10001','01110'],
+    '9':['01110','10001','10001','01111','00001','00001','01110'],
+    '%':['11001','11001','00010','00100','01000','10011','10011']
+  };
+  let lastDotValue;
+  function drawDotNumber(percent) {
+    if (lastDotValue === percent) return;
+    lastDotValue = percent;
+    const label = String(percent) + '%', svg = $('#dotBrightness'), group = document.createDocumentFragment();
+    label.split('').forEach((digit, n) => dotGlyphs[digit].forEach((row, y) => [...row].forEach((pixel, x) => {
+      if (pixel !== '1') return;
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', 3 + n * 30 + x * 5); dot.setAttribute('cy', 3 + y * 5); dot.setAttribute('r', '1'); group.append(dot);
+    })));
+    svg.setAttribute('viewBox', '0 0 ' + (label.length * 30 - 4) + ' 36'); svg.replaceChildren(group);
+    svg.dataset.value = String(percent);
   }
-  $$('.gauge path').forEach(p => p.setAttribute('d', 'M30 180 A150 150 0 0 1 330 180'));
   function drawMaster(percent, enabled) {
     animateNumber($('#masterPercent'), percent); range($('#masterRange'), percent); value($('#masterNumber'), percent);
     $('#masterRange').disabled = $('#masterNumber').disabled = !enabled;
-    $('#gaugeFill').style.strokeDasharray = percent + ' 100';
-    const theta = Math.PI + percent / 100 * Math.PI;
-    $('#gaugeThumb').setAttribute('cx', 180 + Math.cos(theta) * 150); $('#gaugeThumb').setAttribute('cy', 180 + Math.sin(theta) * 150);
-    $$('#gaugeTicks line').forEach((line, i) => line.classList.toggle('lit', i <= percent / 2));
+    $('#dotBrightness').classList.toggle('unavailable', !enabled);
   }
   function bindRange(input, id) {
     input.addEventListener('input', () => {
@@ -129,6 +146,7 @@
     state = next; window.monitorShadeState = state;
     for (const [k, v] of Object.entries(state.palette)) if (k !== 'light') document.documentElement.style.setProperty('--' + k, v);
     document.documentElement.style.colorScheme = state.palette.light ? 'light' : 'dark';
+    document.body.classList.toggle('light', state.palette.light);
     document.body.classList.toggle('solid', !state.glass); document.body.classList.toggle('windows-font', state.font === 'MalgunGothic'); document.body.classList.toggle('high-contrast', state.highContrast);
     safeText($('#themeTime'), state.time); safeText($('#version'), state.version + (state.preview ? ' · 미리보기' : ''));
     $$('[data-field]').forEach(e => {
@@ -166,6 +184,61 @@
     if (token === pageToken) { pageAnimations.forEach(a => a.cancel()); pageAnimations = []; send({ action: 'page', value: page }); }
   }
   window.monitorShadeNavigate = selectPage;
+  const searchIndex = [
+    ['Brightness','밝기 조절','DDC CI 모니터 밝기 brightness','masterRange'],
+    ['Brightness','밝기 동기화','함께 조절 동시 sync','BrightnessSync'],
+    ['Protection','감시할 모니터','화면 보호 화면보호기 검은 화면 OLED 대상','displayChoices'],
+    ['Protection','대기 시간','초 분 시간 타이머 delay','Amount'],
+    ['Protection','움직이는 배경화면','Lively 배경 무시','IgnoreWallpaper'],
+    ['Protection','강제 검은 화면','F9 F10 가리기','ManualEnabled'],
+    ['Layout','창 배치','윈도우 방향키 위 아래 왼쪽 오른쪽 windows','LayoutEnabled'],
+    ['Layout','창 크기 조절','Win Backspace 백스페이스 크기 확장 50 70 100','resizeFeature'],
+    ['Layout','중앙 창 너비','Win Delete Del 16:9 중앙 비율','CenterPercent'],
+    ['Shortcuts','밝기 단축키','키보드 Alt F2 F3 보조키','BrightnessModifier'],
+    ['Shortcuts','밝기 조절 간격','증가 감소 단계 step','BrightnessStep'],
+    ['General','시간별 색상','테마 아침 낮 저녁 밤 디자인 theme','AppearanceMode'],
+    ['General','한글 글꼴','Pretendard 프리텐다드 맑은 고딕 폰트 font','KoreanFont'],
+    ['General','창 뒤 배경 블러','투명 blur Acrylic 유리','UseBackdrop'],
+    ['General','로그인 시 자동 실행','시작프로그램 트레이 startup','AutoStart'],
+    ['Help','도움말','문제 진단 사용법 라이선스','HelpTitle']
+  ];
+  const pageNames = {Brightness:'밝기',Protection:'화면 보호',Layout:'창 배치',Shortcuts:'단축키',General:'일반',Help:'도움말'};
+  const searchInput = $('#settingsSearch'), results = $('#searchResults');
+  const normalizeSearch = text => text.toLocaleLowerCase().replace(/[\s+·/:-]/g, '');
+  function clearSearch() { searchInput.value = ''; updateSearch(); }
+  function updateSearch() {
+    const query = normalizeSearch(searchInput.value.trim());
+    results.replaceChildren(); results.hidden = !query; $('#navigation').hidden = !!query; $('#clearSearch').hidden = !searchInput.value;
+    if (!query) { safeText($('#searchAnnouncement'), ''); return; }
+    const matches = searchIndex.filter(item => normalizeSearch(item.slice(1,3).join(' ') + pageNames[item[0]]).includes(query));
+    safeText($('#searchAnnouncement'), '검색 결과 ' + matches.length + '개');
+    if (!matches.length) { const empty = document.createElement('p'); empty.className = 'search-empty'; empty.textContent = '검색 결과가 없습니다.'; results.append(empty); }
+    matches.forEach(([page, title, keywords, id]) => {
+      const button = document.createElement('button'), name = document.createElement('span'), section = document.createElement('small');
+      button.className = 'search-result'; name.textContent = title; section.textContent = pageNames[page]; button.append(name,section);
+      button.addEventListener('click', async () => {
+        clearSearch(); await selectPage(page);
+        const target = document.getElementById(id); if (!target) return;
+        if (!target.matches('input,select,button,[tabindex]')) target.tabIndex = -1;
+        target.scrollIntoView({block:'center',behavior:'instant'}); target.focus({preventScroll:true});
+        target.classList.remove('search-highlight'); void target.offsetWidth; target.classList.add('search-highlight');
+      }); results.append(button);
+    });
+  }
+  searchInput.addEventListener('input', updateSearch);
+  $('#clearSearch').addEventListener('click', () => { clearSearch(); searchInput.focus(); });
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { clearSearch(); e.preventDefault(); }
+    if (e.key === 'ArrowDown') { $('button',results)?.focus(); e.preventDefault(); }
+    if (e.key === 'Enter' && !e.isComposing) { $('button',results)?.click(); e.preventDefault(); }
+  });
+  results.addEventListener('keydown', e => {
+    const buttons = $$('button',results), i = buttons.indexOf(document.activeElement);
+    if (e.key === 'Escape') { clearSearch(); searchInput.focus(); e.preventDefault(); }
+    if (e.key === 'ArrowDown') { buttons[Math.min(buttons.length-1,i+1)]?.focus(); e.preventDefault(); }
+    if (e.key === 'ArrowUp') { (i > 0 ? buttons[i-1] : searchInput).focus(); e.preventDefault(); }
+  });
+  document.addEventListener('keydown', e => { if(e.ctrlKey && !e.altKey && e.key.toLowerCase()==='f'){searchInput.focus();searchInput.select();e.preventDefault();} });
   $$('[data-page]').forEach(b => b.addEventListener('click', () => selectPage(b.dataset.page)));
   $$('[data-button]').forEach(b => b.addEventListener('click', () => send({ action: 'button', name: b.dataset.button })));
   $$('[data-caption]').forEach(b => b.addEventListener('click', () => send({ action: 'caption', value: b.dataset.caption })));

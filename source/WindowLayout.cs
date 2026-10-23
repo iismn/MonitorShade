@@ -10,13 +10,21 @@ using System.Windows.Forms;
 
 namespace MonitorShade
 {
-    internal enum LayoutDirection { Left, Up, Right, Down, Center }
+    internal enum LayoutDirection { Left, Up, Right, Down, Center, Scale }
 
     internal static class LayoutGeometry
     {
         internal static Rectangle Bounds(Rectangle area, LayoutDirection direction, int step, int percent)
         {
             if (area.Width <= 0 || area.Height <= 0) throw new ArgumentException("Invalid work area");
+            if (direction == LayoutDirection.Scale)
+            {
+                if (step == 2) return area;
+                double scale = step == 0 ? .5 : .7;
+                int scaledWidth = Math.Max(1, (int)Math.Round(area.Width * scale));
+                int scaledHeight = Math.Max(1, (int)Math.Round(area.Height * scale));
+                return new Rectangle(area.X + (area.Width - scaledWidth) / 2, area.Y + (area.Height - scaledHeight) / 2, scaledWidth, scaledHeight);
+            }
             if (direction == LayoutDirection.Center)
             {
                 if (step == 1) return area;
@@ -47,7 +55,7 @@ namespace MonitorShade
         internal bool Process(int key, bool pressed, bool eligible, out LayoutDirection? command)
         {
             command = null;
-            bool relevant = key == 0x5B || key == 0x5C || (key >= 0x25 && key <= 0x28) || key == 0x2E || (key >= 0x10 && key <= 0x12) || (key >= 0xA0 && key <= 0xA5);
+            bool relevant = key == 0x5B || key == 0x5C || (key >= 0x25 && key <= 0x28) || key == 0x2E || key == 0x08 || (key >= 0x10 && key <= 0x12) || (key >= 0xA0 && key <= 0xA5);
             if (!relevant) return false;
             bool repeat = pressed && down.Contains(key);
             if (pressed) down.Add(key); else down.Remove(key);
@@ -57,6 +65,7 @@ namespace MonitorShade
                 if (down.Contains(modifier)) return false;
             if (key >= 0x25 && key <= 0x28) command = (LayoutDirection)(key - 0x25);
             else if (key == 0x2E) command = LayoutDirection.Center;
+            else if (key == 0x08) command = LayoutDirection.Scale;
             if (!command.HasValue) return false;
             swallowed.Add(key); return true;
         }
@@ -119,7 +128,7 @@ namespace MonitorShade
             int brightnessDirection;
             bool brightnessConsume = brightnessKeys.Process(normalizedKey, pressed, brightnessBinding, out brightnessDirection);
             IntPtr window = LayoutNative.GetForegroundWindow();
-            bool shortcutKey = (key.vk >= 0x25 && key.vk <= 0x28) || key.vk == 0x2E;
+            bool shortcutKey = (key.vk >= 0x25 && key.vk <= 0x28) || key.vk == 0x2E || key.vk == 0x08;
             // Brightness also accepts accessibility-generated keys. Layout keeps its physical-key policy.
             bool consume = !injected && keys.Process(normalizedKey, pressed, enabled && shortcutKey && LayoutNative.CanArrange(window), out command);
             if (brightnessDirection != 0 && brightnessDispatch != null) { LayoutNative.MaskStartMenu(); try { brightnessDispatch(brightnessDirection); } catch { } }

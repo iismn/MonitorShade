@@ -18,6 +18,7 @@ namespace MonitorShade
     {
         internal const string Origin = "https://monitorshade.internal";
         private readonly WebView2 browser = new WebView2();
+        private readonly Border resizeBand = new Border { IsHitTestVisible = false };
         private readonly SettingsForm owner;
         private readonly Func<object> snapshot;
         private readonly Action<Dictionary<string, object>> command;
@@ -31,12 +32,29 @@ namespace MonitorShade
         internal WebUi(SettingsForm window, Func<object> read, Action<Dictionary<string, object>> execute)
         {
             owner = window; snapshot = read; command = execute;
-            Children.Add(browser);
+            Children.Add(resizeBand); Children.Add(browser);
+            // HWND-hosted WebView2 receives pointer input ahead of WindowChrome.
+            // Leave a real native resize band, instead of drawing a fake web grip.
+            UpdateResizeBand();
+            owner.StateChanged += WindowStateChanged;
             browser.DefaultBackgroundColor = System.Drawing.Color.Transparent;
             System.Windows.Shell.WindowChrome.SetIsHitTestVisibleInChrome(browser, true);
             Loaded += async delegate { await Start(); };
             owner.IsVisibleChanged += VisibleChanged;
             timer.Tick += delegate { Publish(); };
+        }
+        private void WindowStateChanged(object sender, EventArgs e) { UpdateResizeBand(); }
+        private void UpdateResizeBand()
+        {
+            browser.Margin = new Thickness(owner.WindowState == WindowState.Maximized ? 0 : SettingsWindow.ResizeGrip);
+            resizeBand.BorderThickness = browser.Margin;
+        }
+        internal void PaintResizeBand(System.Windows.Media.Color color, bool glass, bool highContrast)
+        {
+            if (highContrast) color = SystemColors.WindowColor;
+            else color.A = (byte)(glass ? 168 : 255);
+            var current = resizeBand.BorderBrush as System.Windows.Media.SolidColorBrush;
+            if (current == null || current.Color != color) resizeBand.BorderBrush = new System.Windows.Media.SolidColorBrush(color);
         }
         private async void VisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
@@ -123,7 +141,7 @@ namespace MonitorShade
         public void Dispose()
         {
             if (disposed) return;
-            disposed = true; ready = false; timer.Stop(); owner.IsVisibleChanged -= VisibleChanged; browser.Dispose();
+            disposed = true; ready = false; timer.Stop(); owner.IsVisibleChanged -= VisibleChanged; owner.StateChanged -= WindowStateChanged; browser.Dispose();
         }
     }
 }

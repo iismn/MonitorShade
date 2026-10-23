@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330">
+<defs>
+  <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f8f2e8"/><stop offset="1" stop-color="#e3e9db"/></linearGradient>
+  <radialGradient id="warm"><stop stop-color="#f2c89c" stop-opacity=".8"/><stop offset="1" stop-color="#f2c89c" stop-opacity="0"/></radialGradient>
+  <linearGradient id="glass" x2=".4" y2="1"><stop stop-color="#ead7a3"/><stop offset=".5" stop-color="#8dbd75"/><stop offset="1" stop-color="#2f6941"/></linearGradient>
+  <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#edf5dc" opacity=".3"/></pattern>
+</defs>
+<rect width="1280" height="330" rx="28" fill="url(#bg)"/>
+<ellipse cx="480" cy="45" rx="450" ry="220" fill="url(#warm)"/>
+<text x="66" y="75" fill="#6b7764" font-family="Segoe UI, sans-serif" font-size="12" letter-spacing="4">YOUR DISPLAYS. IN BALANCE.</text>
+<text x="62" y="163" fill="#28352b" font-family="Segoe UI, sans-serif" font-weight="600" font-size="66" letter-spacing="-3">MonitorShade</text>
+<text x="66" y="211" fill="#62705e" font-family="Segoe UI, sans-serif" font-size="19">Brightness · OLED care · Window control</text>
+<rect x="66" y="248" width="142" height="30" rx="15" fill="#ffffff" fill-opacity=".6"/><text x="137" y="268" text-anchor="middle" fill="#42634b" font-family="Segoe UI, sans-serif" font-size="12">WINDOWS / 1.17</text>
+<rect x="862" y="44" width="318" height="240" rx="24" fill="url(#glass)" stroke="#fff" stroke-opacity=".65"/>
+<rect x="863" y="173" width="316" height="110" rx="24" fill="url(#dots)"/>
+<g fill="none" stroke="#f2fbde" stroke-width="2"><rect x="918" y="91" width="70" height="88" rx="5"/><rect x="1007" y="110" width="119" height="69" rx="5"/><path d="M1048 190h36m-18-11v11"/></g>
+<path d="M904 232H1137" stroke="#ecf7dc" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/><path d="M904 232H1072" stroke="#ecf7dc" stroke-width="5" stroke-linecap="round"/><circle cx="1072" cy="232" r="8" fill="#f3ffdd"/>
+</svg>

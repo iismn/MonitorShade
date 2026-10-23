@@ -1,127 +1,118 @@
-# MonitorShade
+<div align="center">
 
-Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니터의 화면 내용이 일정 시간 동안 바뀌지 않으면 해당 화면만 검은 오버레이로 가립니다. 다른 모니터에서의 작업은 계속할 수 있습니다.
+![MonitorShade — Your displays. In balance.](docs/images/hero.svg)
 
-현재 소스 버전: **1.16.0**
+**화면을 쉬게 하고, 밝기를 맞추고, 창을 정돈하세요.**
 
-1.15.1의 Pretendard와 반투명 디자인을 기준으로 설정 화면을 **Chromium 기반 WebView2**로 전환했습니다. WPF 텍스트의 픽셀 정렬 대신 Chromium의 자연스러운 글꼴 렌더링을 사용합니다. 창 뒤는 Windows DWM Acrylic이 실시간으로 처리하며, 배경 캡처용 보조 창을 만들지 않습니다. 감시·DDC/CI·창 배치·단축키 로직은 기존 네이티브 코드를 사용합니다.
+Windows용 멀티 모니터 유틸리티 · OLED 화면 보호 · DDC/CI · 창 배치
 
-## 기능
+![Version](https://img.shields.io/badge/source-1.17.0-577653?style=flat-square)
+![Platform](https://img.shields.io/badge/Windows-10%20%2F%2011-477b99?style=flat-square)
+![Architecture](https://img.shields.io/badge/x64-.NET%204.8-8c7861?style=flat-square)
+![Renderer](https://img.shields.io/badge/UI-Chromium%20%2B%20Acrylic-6f8c76?style=flat-square)
 
-- 여러 모니터를 동시에 선택하고 대기 시간을 초 또는 분으로 설정합니다.
-- 화면 내용이 바뀌거나 마우스가 들어오면 자동 가림을 해제합니다.
-- Lively 같은 움직이는 배경화면은 감시에서 제외할 수 있습니다. 작은 앱 창 밖으로 드러나는 배경 영역도 제외합니다.
-- 선택했던 모니터가 다시 연결되면 자동 감시를 재개합니다. 연결된 다른 모니터의 감시는 유지합니다.
-- 시작할 때 대상 모니터가 없어도 연결을 기다립니다. 재연결·잠금 해제 후에는 대기 시간을 처음부터 셉니다.
-- 트레이에서 숨김 실행하며, 설정에서 Windows 로그인 시 자동 실행을 등록할 수 있습니다.
-- 모니터별 강제 검은 화면 단축키, 창 배치 단축키, DDC/CI 밝기 조절을 제공합니다.
-- 밝기 동기화를 켜면 선택한 모니터에 같은 밝기 값을 적용합니다.
-- 시간에 따라 바뀌는 색상과 창 뒤 배경 블러를 결합한 Chromium UI를 제공합니다. 오전 9시는 흰색·살구색, 오후는 세이지, 저녁은 올리브, 밤은 슬레이트 계열입니다.
-- 반원형 밝기 게이지, 모니터별 카드, 마우스를 올리면 은은하게 밝아지는 슬라이더를 제공합니다. 마우스를 올리는 것만으로 모니터 밝기가 바뀌지는 않습니다.
-- 한글 UI의 기본 글꼴은 내장 Pretendard, 숫자는 Manrope입니다. 1.15.1의 반투명 디자인을 유지하고 배경은 DWM, 텍스트는 Chromium으로 합성합니다.
+[시작하기](#시작하기) · [단축키](#손끝에서-정리되는-작업-공간) · [빌드](#직접-빌드하기) · [기술 가이드](docs/technical-guide.md)
 
-## 디자인 설정
+</div>
 
-**일반 → 시간별 색상**에서 자동 변화 또는 아침·낮·저녁·밤을 고정할 수 있습니다. 자동 모드는 PC의 현지 시간을 사용합니다. 오전 9시는 흰색·살구색이며 낮에는 세이지, 저녁에는 올리브, 밤에는 슬레이트 계열로 이어집니다.
+---
 
-**창 뒤 배경 블러**는 Windows 11 22H2 이상에서 Windows 투명도 효과가 켜져 있을 때 적용됩니다. 배경은 Windows DWM의 Desktop Acrylic이고, 그 위에 투명한 WebView2 화면의 시간별 색상과 반투명 카드를 겹칩니다. 별도 화면 캡처·Magnifier 보조 창·주기적인 배경 이미지 갱신은 사용하지 않습니다. 이전 Windows, 투명도 비활성화, 고대비 환경에서는 단색 배경을 사용합니다.
+## 하나의 콘솔, 여러 화면
 
-카드 모서리는 20px입니다. 슬라이더 호버 광채, 메뉴 호버, 본문 페이드와 숫자 전환을 유지했습니다. 마우스를 올리는 것만으로 실제 밝기를 변경하지 않습니다. 상단 빈 영역은 Chromium의 네이티브 `app-region` 기능으로 이동·두 번 클릭 최대화/복원·시스템 메뉴를 지원합니다. 닫기 버튼은 트레이로 숨깁니다.
+![MonitorShade 1.17 아침 테마의 밝기 화면](docs/images/brightness-morning.png)
 
-**일반 → 한글 글꼴**의 기본값은 내장 Pretendard이고 숫자는 Manrope입니다. Regular와 SemiBold 실제 파일을 각각 사용하며 합성 굵기는 사용하지 않습니다. 맑은 고딕도 선택할 수 있습니다. 1.16에서 이전 설정을 처음 읽을 때 Pretendard로 복귀하고 이후 사용자의 선택은 유지합니다. 모니터·밝기·단축키·블러 설정은 유지합니다. 글꼴 렌더러는 Chromium이 결정하며 WPF의 ClearType을 강제하거나 MacType을 설치하지 않습니다.
+<table>
+<tr>
+<td width="33%"><strong>☀ 밝기를 함께</strong><br><br>모니터마다 따로, 또는 같은 값으로.<br>40 · 60에서 +5 → <strong>65 · 65</strong>.<br>슬라이더와 단축키 모두 지원합니다.</td>
+<td width="33%"><strong>◐ 쉬는 화면만 검게</strong><br><br>변화 없는 화면에만 검은 오버레이.<br>마우스가 들어오면 바로 복귀.<br>Lively 배경 제외와 재연결 복구까지.</td>
+<td width="33%"><strong>▣ 창을 원하는 곳으로</strong><br><br>방향 배치, 중앙 16:9, 비율 확대.<br>가로·세로 모니터에 맞춰 순환.<br>설정 창도 가장자리를 잡아 조절하세요.</td>
+</tr>
+</table>
 
-설정 화면은 EXE에 포함된 HTML/CSS/JavaScript와 글꼴만 사용합니다. 외부 페이지 탐색·다운로드·권한 요청은 차단하고, 제한된 메시지 명령으로 기존 C# 컨트롤러를 호출합니다. 설정 창을 처음 열 때만 브라우저를 초기화하고 숨기면 렌더러를 일시정지합니다. 코드상 WPF 창과 비표시 설정 컨트롤은 네이티브 컨트롤러 호환 계층으로 남아 있지만 보이는 설정 텍스트는 Chromium이 그립니다.
+### 아침부터 밤까지, 부드럽게
 
-글꼴과 WebView2 SDK의 라이선스는 **도움말 → 외형과 렌더링**에서 볼 수 있습니다. 출처는 [source/fonts/README.md](source/fonts/README.md), SDK 고지는 [source/licenses](source/licenses)에 있습니다.
+아침의 흰색·살구빛에서 낮의 세이지, 저녁의 올리브, 밤의 슬레이트로 이어집니다. Windows의 실시간 Acrylic 블러 위에 반투명 카드를 겹치고, 밝기 조절에는 초록빛 앰비언트 카드와 도트 숫자를 사용합니다.
 
-## 실행
+- **찾기 쉬운 설정** — 검색에 `Backspace`, `프리텐다드`, `자동 실행`을 입력해 바로 이동합니다. `Ctrl + F`로 검색을 엽니다.
+- **작은 움직임** — 슬라이더의 은은한 호버 광채, 메뉴 반응, 페이지 페이드. 호버만으로 실제 밝기가 바뀌지 않습니다.
+- **또렷한 글꼴** — Chromium에서 내장 Pretendard와 Manrope를 렌더링합니다. 도트 숫자는 DPI에 맞춰 확대되는 SVG입니다.
+- **가벼운 실행 흐름** — 기본 실행은 트레이에서 시작합니다. 설정 화면은 열 때 초기화하고 숨기면 렌더러를 일시정지합니다.
 
-Windows 10 버전 2004 이상 또는 Windows 11, .NET Framework 4.8, Microsoft Edge WebView2 Runtime이 필요합니다. x64 전용입니다. WebView2 Runtime이 없는 PC에서는 [Microsoft 공식 배포처](https://developer.microsoft.com/microsoft-edge/webview2/)의 Evergreen Runtime을 설치하세요.
+<details>
+<summary><strong>저녁 테마 보기</strong></summary>
 
-빌드한 `MonitorShade.exe`를 쓰기 가능한 폴더에 두고 실행하세요. 설정은 EXE 옆의 `MonitorShade.settings.xml`에 자동 저장됩니다. 글꼴·HTML·WebView2 SDK 파일은 EXE에 포함되어 별도 리소스 파일은 필요하지 않습니다. SDK DLL은 첫 실행 시 `%LOCALAPPDATA%\MonitorShade\WebView2SDK`에 풀고 브라우저 캐시는 `%LOCALAPPDATA%\MonitorShade\WebView2`에 보관합니다.
+![MonitorShade 저녁 테마](docs/images/brightness-evening.png)
 
-- 기본 실행: 설정 창 없이 트레이에서 시작하고 약 3초 뒤 자동 감시를 준비합니다.
-- 설정 열기: 트레이 아이콘을 두 번 클릭하거나 `Ctrl + Alt + F11`을 누릅니다.
-- 설정을 편집한 다음 **감시 시작**을 누르면 감시를 시작합니다. 설정 창을 여는 동안에는 보호가 일시정지합니다.
-- 로그인 자동 실행: **일반 → 로그인 시 자동 실행**을 켭니다. EXE를 다른 폴더로 옮겼다면 다시 등록하세요.
-- 앱 종료: 트레이 메뉴의 **종료**를 선택합니다. 창의 닫기 버튼은 트레이로 숨깁니다.
+</details>
 
-```powershell
-# 설정 창을 바로 열기
-.\MonitorShade.exe --settings
-```
+> 화면 예시는 앱의 미리보기 모드로 촬영했습니다. 모니터와 밝기 값은 테스트 데이터이며, 웹 캡처의 배경에는 고정 색상을 사용했습니다. 실제 창 뒤 블러는 바탕화면과 Windows 투명도 설정에 따라 달라집니다.
 
-기존 버전에서 업데이트하려면 트레이 메뉴의 **종료**로 앱을 닫고, 기존 EXE를 새 파일로 교체하세요. 같은 폴더의 `MonitorShade.settings.xml`을 유지하면 기존 감시 대상과 단축키 설정을 이어서 사용합니다. 기본 실행은 계속 창 없이 트레이에서 시작합니다.
-
-## 단축키
+## 손끝에서 정리되는 작업 공간
 
 | 단축키 | 동작 |
-| --- | --- |
-| Ctrl + Alt + F11 | 설정 열기 |
-| Ctrl + Alt + F12 | 자동 감시 일시정지 / 재시작 |
-| Ctrl + Alt + F9 / F10 | 지정한 모니터에 강제 검은 화면 켜기 / 끄기 |
-| Win + 방향키 | 해당 방향으로 1/2 → 2/3 → 최대화 |
-| Win + Delete | 중앙 16:9 창 → 최대화 |
-| 오른쪽 Alt + F2 / F3 | 밝기 낮추기 / 높이기 |
+| :--- | :--- |
+| **Win + Backspace** | 현재 모니터 비율로 **50% → 70% → 100%** 순환 |
+| **Win + ↑ ↓ ← →** | 해당 방향으로 **½ → ⅔ → 최대화** |
+| **Win + Delete** | **중앙 16:9 → 최대화** · 기본 너비 65%, 변경 가능 |
+| **오른쪽 Alt + F2 / F3** | 밝기 낮추기 / 높이기 · 키와 간격 변경 가능 |
+| **Ctrl + Alt + F9 / F10** | 지정한 모니터의 강제 검은 화면 켜기 / 끄기 |
+| **Ctrl + Alt + F11** | 설정 열기 |
+| **Ctrl + Alt + F12** | 자동 화면 보호 일시정지 / 재시작 |
 
-창 배치 기능은 설정에서 끌 수 있습니다. 중앙 창 크기는 기본 65%이며 수정할 수 있습니다. 밝기 단축키와 조절 간격도 변경할 수 있습니다.
+`Win + Backspace`의 비율은 **작업 표시줄을 제외한 작업 영역의 가로·세로 각각**에 적용됩니다. 50%·70%는 중앙 정렬, 100%는 최대화입니다. 반복하면 다시 50%로 돌아갑니다. 창을 직접 이동·변경하거나 다른 배치 단축키를 사용하면 순환을 처음부터 시작합니다.
 
-강제 검은 화면은 마우스가 들어오면 해제됩니다. 가릴 때 이미 마우스가 그 화면에 있었다면 밖으로 나갔다가 다시 들어오면 해제됩니다. 잠금·절전·모니터 구성 변경 시 강제 가림은 해제하며, 자동으로 다시 강제 가리지 않습니다.
+<details>
+<summary><strong>창 배치 화면 보기</strong></summary>
 
-## 빌드
+![방향 배치와 창 크기 순환](docs/images/window-layout.png)
 
-Windows의 .NET Framework 컴파일러로 빌드합니다. 첫 빌드에서 공식 NuGet의 Microsoft.Web.WebView2 1.0.4258.31을 내려받아 고정 SHA-256으로 검증합니다. 이후 `.build/webview2` 캐시를 사용합니다.
+</details>
+
+## 시작하기
+
+1. `MonitorShade.exe`를 쓰기 가능한 폴더에 둡니다. 공개된 빌드는 [GitHub Releases](https://github.com/iismn/MonitorShade/releases)에서 확인할 수 있습니다. **소스 버전과 공개 릴리즈 버전은 다를 수 있습니다.**
+2. 실행 후 트레이 아이콘을 두 번 클릭하거나 `Ctrl + Alt + F11`로 설정을 엽니다.
+3. **화면 보호**에서 모니터와 대기 시간(초/분)을 선택하고 **감시 시작**을 누릅니다.
+4. **일반 → 로그인 시 자동 실행**을 켜면 다음 로그인부터 창 없이 시작합니다.
+
+**필요 환경:** Windows 10 2004 이상 / Windows 11, x64, .NET Framework 4.8, [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/). 창 뒤 Acrylic은 **Windows 11 22H2 이상 + 투명도 효과 켜짐**에서 지원됩니다. 미지원 환경에는 단색 배경을 사용합니다.
+
+설정은 EXE 옆의 `MonitorShade.settings.xml`에 저장합니다. 업데이트할 때는 트레이의 **종료**로 앱을 닫고 EXE만 교체하세요. XML을 유지하면 기존 설정을 이어서 사용합니다. 자동 실행을 등록한 뒤 EXE 경로를 바꿨다면 다시 등록하세요.
+
+## 직접 빌드하기
+
+별도 IDE 없이 Windows의 .NET Framework 컴파일러로 빌드할 수 있습니다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\source\build.ps1
 ```
 
-저장소 루트에 `MonitorShade.exe`가 생성됩니다. 이 명령의 실행 정책 옵션은 해당 프로세스에만 적용됩니다.
-
-## 검증
+루트에 `MonitorShade.exe`가 생성됩니다. 첫 빌드에서는 고정 버전의 WebView2 SDK를 공식 NuGet에서 받아 SHA-256을 검증합니다. HTML·CSS·JavaScript·글꼴·SDK는 EXE에 포함됩니다. 시스템의 WebView2 Runtime은 별도로 필요합니다.
 
 ```powershell
-# 빌드 후 로직 검증 실행
-powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1
-
-# 설정 UI의 배치·동작·렌더링 검증도 포함
+# 기존 로직 + Chromium UI 검사
 powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
+
+# 실제 모니터 밝기·사용자 설정을 건드리지 않는 UI 미리보기
+.\MonitorShade.exe --design-preview
 ```
 
-결과는 `tests/`에 생성됩니다. 기본 검증은 재연결, 화면 접근 복구, 강제 가림, 밝기 계산, 배경화면 제외, 유휴 시간 및 창 배치 로직을 다룹니다. 재연결 검증은 모의 모니터와 가짜 화면 표면을 사용하며, 실제 케이블이나 모니터 밝기를 변경하지 않습니다. `-IncludeUi`는 설정 UI를 잠시 열고 렌더링합니다.
+화면 보호·재연결·밝기 동기화·키 필터·설정 저장·창 배치·검색·도트 숫자와 UI 연결을 자동 검사합니다. 실제 케이블 재연결이나 모든 모니터의 DDC/CI 호환성을 자동 검사가 보장하지는 않습니다. 자세한 진단 명령은 [기술 가이드](docs/technical-guide.md#검증)에 있습니다.
 
-`--web-ui-test <보고서 경로>`는 미리보기 모드에서 Chromium 글꼴 로딩, 실제 메시지 연결, 밝기 동기화, 페이지 전환, 설정과 창 크기별 배치를 검사합니다. 모니터 밝기와 사용자 설정을 변경하지 않습니다. 브라우저 PNG는 보고서 옆에 저장하며 Windows DWM 배경은 웹 캡처 밖에 있습니다.
+## 알아둘 점
 
-`--web-live-test <보고서 경로>`는 잠금이 해제된 대화형 화면에서 임시 색상 창과 앱 자신의 창만 이용해 실제 DWM 투과·배경 갱신·이동 후 갱신·숨김/복원을 검사합니다. 테스트용 캡처와 임시 배경 창은 이 명령에서만 생성됩니다.
+- 화면 보호는 **검은 오버레이**입니다. 모니터 전원이나 입력 신호를 끄지 않습니다.
+- DDC/CI 쓰기는 표준 밝기 명령 `0x10`에 한정합니다. 모니터 OSD에서 DDC/CI를 켜야 하며, HDR·일부 화면 모드에서는 밝기 조절이 제한될 수 있습니다.
+- 화면 비교는 메모리에서 처리합니다. 화면 내용을 저장하거나 전송하지 않습니다. 화면 공유에는 검은 오버레이 뒤 내용이 보일 수 있습니다.
+- 관리자 권한 앱이나 최소 크기가 제한된 창에는 창 배치를 적용하지 못할 수 있습니다. 기능을 끄면 Windows 기본 단축키 동작으로 돌아갑니다.
+- 설정 창을 여는 동안 자동 감시를 일시정지합니다. 닫기 버튼은 트레이로 숨기고, **감시 시작**으로 감시를 이어갑니다.
 
-이전 `--ui-test`, `--text-test`, `--settings-text-test`, `--settings-text-pretendard-test`는 과거 WPF 화면 회귀 검사용으로만 남아 있습니다. 새 Chromium 렌더러의 검증 자료로 사용하지 않습니다.
-소스에는 실제 화면 캡처·가림·창 이동을 확인하는 별도 진단도 포함되어 있지만 기본 검증 스크립트에서는 실행하지 않습니다. 실제 케이블 재연결과 모니터별 DDC/CI 호환성은 사용 환경에서 별도로 확인해야 합니다.
+---
 
-## 동작 범위
+<div align="center">
 
-- 검은 오버레이를 띄우는 방식이며 모니터의 전원이나 입력 신호를 끄지 않습니다.
-- 자동 감시는 선택한 모니터에만 적용합니다. 직접 일시정지하거나 설정 창을 연 뒤에는 연결 변경만으로 재개하지 않습니다.
-- 모니터의 Windows 인터페이스 식별 정보를 기억합니다. 다른 포트로 옮기거나 드라이버 변경으로 식별 정보가 달라지면 다시 선택해야 할 수 있습니다.
-- 화면 캡처는 메모리에서 비교하며 저장하거나 전송하지 않습니다. 화면 공유에는 검은 오버레이 뒤의 내용이 보일 수 있습니다.
-- DRM 영상, 독점 전체 화면, 보안 화면에서는 변화 감지가 제한될 수 있습니다.
-- DDC/CI 쓰기는 표준 밝기 항목 `0x10`에 한정합니다. HDR이나 모니터 화면 모드에 따라 밝기 조절이 제한될 수 있습니다.
-- 밝기 동기화 중 높이기는 가장 밝은 모니터, 낮추기는 가장 어두운 모니터를 기준으로 합니다. 예를 들어 40·60에서 5% 높이면 65·65가 됩니다.
-- 표시되는 nit 정보는 Windows의 읽기 전용 휘도 메타데이터이며 현재 밝기의 실측값이 아닙니다.
+**MonitorShade** · 개인 작업 공간을 위한 디스플레이 도구
 
-## 소스 구성
+[기술 가이드](docs/technical-guide.md) · [글꼴 출처 및 라이선스](source/fonts/README.md) · [WebView2 고지](source/licenses) · [문제 보고](https://github.com/iismn/MonitorShade/issues)
 
-- `source/MonitorShade.cs`: 진입점, 설정 저장, 화면 캡처와 감시 그룹
-- `source/DesktopRecovery.cs`, `source/DisplayRecovery.cs`: 화면 접근 복구와 모니터 재연결 처리
-- `source/WallpaperRegions.cs`: 바탕화면 영역 제외
-- `source/SettingsForm.cs`, `source/Settings.xaml`: 기존 네이티브 컨트롤러와 비표시 호환 컨트롤
-- `source/SettingsWindow.cs`: 네이티브 창, 트레이 및 메시지 처리 연결
-- `source/Appearance.cs`, `source/BrightnessControls.cs`: 시간별 색상, Desktop Acrylic, 게이지 및 슬라이더 효과
-- `source/WebUi.cs`, `source/WebSettings.cs`, `source/WebRuntime.cs`: WebView2 호스트, 메시지 연결, 내장 SDK 로더
-- `source/web/`: 실제 설정 화면 HTML, CSS, JavaScript
-- `source/UiMotion.cs`: 이전 WPF 화면의 회귀 검사와 호환 컨트롤
-- `source/WindowLayout.cs`: 창 배치 단축키
-- `source/ManualShade.cs`: 강제 검은 화면
-- `source/Ddc.cs`, `source/Brightness*.cs`: 밝기 조절과 단축키
-- `source/*Verification.cs`: 자동 검증
-
-개인 설정, 실제 모니터 식별 정보, 생성된 실행 파일·로그·미리보기는 버전 관리에서 제외합니다.
+</div>

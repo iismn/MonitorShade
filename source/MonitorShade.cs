@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.16.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.16.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.17.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.17.0.0")]
 
 namespace MonitorShade
 {
@@ -38,7 +38,10 @@ namespace MonitorShade
             if (args.Length == 1 && args[0] == "--design-preview")
             {
                 var demo = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose };
-                using (var form = new SettingsForm(true, false)) demo.Run(form);
+                using (var form = new SettingsForm(true, false)) {
+                    form.Loaded += delegate { LayoutNative.ShowWindowAsync(form.Handle, 5); };
+                    demo.Run(form);
+                }
                 return 0;
             }
             if (args.Length == 3 && args[0] == "--ddc-worker") return DdcWorker.Run(args[1], args[2]);

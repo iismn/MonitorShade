@@ -13,6 +13,7 @@ namespace MonitorShade
     // WinForms-style lifetime/message interface also serves the tray and monitor controllers.
     internal class SettingsWindow : Window, IDisposable, F.IWin32Window
     {
+        internal const double ResizeGrip = 8;
         private IntPtr handle;
         private HwndSource source;
         internal bool IsDisposed { get; private set; }
@@ -28,7 +29,7 @@ namespace MonitorShade
             UseLayoutRounding = true; SnapsToDevicePixels = true;
             // Keep an ordinary DWM window: AllowsTransparency would disable native chrome and crisp text.
             WindowChrome.SetWindowChrome(this, new WindowChrome {
-                CaptionHeight = 40, ResizeBorderThickness = new Thickness(6),
+                CaptionHeight = 40, ResizeBorderThickness = new Thickness(ResizeGrip),
                 GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(0), UseAeroCaptionButtons = false
             });
         }
