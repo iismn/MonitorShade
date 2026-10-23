@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-labelledby="title description">
-  <title id="title">한쪽 화면을 가리는 동안 다른 화면에서 작업</title>
-  <desc id="description">왼쪽 모니터는 검은 오버레이를 표시합니다. 오른쪽 모니터는 앱 창을 계속 표시합니다. 동작을 설명하는 그림입니다.</desc>
+  <title id="title">Independent display protection</title>
+  <desc id="description">Illustration: the left monitor is covered by a black overlay. The right monitor remains in use.</desc>
   <defs>
     <linearGradient id="canvas" x2="1" y2="1"><stop stop-color="#f5f1e9"/><stop offset="1" stop-color="#e8eee4"/></linearGradient>
     <radialGradient id="glow"><stop stop-color="#c7dfae" stop-opacity=".65"/><stop offset="1" stop-color="#c7dfae" stop-opacity="0"/></radialGradient>
@@ -31,9 +31,9 @@
     </g>
     <g text-anchor="middle">
       <rect x="164" y="384" width="164" height="34" rx="17" fill="#e2e8db"/>
-      <text x="246" y="406" fill="#46583e" font-size="14" font-weight="600">멈춘 화면은 검게</text>
+      <text x="246" y="406" fill="#46583e" font-size="14" font-weight="600">Protected</text>
       <rect x="658" y="384" width="176" height="34" rx="17" fill="#d5e8c0"/>
-      <text x="746" y="406" fill="#355336" font-size="14" font-weight="600">다른 화면은 작업 계속</text>
+      <text x="746" y="406" fill="#355336" font-size="14" font-weight="600">In use</text>
     </g>
   </g>
 </svg>

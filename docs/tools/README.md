@@ -1,0 +1,31 @@
+# README recordings
+
+The GIFs are recordings of MonitorShade 1.17's WebView2 settings UI.
+The recorder loads the released EXE in its existing preview mode.
+No replacement UI, generated animation frames, or image crossfades are used.
+
+- Brightness changes pass through the normal UI event and native controller.
+- The monitors are preview devices. Recording does not send DDC/CI commands.
+- The appearance recording advances the app's preview clock through 24 hours.
+- Frames come from WebView2 at 8 fps. The appearance GIF uses every second frame to reduce its size. Native DWM blur is outside this capture.
+- A solid base uses the app's background color under the translucent UI.
+- Preferences and the released EXE are not modified.
+
+## Record
+
+Run from the repository root on Windows with .NET Framework 4.8 and WebView2.
+The pinned WebView2 SDK must already exist in `.build/webview2` (created by the application build).
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\docs\tools\record-demos.ps1 -ApplicationPath .\MonitorShade.exe
+python .\docs\tools\encode-demos.py .\.build\readme-recordings .\docs\images
+```
+
+The encoder requires Pillow. Intermediate frames and validation results stay in
+`.build/readme-recordings`. Only the GIFs and four appearance stills are published.
+
+Source EXE SHA-256:
+
+```text
+6ae603e4ac3064e0bd08527969efd3b307e15ce1dea378591101b6a6b39dbac0
+```
