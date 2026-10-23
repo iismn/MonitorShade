@@ -16,6 +16,17 @@ namespace MonitorShade
                 check(morning.Light && morning.Background.R > 240 && morning.Background.G > 240 && morning.Aura.R > morning.Aura.B, "09:00 is warm white with an apricot tint");
                 check(!evening.Light && evening.Accent.G > evening.Accent.R && evening.Accent.G > evening.Accent.B, "20:00 retains the olive evening palette");
                 check(DayPalette.At(0).Background == DayPalette.At(24).Background && DayPalette.At(-1).Background == DayPalette.At(23).Background, "Palette wraps continuously at midnight");
+                check(DayPalette.MasterWarmthAt(9) == 0 && DayPalette.MasterWarmthAt(14) == 0 && DayPalette.MasterWarmthAt(20) == 1 && DayPalette.MasterWarmthAt(0) == 1, "Brightness card stays green by day and warm at night");
+                double previousWarmth = DayPalette.MasterWarmthAt(0); bool smoothWarmth = true;
+                for (int minute = 1; minute <= 1440; minute++)
+                {
+                    double warmth = DayPalette.MasterWarmthAt(minute / 60.0);
+                    smoothWarmth &= warmth >= 0 && warmth <= 1 && Math.Abs(warmth - previousWarmth) < .007;
+                    if (minute > 300 && minute <= 540) smoothWarmth &= warmth <= previousWarmth;
+                    if (minute > 840 && minute <= 1200) smoothWarmth &= warmth >= previousWarmth;
+                    previousWarmth = warmth;
+                }
+                check(smoothWarmth && DayPalette.MasterWarmthAt(-1) == DayPalette.MasterWarmthAt(23), "Card warmth fades monotonically at dawn/dusk and wraps without a midnight jump");
                 double minText = 100, minMuted = 100;
                 for (int minute = 0; minute < 1440; minute++)
                 {

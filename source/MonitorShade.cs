@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.18.1.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.18.1.0")]
+[assembly: System.Reflection.AssemblyVersion("1.18.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.18.2.0")]
 
 namespace MonitorShade
 {

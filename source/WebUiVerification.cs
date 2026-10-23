@@ -80,10 +80,13 @@ namespace MonitorShade
                     await core.ExecuteScriptAsync("monitorShadeNavigate('General')"); await Task.Delay(400);
                     await core.ExecuteScriptAsync("document.querySelector('#AppearanceMode').value='1';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'))"); await Task.Delay(350);
                     await check("monitorShadeState.palette.light && monitorShadeState.fields.AppearanceMode.value===1", "Morning palette is warm and light");
+                    await check("monitorShadeState.masterWarmth===0 && Number(getComputedStyle(document.querySelector('.ambient-master'),'::after').opacity)<.01", "Morning selection restores the green brightness card");
                     await core.ExecuteScriptAsync("document.querySelector('#UseBackdrop').click()"); await Task.Delay(350);
                     await check("document.body.classList.contains('solid') && !monitorShadeState.glass", "Blur can be disabled without a capture window");
                     await core.ExecuteScriptAsync("document.querySelector('#UseBackdrop').click();document.querySelector('#AppearanceMode').value='3';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'))"); await Task.Delay(350);
                     await check("monitorShadeState.fields.UseBackdrop && !monitorShadeState.palette.light", "Blur preference and evening palette restore");
+                    await check("monitorShadeState.masterWarmth===1 && Number(getComputedStyle(document.querySelector('.ambient-master'),'::after').opacity)>.99", "Evening selection crossfades the brightness card to orange and pink");
+                    await check("getComputedStyle(document.querySelector('#dotBrightness')).filter.includes('drop-shadow') && getComputedStyle(document.querySelector('.master-heading')).color!== 'rgb(37, 69, 50)'", "Dot glow and heading tint follow the warm card");
                     foreach (string page in new[] { "Protection", "Layout", "Shortcuts", "Help", "General", "Brightness" }) {
                         await core.ExecuteScriptAsync("monitorShadeNavigate('" + page + "')"); await Task.Delay(400);
                         await check("!document.querySelector('#" + page + "').hidden && !window.monitorShadeError", page + " page renders");
@@ -182,6 +185,12 @@ namespace MonitorShade
                     await core.ExecuteScriptAsync("document.querySelector('#AppearanceMode').value='1';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'))"); await Task.Delay(1500);
                     await core.ExecuteScriptAsync("document.documentElement.style.background='rgb('+monitorShadeState.palette.background+')'");
                     using (var output = File.Create(path + ".morning.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("document.querySelector('#AppearanceMode').value='4';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'))"); await Task.Delay(1500);
+                    await check("monitorShadeState.masterWarmth===1 && Number(getComputedStyle(document.querySelector('.ambient-master'),'::after').opacity)>.99", "Night theme keeps the warm card on the midnight app background");
+                    await core.ExecuteScriptAsync("document.documentElement.style.background='rgb('+monitorShadeState.palette.background+')'");
+                    using (var output = File.Create(path + ".night.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("document.querySelector('#AppearanceMode').value='1';document.querySelector('#AppearanceMode').dispatchEvent(new Event('change'))"); await Task.Delay(1500);
+                    await core.ExecuteScriptAsync("document.documentElement.style.background='rgb('+monitorShadeState.palette.background+')'");
                     await core.ExecuteScriptAsync("monitorShadeNavigate('Layout')"); await Task.Delay(450);
                     await core.ExecuteScriptAsync("document.activeElement.blur()");
                     using (var output = File.Create(path + ".layout.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);

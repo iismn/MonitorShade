@@ -44,6 +44,15 @@ namespace MonitorShade
         internal static M.Color Mix(M.Color a, M.Color b, double t)
         { return M.Color.FromArgb((byte)Math.Round(a.A + (b.A - a.A) * t), (byte)Math.Round(a.R + (b.R - a.R) * t), (byte)Math.Round(a.G + (b.G - a.G) * t), (byte)Math.Round(a.B + (b.B - a.B) * t)); }
         internal static M.Color Alpha(M.Color c, byte alpha) { c.A = alpha; return c; }
+        // The brightness card has its own light field, but follows the same local/fixed hour.
+        internal static double MasterWarmthAt(double hour)
+        {
+            double h = ((hour % 24) + 24) % 24;
+            if (h <= 5 || h >= 20) return 1;
+            if (h >= 9 && h <= 14) return 0;
+            double t = h < 9 ? (9 - h) / 4 : (h - 14) / 6;
+            return Math.Round(t * t * (3 - 2 * t), 4);
+        }
         private static double Linear(byte v) { double x = v / 255.0; return x <= .04045 ? x / 12.92 : Math.Pow((x + .055) / 1.055, 2.4); }
         private static double Luminance(M.Color c) { return Linear(c.R) * .2126 + Linear(c.G) * .7152 + Linear(c.B) * .0722; }
         internal static double Contrast(M.Color a, M.Color b) { double x = Luminance(a), y = Luminance(b); return (Math.Max(x, y) + .05) / (Math.Min(x, y) + .05); }

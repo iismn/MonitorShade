@@ -63,7 +63,8 @@ body.light .nav{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.
 #searchResults{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}.search-result{display:flex;flex-direction:column;align-items:flex-start;gap:7px;width:100%;margin:0 0 7px;text-align:left;padding:12px;border-radius:16px;font-size:13px;line-height:1.35}.search-result small{font-size:10px;color:rgb(var(--muted))}.search-empty{padding:12px 5px;font-size:12px;color:rgb(var(--muted));line-height:1.6}
 .search-highlight{animation:search-highlight 1.4s ease-out}@keyframes search-highlight{from{box-shadow:0 0 0 4px rgba(var(--accent),.55)}to{box-shadow:0 0 0 4px transparent}}
 
-/* Dedicated ambient brightness surface, inspired by a warm-to-green light field. */
+/* Crossfade the local-time light field without animating the card's contents. */
+@property --master-night { syntax:'<number>'; inherits:true; initial-value:0; }
 .ambient-master{--accent:241,250,221;--muted:218,237,205;--text:255,255,243;--ink:25,63,41;--soft:125,162,103;--line:211,230,183;--background:28,86,49;--bloom-warm:249,210,159;color:rgb(var(--text));border-color:rgba(207,233,174,.35);background-color:rgba(23,78,44,.7);background-image:radial-gradient(ellipse at 35% -12%,rgba(255,217,169,.94),transparent 53%),radial-gradient(ellipse at 98% 15%,rgba(202,214,126,.62),transparent 60%),radial-gradient(ellipse at -12% 61%,rgba(69,166,65,.65),transparent 69%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 8px 26px rgba(25,75,39,.08)}
 body.light .ambient-master{border-color:rgba(230,239,207,.6);background-color:rgba(34,94,46,.78);background-image:radial-gradient(ellipse at 35% -12%,rgba(255,220,178,.98),transparent 53%),radial-gradient(ellipse at 98% 17%,rgba(198,216,131,.78),transparent 59%),radial-gradient(ellipse at -12% 65%,rgba(66,169,65,.77),transparent 68%)}
 .ambient-master:before{background:radial-gradient(circle,rgba(239,255,212,.45) .8px,transparent 1px) 0 0/7px 7px;mask-image:linear-gradient(transparent 65%,#000 100%);opacity:.32}
@@ -72,7 +73,18 @@ body.light .ambient-master{border-color:rgba(230,239,207,.6);background-color:rg
 .dot-number{width:48%;max-width:155px;height:65px;overflow:visible;fill:#f5ffdf;stroke:none;filter:drop-shadow(0 0 2px rgba(245,255,215,.72)) drop-shadow(0 0 7px rgba(227,255,168,.4)) drop-shadow(0 0 15px rgba(205,245,145,.18))}.dot-number circle{stroke:none;fill:currentColor;color:#f5ffdf}.dot-number.unavailable{opacity:.45}.master-caption{font-size:12px;color:#edf8df;letter-spacing:.3px}
 .ambient-master .range-labels{color:#e4f3d7}.ambient-master input[type=range]{background:linear-gradient(to right,rgba(237,255,214,.9) 0 var(--fill,0%),rgba(229,245,209,.17) var(--fill,0%) 100%);border-color:rgba(242,255,222,.28)}
 .ambient-master .stepper input{background:rgba(17,62,35,.24);border-color:rgba(242,255,222,.22);color:#f5ffdf}.ambient-master .stepper button{background:rgba(236,255,219,.13);border-color:rgba(242,255,222,.18);color:#f5ffdf}.ambient-master .stepper button:hover{background:rgba(236,255,219,.24)}
-body.high-contrast .ambient-master{background:Canvas;color:CanvasText;border-color:CanvasText}.high-contrast .master-heading,.high-contrast .master-caption,.high-contrast .master-heading .eyebrow{color:CanvasText}.high-contrast .dot-number circle{color:CanvasText;fill:CanvasText}
+.ambient-master{--master-light:color-mix(in srgb,#f5ffdf,#fff4e9 calc(var(--master-night)*100%));--master-ink:color-mix(in srgb,#254532,#573339 calc(var(--master-night)*100%));transition:background-color 1s,border-color 1s,--master-night 1.2s ease}
+.ambient-master:after{content:'';position:absolute;inset:0;z-index:-2;pointer-events:none;opacity:var(--master-night);background:radial-gradient(ellipse at 48% 44%,rgba(237,125,37,.97),rgba(233,117,48,.75) 24%,transparent 67%),radial-gradient(ellipse at 96% 15%,rgba(225,143,176,.91),transparent 65%),radial-gradient(ellipse at 0% 0%,rgba(235,244,241,.93),transparent 48%),linear-gradient(145deg,rgba(188,206,215,.97),rgba(221,196,208,.96) 45%,rgba(135,92,108,.97))}
+.ambient-master:before{background-image:radial-gradient(circle,color-mix(in srgb,var(--master-light) 45%,transparent) .8px,transparent 1px)}
+.master-heading,.master-heading .eyebrow{color:var(--master-ink)}
+.ambient-readout>i,.master-caption,.ambient-master .range-labels,.dot-number circle{color:var(--master-light)}
+.dot-number{filter:drop-shadow(0 0 2px color-mix(in srgb,var(--master-light) 72%,transparent)) drop-shadow(0 0 7px color-mix(in srgb,var(--master-light) 40%,transparent)) drop-shadow(0 0 15px color-mix(in srgb,var(--master-light) 18%,transparent))}
+.ambient-master input[type=range]{background:linear-gradient(to right,color-mix(in srgb,var(--master-light) 90%,transparent) 0 var(--fill,0%),color-mix(in srgb,var(--master-light) 17%,transparent) var(--fill,0%) 100%)}
+.ambient-master input[type=range]::-webkit-slider-thumb{background:var(--master-light);border-color:var(--master-light)}
+.ambient-master .stepper input{background:color-mix(in srgb,var(--master-ink) 24%,transparent);color:var(--master-light)}
+.ambient-master .stepper button{color:var(--master-light)}
+body.high-contrast .ambient-master{background:Canvas;color:CanvasText;border-color:CanvasText}body.high-contrast .ambient-master:after{display:none}.high-contrast .master-heading,.high-contrast .master-caption,.high-contrast .master-heading .eyebrow{color:CanvasText}.high-contrast .dot-number circle{color:CanvasText;fill:CanvasText}
+@media(prefers-reduced-motion:reduce){.ambient-master{transition:none}}
 @media(prefers-reduced-motion:reduce){.search-highlight{animation:none!important}}
 
 /* The editor keeps action labels and both parts of the chord aligned. */

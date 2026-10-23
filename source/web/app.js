@@ -208,6 +208,7 @@
   function applyState(next) {
     state = next; window.monitorShadeState = state; localize(state); updateLayoutShortcuts(state);
     for (const [k, v] of Object.entries(state.palette)) if (k !== 'light') document.documentElement.style.setProperty('--' + k, v);
+    $('.ambient-master').style.setProperty('--master-night', state.masterWarmth);
     document.documentElement.style.colorScheme = state.palette.light ? 'light' : 'dark';
     document.body.classList.toggle('light', state.palette.light);
     document.body.classList.toggle('solid', !state.glass); document.body.classList.toggle('windows-font', state.font === 'MalgunGothic'); document.body.classList.toggle('high-contrast', state.highContrast);
