@@ -34,7 +34,7 @@ Per-monitor black overlay. Restores on mouse entry or screen changes. Supports a
 
 ![Window layout settings in MonitorShade 1.17](docs/images/window-layout.png)
 
-| Shortcut | Cycle |
+| Default shortcut | Cycle |
 | --- | --- |
 | **Win + Backspace** | Centered 50% → 70% → maximized |
 | **Win + Arrow** | Directional ½ → ⅔ → maximized |
@@ -42,13 +42,16 @@ Per-monitor black overlay. Restores on mouse entry or screen changes. Supports a
 
 <sub>Percentages apply to work-area width and height. The 16:9 window width is configurable.</sub>
 
+Change each binding in **Window layout → Shortcut settings**. Select modifiers and a key, then click **Apply**.
+
 <br>
 
 ## Appearance
 
+Choose **KO** or **EN** in **General → Language**.
+
 ![MonitorShade changes its UI colors through a full day](docs/images/appearance-demo.gif)
 
-<sub>24-hour cycle, accelerated. App UI recording; native desktop blur is not included.</sub>
 
 | 09:00 | 14:00 |
 | :---: | :---: |

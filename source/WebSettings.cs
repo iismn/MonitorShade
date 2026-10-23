@@ -17,7 +17,7 @@ namespace MonitorShade
         private string webLicenses;
         private static readonly string[] WebChecks = { "BrightnessSync", "IgnoreWallpaper", "ManualEnabled", "LayoutEnabled", "BrightnessHotkeys", "UseBackdrop", "AutoStart", "Seconds", "Minutes" };
         private static readonly string[] WebNumbers = { "Amount", "CenterPercent", "BrightnessStep" };
-        private static readonly string[] WebCombos = { "ManualFirst", "ManualSecond", "BrightnessModifier", "BrightnessDown", "BrightnessUp", "BrightnessTarget", "AppearanceMode", "KoreanFont" };
+        private static readonly string[] WebCombos = { "ManualFirst", "ManualSecond", "BrightnessModifier", "BrightnessDown", "BrightnessUp", "BrightnessTarget", "AppearanceMode", "KoreanFont", "Language" };
         private static readonly string[] WebButtons = { "Start", "Exit", "Refresh", "ApplyManual", "ApplyLayout", "ApplyBrightness", "RefreshBrightness", "Diagnose", "TestLayout", "BrightnessCapabilities", "MasterMinus", "MasterPlus" };
         private static readonly string[] WebMessages = { "Status", "Validation", "CenterValidation", "ManualStatus", "LayoutStatus", "BrightnessStatus", "ShortcutsStatus", "AppearanceStatus", "KoreanFontStatus", "HelpStatus", "DdcStatus" };
         internal WebUi BrowserUi { get { return webUi; } }
@@ -48,7 +48,9 @@ namespace MonitorShade
             bool highContrast = SystemParameters.HighContrast;
             webUi.PaintResizeBand(p.Background, webGlass, highContrast);
             return new {
-                version = "1.17.0", preview = preview, glass = webGlass, highContrast = highContrast,
+                version = "1.18.0", language = appearance.Language, translations = UiText.English,
+                layoutShortcuts = draftLayoutShortcuts.Select(b => new { action = b.Action, modifiers = b.Modifiers, key = b.Key }).ToArray(),
+                appliedShortcuts = appliedLayoutShortcuts.Select(b => new { action = b.Action, modifiers = b.Modifiers, key = b.Key }).ToArray(), preview = preview, glass = webGlass, highContrast = highContrast,
                 maximized = WindowState == WindowState.Maximized,
                 palette = new { background = Css(p.Background), panel = Css(p.Panel), raised = Css(p.Raised), line = Css(p.Line), soft = Css(p.Soft), accent = Css(p.Accent), ink = Css(p.Ink), text = Css(p.Text), muted = Css(p.Muted), aura = Css(p.Aura), light = p.Light },
                 font = appearance.KoreanFont, time = Find<TextBlock>("ThemeTime").Text,
@@ -68,6 +70,14 @@ namespace MonitorShade
         internal void WebCommand(Dictionary<string, object> m)
         {
             string action = MessageString(m, "action");
+            if (action == "layoutShortcut") {
+                string name = MessageString(m, "name"); int modifiers = MessageInt(m, "modifiers"), key = MessageInt(m, "key");
+                if (!LayoutBindings.Actions.Contains(name) || modifiers < 1 || modifiers > 15 || modifiers == 4 || !LayoutBindings.ValidKey(key)) throw new ArgumentException("Ctrl, Alt 또는 Win이 포함된 키 조합을 선택하세요.");
+                var draft = LayoutBindings.Copy(draftLayoutShortcuts); var binding = draft.First(b => b.Action == name); binding.Modifiers = modifiers; binding.Key = key; draftLayoutShortcuts = draft;
+                Find<TextBlock>("LayoutStatus").Text = LayoutBindings.Error(draft, layoutEnabled.IsChecked == true ? brightnessPage.ConfiguredBinding : null) ?? "적용을 누르면 단축키를 저장합니다.";
+                return;
+            }
+            if (action == "resetLayoutShortcuts") { draftLayoutShortcuts = LayoutBindings.Defaults(); Find<TextBlock>("LayoutStatus").Text = "적용을 누르면 단축키를 저장합니다."; return; }
             if (action == "caption") {
                 string op = MessageString(m, "value");
                 if (op == "minimize") SystemCommands.MinimizeWindow(this);

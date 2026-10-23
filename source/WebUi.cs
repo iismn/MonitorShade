@@ -112,8 +112,8 @@ namespace MonitorShade
             if (disposed) return;
             Error = message; timer.Stop(); Children.Clear();
             var panel = new StackPanel { Margin = new Thickness(40), VerticalAlignment = VerticalAlignment.Center };
-            panel.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, FontSize = 16 });
-            var close = new Button { Content = "닫기", Margin = new Thickness(0, 24, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+            panel.Children.Add(new TextBlock { Text = UiText.Translate(message), TextWrapping = TextWrapping.Wrap, FontSize = 16 });
+            var close = new Button { Content = UiText.Translate("닫기"), Margin = new Thickness(0, 24, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
             close.Click += delegate { owner.Close(); }; panel.Children.Add(close);
             Background = System.Windows.Media.Brushes.White; Children.Add(panel);
         }

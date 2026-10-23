@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -54,19 +55,24 @@ namespace MonitorShade
         internal void Seed(int key) { down.Add(key); }
         internal bool Process(int key, bool pressed, bool eligible, out LayoutDirection? command)
         {
+            return Process(key, pressed, eligible, LayoutBindings.Defaults(), out command);
+        }
+        internal bool Process(int key, bool pressed, bool eligible, LayoutShortcut[] bindings, out LayoutDirection? command)
+        {
             command = null;
-            bool relevant = key == 0x5B || key == 0x5C || (key >= 0x25 && key <= 0x28) || key == 0x2E || key == 0x08 || (key >= 0x10 && key <= 0x12) || (key >= 0xA0 && key <= 0xA5);
+            bool relevant = key == 0x5B || key == 0x5C || (key >= 0x10 && key <= 0x12) || (key >= 0xA0 && key <= 0xA5) || bindings.Any(b => b.Key == key) || swallowed.Contains(key) || down.Contains(key);
             if (!relevant) return false;
             bool repeat = pressed && down.Contains(key);
             if (pressed) down.Add(key); else down.Remove(key);
             if (swallowed.Contains(key)) { if (!pressed) swallowed.Remove(key); return true; }
-            if (!pressed || repeat || !eligible || !(down.Contains(0x5B) || down.Contains(0x5C))) return false;
-            foreach (int modifier in new[] { 0x10, 0x11, 0x12, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5 })
-                if (down.Contains(modifier)) return false;
-            if (key >= 0x25 && key <= 0x28) command = (LayoutDirection)(key - 0x25);
-            else if (key == 0x2E) command = LayoutDirection.Center;
-            else if (key == 0x08) command = LayoutDirection.Scale;
-            if (!command.HasValue) return false;
+            if (!pressed || repeat || !eligible) return false;
+            int mods = (down.Contains(0x5B) || down.Contains(0x5C) ? 8 : 0)
+                | (down.Contains(0x11) || down.Contains(0xA2) || down.Contains(0xA3) ? 2 : 0)
+                | (down.Contains(0x10) || down.Contains(0xA0) || down.Contains(0xA1) ? 4 : 0)
+                | (down.Contains(0x12) || down.Contains(0xA4) || down.Contains(0xA5) ? 1 : 0);
+            var binding = bindings.FirstOrDefault(b => b.Key == key && b.Modifiers == mods);
+            if (binding == null) return false;
+            command = (LayoutDirection)Array.IndexOf(LayoutBindings.Actions, binding.Action);
             swallowed.Add(key); return true;
         }
     }
@@ -81,6 +87,8 @@ namespace MonitorShade
         private readonly BrightnessKeys brightnessKeys = new BrightnessKeys();
         private readonly Action<int> brightnessDispatch;
         private volatile BrightnessBinding brightnessBinding;
+        private volatile LayoutShortcut[] layoutBindings = LayoutBindings.Defaults();
+        internal void ConfigureLayout(LayoutShortcut[] bindings) { layoutBindings = LayoutBindings.Copy(bindings); }
         internal void ConfigureBrightness(BrightnessBinding binding) { brightnessBinding = binding; }
         private IntPtr hook;
         private uint threadId;
@@ -128,9 +136,10 @@ namespace MonitorShade
             int brightnessDirection;
             bool brightnessConsume = brightnessKeys.Process(normalizedKey, pressed, brightnessBinding, out brightnessDirection);
             IntPtr window = LayoutNative.GetForegroundWindow();
-            bool shortcutKey = (key.vk >= 0x25 && key.vk <= 0x28) || key.vk == 0x2E || key.vk == 0x08;
+            var bindings = layoutBindings;
+            bool shortcutKey = bindings.Any(b => b.Key == normalizedKey);
             // Brightness also accepts accessibility-generated keys. Layout keeps its physical-key policy.
-            bool consume = !injected && keys.Process(normalizedKey, pressed, enabled && shortcutKey && LayoutNative.CanArrange(window), out command);
+            bool consume = !injected && keys.Process(normalizedKey, pressed, enabled && !brightnessConsume && shortcutKey && LayoutNative.CanArrange(window), bindings, out command);
             if (brightnessDirection != 0 && brightnessDispatch != null) { LayoutNative.MaskStartMenu(); try { brightnessDispatch(brightnessDirection); } catch { } }
             if (command.HasValue)
             {

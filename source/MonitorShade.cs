@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.17.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.17.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.18.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.18.0.0")]
 
 namespace MonitorShade
 {
@@ -115,11 +115,11 @@ namespace MonitorShade
                     Application.ThreadException += delegate(object sender, ThreadExceptionEventArgs e)
                     {
                         form.Pause("오류로 감시를 중지했습니다.");
-                        MessageBox.Show(e.Exception.Message, "MonitorShade 오류");
+                        MessageBox.Show(UiText.Translate(e.Exception.Message), UiText.Translate("MonitorShade 오류"));
                     };
                     application.SessionEnding += delegate { form.AllowSystemExit(); };
                     application.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
-                    { form.Pause("오류로 감시를 중지했습니다."); MessageBox.Show(e.Exception.Message, "MonitorShade 오류"); e.Handled = true; };
+                    { form.Pause("오류로 감시를 중지했습니다."); MessageBox.Show(UiText.Translate(e.Exception.Message), UiText.Translate("MonitorShade 오류")); e.Handled = true; };
                     form.Closed += delegate { application.Shutdown(); };
                     if (!automatic) form.Show();
                     application.Run();
@@ -160,6 +160,7 @@ namespace MonitorShade
         public bool IgnoreWallpaper = true;
         public bool LayoutEnabled = true;
         public int CenterPercent = 65;
+        public LayoutShortcut[] LayoutShortcuts = LayoutBindings.Defaults();
         public BrightnessPreferences Brightness = new BrightnessPreferences();
         public ManualShadePreferences ManualShade = new ManualShadePreferences();
         public AppearancePreferences Appearance = new AppearancePreferences();
@@ -176,6 +177,7 @@ namespace MonitorShade
                     if (p.ManualShade == null) p.ManualShade = new ManualShadePreferences();
                     if (p.Appearance == null) p.Appearance = new AppearancePreferences();
                     p.Appearance.Normalize();
+                    p.LayoutShortcuts = LayoutBindings.Normalize(p.LayoutShortcuts);
                     p.Brightness.Normalize();
                     return p;
                 }

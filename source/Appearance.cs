@@ -12,9 +12,11 @@ namespace MonitorShade
         public bool Blur = true;
         public string Theme = "Auto";
         public string KoreanFont = "Pretendard";
+        public string Language = "KO";
         public int TypographyVersion;
         public void Normalize()
         {
+            if (Language != "EN") Language = "KO";
             if (!new[] { "Auto", "Morning", "Day", "Evening", "Night" }.Contains(Theme)) Theme = "Auto";
             // Restore the requested 1.15.1 face when adopting the Chromium renderer.
             if (TypographyVersion < 3) { KoreanFont = "Pretendard"; TypographyVersion = 3; }

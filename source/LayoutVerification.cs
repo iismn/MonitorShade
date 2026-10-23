@@ -72,14 +72,55 @@ namespace MonitorShade
                     keys.Process(0x08, false, false, out command); keys.Process(0x5B, false, true, out command);
                     check(!keys.Process(0x08, true, true, out command) && !command.HasValue, "Backspace alone remains normal text editing");
                 }
+                foreach (int modifiers in new[] { 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 })
+                    foreach (string action in LayoutBindings.Actions)
+                    {
+                        var bindings = LayoutBindings.Defaults(); var binding = bindings.First(b => b.Action == action); binding.Modifiers = modifiers; binding.Key = 0x70;
+                        check(LayoutBindings.Error(bindings, null) == null, "Custom chord validates: " + modifiers + "/" + action);
+                        var keys = new LayoutKeys(); LayoutDirection? command;
+                        foreach (var pair in new[] { new[] { 1, 0xA4 }, new[] { 2, 0xA2 }, new[] { 4, 0xA0 }, new[] { 8, 0x5B } })
+                            if ((modifiers & pair[0]) != 0) keys.Process(pair[1], true, true, bindings, out command);
+                        check(keys.Process(0x70, true, true, bindings, out command) && command.ToString() == action, "Custom chord dispatches exactly one action: " + modifiers + "/" + action);
+                        check(keys.Process(0x70, true, true, bindings, out command) && command == null, "Custom chord repeat does not cycle");
+                        check(keys.Process(0x70, false, false, LayoutBindings.Defaults(), out command), "Held shortcut release is consumed after configuration replacement");
+                    }
+                {
+                    var bindings = LayoutBindings.Defaults(); bindings[0].Modifiers = 6; bindings[0].Key = 0x41;
+                    var keys = new LayoutKeys(); LayoutDirection? command;
+                    keys.Seed(0x5B);
+                    check(!keys.Process(0x25, true, true, bindings, out command), "Reassigned action no longer consumes its old Win shortcut");
+                    keys = new LayoutKeys(); keys.Seed(0xA2); keys.Seed(0xA0);
+                    check(!keys.Process(0x41, true, false, bindings, out command), "Disabled custom shortcut passes through");
+                    keys.Process(0x41, false, true, bindings, out command); keys.Seed(0xA4);
+                    check(!keys.Process(0x41, true, true, bindings, out command), "Extra modifier does not match a custom chord");
+                    keys = new LayoutKeys(); keys.Seed(0x11); keys.Seed(0x10);
+                    check(keys.Process(0x41, true, true, bindings, out command) && command == LayoutDirection.Left, "Generic Ctrl and Shift states match the custom chord");
+                    bindings[1].Modifiers = 6; bindings[1].Key = 0x41;
+                    check(LayoutBindings.Error(bindings, null) != null, "Duplicate shortcuts rejected");
+                    check(LayoutBindings.Normalize(bindings)[0].Key == 0x25, "Invalid stored bindings restore defaults");
+                    foreach (var invalid in new[] { new[] {0,65}, new[] {4,65}, new[] {16,65}, new[] {8,0}, new[] {3,46}, new[] {8,76}, new[] {1,115}, new[] {3,120}, new[] {3,123} }) {
+                        bindings = LayoutBindings.Defaults(); bindings[0].Modifiers = invalid[0]; bindings[0].Key = invalid[1];
+                        check(LayoutBindings.Error(bindings, null) != null, "Invalid or reserved chord rejected: " + invalid[0] + "/" + invalid[1]);
+                    }
+                    foreach (string modifier in new[] { "RightAlt", "LeftAlt", "CtrlAlt", "CtrlShift" }) {
+                        bindings = LayoutBindings.Defaults(); bindings[0].Modifiers = modifier == "CtrlShift" ? 6 : modifier == "CtrlAlt" ? 3 : 1; bindings[0].Key = 0x71;
+                        check(LayoutBindings.Error(bindings, new BrightnessBinding(true, modifier, 0x71, 0x72)) != null, "Brightness conflict rejected: " + modifier);
+                        check(LayoutBindings.Error(bindings, new BrightnessBinding(false, modifier, 0x71, 0x72)) == null, "Disabled brightness binding does not reserve keys");
+                    }
+                    bindings = LayoutBindings.Defaults(); bindings[0].Modifiers = 3; bindings[0].Key = 0x71;
+                    check(LayoutBindings.Error(bindings, new BrightnessBinding(true, "RightAlt", 0x71, 0x72)) != null, "AltGr synthetic Ctrl+Alt brightness conflict rejected");
+                }
                 string temporary = Path.Combine(Path.GetDirectoryName(path), "layout-preferences-test.xml");
                 try
                 {
                     File.WriteAllText(temporary, "<Preferences><DeviceName>legacy</DeviceName><WaitValue>60</WaitValue><Minutes>false</Minutes></Preferences>");
                     Preferences p = Preferences.Read(temporary);
                     check(p.LayoutEnabled && p.CenterPercent == 65 && p.SelectedDevices()[0] == "legacy" && p.WaitValue == 60, "Legacy settings keep monitor and delay with layout defaults");
+                    check(p.LayoutShortcuts.Length == 6 && p.LayoutShortcuts[5].Key == 0x08, "Legacy settings receive all default layout shortcuts");
+                    p.LayoutShortcuts[5].Modifiers = 6; p.LayoutShortcuts[5].Key = 0x52;
                     p.LayoutEnabled = false; p.CenterPercent = 80; p.Write(temporary); p = Preferences.Read(temporary);
                     check(!p.LayoutEnabled && p.CenterPercent == 80 && p.WaitValue == 60, "Layout options round trip without changing protection settings");
+                    check(p.LayoutShortcuts[5].Modifiers == 6 && p.LayoutShortcuts[5].Key == 0x52, "Custom resize shortcut survives XML save and reload");
                     p.CenterPercent = 101; p.Write(temporary); check(Preferences.Read(temporary).CenterPercent == 65, "Invalid stored percentage restores valid default");
                 }
                 finally { if (File.Exists(temporary)) File.Delete(temporary); }

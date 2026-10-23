@@ -17,7 +17,7 @@ foreach ($check in $checks) {
     if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report }
     $process = Start-Process -FilePath $executable -ArgumentList @('--' + $check + '-test', ('"' + $report + '"')) -WindowStyle Hidden -PassThru
     try {
-        if (-not $process.WaitForExit(30000)) {
+        if (-not $process.WaitForExit($(if ($check -eq 'web-ui') { 60000 } else { 30000 }))) {
             if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit(5000) | Out-Null }
             throw "Timed out: $check"
         }

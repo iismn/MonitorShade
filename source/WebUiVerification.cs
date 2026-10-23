@@ -24,8 +24,17 @@ namespace MonitorShade
                     report.Add("INFO: WebView2 " + core.Environment.BrowserVersionString);
                     report.Add("INFO: DPI " + System.Windows.PresentationSource.FromVisual(form).CompositionTarget.TransformToDevice.M11 * 96);
                     Func<string, string, Task> check = async (expression, name) => {
-                        string actual = await core.ExecuteScriptAsync("Boolean(" + expression + ")");
-                        if (actual != "true") throw new Exception("FAIL: " + name + " => " + actual);
+                        string actual = "false";
+                        for (int attempt = 0; attempt < 20; attempt++) {
+                            actual = await core.ExecuteScriptAsync("Boolean(" + expression + ")");
+                            if (actual == "true") break;
+                            await Task.Delay(100);
+                        }
+                        if (actual != "true") {
+                            report.Add("INFO: UI state " + await core.ExecuteScriptAsync("JSON.stringify({error:window.monitorShadeError,master:monitorShadeState.master,monitors:monitorShadeState.monitors.map(m=>m.percent),dot:document.querySelector('#dotBrightness').dataset.value,number:document.querySelector('#masterPercent')._value,target:document.querySelector('#masterPercent')._target})"));
+                            if (name.Contains("translation")) report.Add("INFO: Untranslated text " + await core.ExecuteScriptAsync("JSON.stringify([...document.querySelectorAll('p,label,h1,h2,summary,button,.sub-label,.monitor-model')].filter(n=>/[가-힣]/.test(n.textContent)).map(n=>n.textContent))"));
+                            throw new Exception("FAIL: " + name + " => " + actual);
+                        }
                         report.Add("PASS: " + name);
                     };
                     await core.ExecuteScriptAsync("document.fonts.ready.then(()=>window.fontsReady=true)");
@@ -47,10 +56,13 @@ namespace MonitorShade
                     await Task.Delay(350);
                     await check("monitorShadeState.monitors.every(m=>m.percent===70)", "Plus button uses the existing synchronized step logic");
                     await check("document.querySelector('#dotBrightness').dataset.value==='70' && document.querySelectorAll('#dotBrightness circle').length>40", "Ambient card renders the real brightness as scalable dot glyphs");
+                    await core.ExecuteScriptAsync("window.originalRequestAnimationFrame=window.requestAnimationFrame;window.requestAnimationFrame=callback=>originalRequestAnimationFrame(now=>callback(now-80))");
                     foreach (int percent in new[] { 0, 100, 70 }) {
                         await core.ExecuteScriptAsync("document.querySelector('#masterRange').value=" + percent + ";document.querySelector('#masterRange').dispatchEvent(new Event('input',{bubbles:true}))"); await Task.Delay(400);
                         await check("document.querySelector('#dotBrightness').dataset.value==='" + percent + "' && monitorShadeState.monitors.every(m=>m.percent===" + percent + ")", "Dot readout stays synchronized at " + percent + " percent");
                     }
+                    await core.ExecuteScriptAsync("window.requestAnimationFrame=window.originalRequestAnimationFrame");
+                    await check("!window.monitorShadeError", "A frame timestamp before the input event never produces an invalid dot glyph");
                     await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='Backspace';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
                     await check("document.querySelectorAll('.search-result').length===1 && document.querySelector('.search-result').textContent.includes('창 크기 조절')", "Search finds resize shortcut by its key name");
                     await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))"); await Task.Delay(500);
@@ -85,8 +97,47 @@ namespace MonitorShade
                     }
                     await core.ExecuteScriptAsync("monitorShadeNavigate('General');monitorShadeNavigate('Layout');monitorShadeNavigate('Brightness')"); await Task.Delay(500);
                     await check("document.querySelectorAll('.page:not([hidden])').length===1 && document.querySelectorAll('[aria-current=page]').length===1 && !document.querySelector('#Brightness').hidden", "Rapid navigation reaches the last requested page with no stale fade");
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('General')"); await Task.Delay(350);
+                    await core.ExecuteScriptAsync("document.querySelector('#Language').focus();document.querySelector('#Language').value='1';document.querySelector('#Language').dispatchEvent(new Event('change'))"); await Task.Delay(400);
+                    await check("monitorShadeState.language==='EN' && document.documentElement.lang==='en' && document.querySelector('#GeneralTitle').textContent==='General'", "KO/EN selection changes the live UI without restarting");
+                    await check("document.activeElement.id==='Language' && document.querySelector('#Language').value==='1'", "Focused language selector keeps EN selected while its options are translated");
+                    await check("document.querySelector('.sync-row label').textContent==='Brightness sync' && document.querySelector('#settingsSearch').placeholder==='Search settings'", "Brightness sync label and search placeholder use English");
+                    await check("document.querySelector('#AppearanceMode').options[1].text==='Morning · 09:00' && document.querySelector('[data-caption=close]').getAttribute('aria-label')==='Close'", "Dynamic options and accessibility names use English");
+                    await check("[...document.querySelectorAll('.page,nav,aside')].every(e=>![...e.querySelectorAll('p,label,h1,h2,summary,button,.sub-label,.monitor-model')].some(n=>/[가-힣]/.test(n.textContent)))", "Every settings page and help paragraph has an English translation");
+                    await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='language';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
+                    await check("document.querySelector('.search-result').textContent.includes('Language')", "English search finds the language setting");
+                    await core.ExecuteScriptAsync("document.querySelector('#clearSearch').click();monitorShadeNavigate('Layout')"); await Task.Delay(400);
+                    await check("document.querySelectorAll('.layout-shortcut-row').length===6", "All six placement and resize actions have separate editors");
+                    await core.ExecuteScriptAsync("document.querySelector('#layoutModifiersScale').value='6';document.querySelector('#layoutKeyScale').value='82';document.querySelector('#layoutKeyScale').dispatchEvent(new Event('change'))"); await Task.Delay(300);
+                    await check("monitorShadeState.layoutShortcuts.find(b=>b.action==='Scale').key===82 && monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===8", "Editing a custom Ctrl+Shift+R resize chord does not activate it before Apply");
+                    await core.ExecuteScriptAsync("document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
+                    await check("monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===82 && document.querySelector('#scaleKeys').textContent==='Ctrl + Shift + R' && document.querySelector('[data-message=LayoutStatus]').textContent==='Saved'", "Apply activates the custom chord and updates the displayed shortcut");
+                    await core.ExecuteScriptAsync("document.querySelector('#layoutModifiersCenter').value='6';document.querySelector('#layoutKeyCenter').value='82';document.querySelector('#layoutKeyCenter').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
+                    await check("monitorShadeState.appliedShortcuts.find(b=>b.action==='Center').key===46 && document.querySelector('[data-message=LayoutStatus]').textContent.includes('same shortcut')", "Duplicate chord is rejected without changing active shortcuts");
+                    await core.ExecuteScriptAsync("document.querySelector('#resetLayoutShortcuts').click();document.querySelector('#layoutModifiersScale').value='1';document.querySelector('#layoutKeyScale').value='113';document.querySelector('#layoutKeyScale').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
+                    await check("document.querySelector('[data-message=LayoutStatus]').textContent.includes('brightness shortcut') && monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===82", "Layout editor rejects overlap with enabled brightness shortcuts");
+                    await core.ExecuteScriptAsync("document.querySelector('#layoutModifiersScale').value='6';document.querySelector('#layoutKeyScale').value='115';document.querySelector('#layoutKeyScale').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
+                    await core.ExecuteScriptAsync("document.querySelector('#BrightnessModifier').value='3';document.querySelector('#BrightnessModifier').dispatchEvent(new Event('change'));document.querySelector('#BrightnessDown').value='3';document.querySelector('#BrightnessDown').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyBrightness]').click()"); await Task.Delay(300);
+                    await check("document.querySelector('[data-message=ShortcutsStatus]').textContent.includes('brightness shortcut') && monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===115", "Brightness editor also rejects overlap with an active layout shortcut");
+                    await core.ExecuteScriptAsync("document.querySelector('#BrightnessModifier').value='0';document.querySelector('#BrightnessModifier').dispatchEvent(new Event('change'));document.querySelector('#BrightnessDown').value='1';document.querySelector('#BrightnessDown').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyBrightness]').click()"); await Task.Delay(300);
+                    await core.ExecuteScriptAsync("document.querySelector('#resetLayoutShortcuts').click();document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
+                    await check("monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===8 && monitorShadeState.appliedShortcuts.every(b=>b.modifiers===8)", "Default button restores original bindings when applied");
+                    form.Width=960; form.Height=640; await Task.Delay(300);
+                    await check("document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth+1 && [...document.querySelectorAll('.layout-shortcut-row select')].every(e=>e.getBoundingClientRect().right<=document.querySelector('#main').getBoundingClientRect().right)", "English shortcut editor fits the minimum window size");
+                    form.Width=1120;form.Height=840; await Task.Delay(400);
+                    await core.ExecuteScriptAsync("document.documentElement.style.background='rgb('+monitorShadeState.palette.background+')'");
+                    using (var output = File.Create(path + ".english-layout.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("document.querySelector('#layoutShortcutEditor').scrollIntoView({block:'center'});document.activeElement.blur()"); await Task.Delay(200);
+                    using (var output = File.Create(path + ".english-shortcuts.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('General')"); await Task.Delay(350);
+                    using (var output = File.Create(path + ".english-general.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("document.querySelector('#Language').value='0';document.querySelector('#Language').dispatchEvent(new Event('change'))"); await Task.Delay(300);
+                    await check("document.documentElement.lang==='ko' && document.querySelector('.sync-row label').textContent==='밝기 동기화' && document.querySelector('#GeneralTitle').textContent==='일반'", "Switching back restores Korean labels and the shortened sync label");
                     // Command validation is checked at the native boundary, not only in HTML.
                     foreach (var command in new[] {
+                        new Dictionary<string, object> { { "action", "layoutShortcut" }, { "name", "Scale" }, { "modifiers", 0 }, { "key", 65 } },
+                        new Dictionary<string, object> { { "action", "layoutShortcut" }, { "name", "Unknown" }, { "modifiers", 8 }, { "key", 65 } },
+                        new Dictionary<string, object> { { "action", "field" }, { "name", "Language" }, { "value", 2 } },
                         new Dictionary<string, object> { { "action", "field" }, { "name", "Unknown" }, { "value", true } },
                         new Dictionary<string, object> { { "action", "brightness" }, { "id", "master" }, { "value", 101 } },
                         new Dictionary<string, object> { { "action", "field" }, { "name", "AppearanceMode" }, { "value", -1 } },

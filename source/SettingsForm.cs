@@ -75,6 +75,7 @@ namespace MonitorShade
         private readonly ManualShadePage manualShade;
         private bool appliedLayoutEnabled;
         private int appliedCenterPercent;
+        private LayoutShortcut[] appliedLayoutShortcuts, draftLayoutShortcuts;
         private readonly Timer startupTimer = new Timer { Interval = 1000 };
         private bool startupPending, updatingStartup;
         private string[] savedStartupTargets;
@@ -135,6 +136,9 @@ namespace MonitorShade
             brightnessPage = new BrightnessPage(ui, preview ? new BrightnessPreferences() : preferences.Brightness, preferencesPath, preview);
             manualShade = new ManualShadePage(ui, preview ? new ManualShadePreferences() : preferences.ManualShade, preferencesPath, preview, delegate { return Handle; }, watcher);
             brightnessPage.BindingChanged += delegate { SetLayoutHook(); };
+            appliedLayoutShortcuts = LayoutBindings.Normalize(preferences.LayoutShortcuts);
+            draftLayoutShortcuts = LayoutBindings.Copy(appliedLayoutShortcuts);
+            brightnessPage.ValidateBinding = binding => appliedLayoutEnabled ? LayoutBindings.Error(appliedLayoutShortcuts, binding) : null;
             appliedLayoutEnabled = preferences.LayoutEnabled; appliedCenterPercent = preferences.CenterPercent;
             layoutEnabled.IsChecked = appliedLayoutEnabled; centerPercent.Text = appliedCenterPercent.ToString(CultureInfo.InvariantCulture);
             centerPercent.TextChanged += delegate { ValidateLayout(); };
@@ -179,10 +183,10 @@ namespace MonitorShade
             menu.Items.Add("종료", null, delegate { ExitApplication(); });
             tray = new NotifyIcon { Icon = trayIcon, Text = "MonitorShade · 준비됨", ContextMenuStrip = menu, Visible = !preview };
             tray.DoubleClick += delegate { OpenSettings(); };
-            arranger.Failed += delegate(string reason) { Find<C.TextBlock>("LayoutStatus").Text = reason; tray.ShowBalloonTip(3000, "MonitorShade 창 배치", reason, ToolTipIcon.Info); };
+            arranger.Failed += delegate(string reason) { Find<C.TextBlock>("LayoutStatus").Text = reason; tray.ShowBalloonTip(3000, UiText.Translate("MonitorShade 창 배치"), UiText.Translate(reason), ToolTipIcon.Info); };
             watcher.StateChanged += UpdateWatchingStatus;
             manualShade.Controller.Changed += UpdateWatchingStatus;
-            watcher.Failed += delegate(string reason) { UpdateWatchingStatus(); status.Text = watcher.RunningCount + "대 감시 · 일부 중지"; tray.ShowBalloonTip(4000, "MonitorShade 일부 감시 중지", reason, ToolTipIcon.Warning); };
+            watcher.Failed += delegate(string reason) { UpdateWatchingStatus(); status.Text = watcher.RunningCount + "대 감시 · 일부 중지"; tray.ShowBalloonTip(4000, UiText.Translate("MonitorShade 일부 감시 중지"), UiText.Translate(reason), ToolTipIcon.Warning); };
             if (!preview)
             {
                 SystemEvents.DisplaySettingsChanged += DisplayChanged;
@@ -224,7 +228,7 @@ namespace MonitorShade
             {
                 if (startupAttempts < 30) return;
                 CancelAutomaticStart(); Pause(e.Message);
-                tray.ShowBalloonTip(4000, "MonitorShade 자동 시작 확인", e.Message, ToolTipIcon.Warning);
+                tray.ShowBalloonTip(4000, UiText.Translate("MonitorShade 자동 시작 확인"), UiText.Translate(e.Message), ToolTipIcon.Warning);
             }
         }
         private void ChangeStartup(bool enable)
@@ -246,14 +250,14 @@ namespace MonitorShade
                 updatingStartup = true;
                 try { autoStart.IsChecked = StartupRegistration.Enabled; } catch { autoStart.IsChecked = false; }
                 updatingStartup = false;
-                MessageBox.Show(this, e.Message, "자동 실행 설정", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, UiText.Translate(e.Message), UiText.Translate("자동 실행 설정"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         private void SavePreferences()
         {
             Preferences saved = Preferences.Read(preferencesPath);
             displaySelection.Store(saved);
-            saved.WaitValue = int.Parse(amount.Text, CultureInfo.InvariantCulture); saved.Minutes = minutes.IsChecked == true; saved.IgnoreWallpaper = ignoreWallpaper.IsChecked == true; saved.LayoutEnabled = appliedLayoutEnabled; saved.CenterPercent = appliedCenterPercent; saved.Write(preferencesPath);
+            saved.WaitValue = int.Parse(amount.Text, CultureInfo.InvariantCulture); saved.Minutes = minutes.IsChecked == true; saved.IgnoreWallpaper = ignoreWallpaper.IsChecked == true; saved.LayoutEnabled = appliedLayoutEnabled; saved.CenterPercent = appliedCenterPercent; saved.LayoutShortcuts = LayoutBindings.Copy(appliedLayoutShortcuts); saved.Write(preferencesPath);
             savedSelectionRevision = displaySelection.Revision;
         }
 
@@ -276,6 +280,7 @@ namespace MonitorShade
             {
                 if (!SystemSuspended && (appliedLayoutEnabled || brightnessPage.Binding.Enabled) && layoutHook == null)
                     layoutHook = new LayoutKeyboardHook(delegate(IntPtr window, LayoutDirection direction) { Dispatch(delegate { if (appliedLayoutEnabled && !diagnosing && !SystemSuspended && LayoutNative.GetForegroundWindow() == window) arranger.Apply(window, direction, appliedCenterPercent); }); }, delegate(int direction) { Dispatch(delegate { if (!diagnosing && !SystemSuspended) brightnessPage.Shortcut(direction); }); });
+                if (layoutHook != null) layoutHook.ConfigureLayout(appliedLayoutShortcuts);
                 if (layoutHook != null) layoutHook.Enabled = appliedLayoutEnabled && !diagnosing && !SystemSuspended;
                 if (layoutHook != null) layoutHook.ConfigureBrightness(diagnosing || SystemSuspended ? null : brightnessPage.Binding);
                 if (!appliedLayoutEnabled) arranger.Reset();
@@ -286,14 +291,17 @@ namespace MonitorShade
         private bool ApplyLayoutSettings()
         {
             int value; if (!TryGetPercent(out value)) { ValidateLayout(); return false; }
+            string conflict = LayoutBindings.Error(draftLayoutShortcuts, layoutEnabled.IsChecked == true ? brightnessPage.ConfiguredBinding : null);
+            if (conflict != null) { Find<C.TextBlock>("LayoutStatus").Text = conflict; return false; }
             try
             {
                 if (!preview)
                 {
                     Preferences saved = Preferences.Read(preferencesPath);
-                    saved.LayoutEnabled = layoutEnabled.IsChecked == true; saved.CenterPercent = value; saved.Write(preferencesPath);
+                    saved.LayoutEnabled = layoutEnabled.IsChecked == true; saved.CenterPercent = value; saved.LayoutShortcuts = LayoutBindings.Copy(draftLayoutShortcuts); saved.Write(preferencesPath);
                 }
                 appliedLayoutEnabled = layoutEnabled.IsChecked == true; appliedCenterPercent = value;
+                appliedLayoutShortcuts = LayoutBindings.Copy(draftLayoutShortcuts);
                 arranger.Reset(); SetLayoutHook(); Find<C.TextBlock>("LayoutStatus").Text = "저장됨"; return true;
             }
             catch (Exception e) { Find<C.TextBlock>("LayoutStatus").Text = "저장하지 못했습니다: " + e.Message; return false; }
@@ -326,6 +334,10 @@ namespace MonitorShade
                 Find<C.TextBlock>("FontLicenses").Text = licenses;
             }
             catch { Find<C.TextBlock>("FontLicenses").Text = "Pretendard / Manrope — SIL Open Font License 1.1. 라이선스 원문은 EXE의 fonts 리소스에 포함되어 있습니다."; }
+            var language = Find<C.ComboBox>("Language");
+            language.ItemsSource = new[] { "KO", "EN" }; language.SelectedIndex = appearance.Language == "EN" ? 1 : 0;
+            UiText.Language = appearance.Language;
+            LocalizeTray();
             var mode = Find<C.ComboBox>("AppearanceMode");
             mode.ItemsSource = new[] { "시간에 따라 자동", "아침 · 09:00", "낮 · 14:00", "저녁 · 20:00", "밤 · 00:00" };
             string[] values = { "Auto", "Morning", "Day", "Evening", "Night" };
@@ -336,6 +348,8 @@ namespace MonitorShade
             koreanFont.SelectedIndex = appearance.KoreanFont == "Pretendard" ? 1 : 0;
             Action save = delegate
             {
+                appearance.Language = language.SelectedIndex == 1 ? "EN" : "KO";
+                UiText.Language = appearance.Language; LocalizeTray();
                 appearance.Theme = values[Math.Max(0, mode.SelectedIndex)];
                 appearance.Blur = Find<C.CheckBox>("UseBackdrop").IsChecked == true;
                 appearance.KoreanFont = koreanFont.SelectedIndex == 1 ? "Pretendard" : "MalgunGothic";
@@ -344,6 +358,7 @@ namespace MonitorShade
                 try { var saved = Preferences.Read(preferencesPath); saved.Appearance = appearance; saved.Write(preferencesPath); }
                 catch (Exception e) { Find<C.TextBlock>("AppearanceStatus").Text = "외형 설정 저장 실패: " + e.Message; }
             };
+            language.SelectionChanged += delegate { save(); };
             mode.SelectionChanged += delegate { save(); };
             koreanFont.SelectionChanged += delegate { save(); };
             Find<C.CheckBox>("UseBackdrop").Checked += delegate { save(); };
@@ -503,10 +518,10 @@ namespace MonitorShade
                 ReconcileDisplays();
                 reconnectTimer.Start();
                 UpdateWatchingStatus();
-                Hide(); if (!quiet) tray.ShowBalloonTip(2500, "MonitorShade 감시 중", "트레이 아이콘을 두 번 클릭하면 설정을 엽니다.", ToolTipIcon.Info);
+                Hide(); if (!quiet) tray.ShowBalloonTip(2500, UiText.Translate("MonitorShade 감시 중"), UiText.Translate("트레이 아이콘을 두 번 클릭하면 설정을 엽니다."), ToolTipIcon.Info);
                 return true;
             }
-            catch (Exception e) { if (quiet) throw; Pause(e.Message); MessageBox.Show(this, e.Message, "시작할 수 없습니다", MessageBoxButtons.OK, MessageBoxIcon.Warning); return false; }
+            catch (Exception e) { if (quiet) throw; Pause(e.Message); MessageBox.Show(this, UiText.Translate(e.Message), UiText.Translate("시작할 수 없습니다"), MessageBoxButtons.OK, MessageBoxIcon.Warning); return false; }
         }
         public void Pause(string message)
         {
@@ -515,8 +530,8 @@ namespace MonitorShade
             displayRecovery.Stop();
             if (manualShade != null) manualShade.Controller.Clear();
             watcher.Stop(); status.Text = message;
-            if (pauseItem != null) pauseItem.Text = "감시 시작 / 다시 시작";
-            if (tray != null) tray.Text = "MonitorShade · 일시정지";
+            if (pauseItem != null) pauseItem.Text = UiText.Translate("감시 시작 / 다시 시작");
+            if (tray != null) tray.Text = UiText.Translate("MonitorShade · 일시정지");
         }
         private void Diagnose()
         {
@@ -554,10 +569,10 @@ namespace MonitorShade
             int waiting = watcher.WaitingCount, active = watcher.RunningCount - waiting;
             status.Text = watcher.Running ? (waiting == 0 ? "감시 중" : active == 0 ? "화면 전환 대기 중" : active + "대 감시 · " + waiting + "대 대기") : "감시 중지";
             if (displayRecovery.Enabled && disconnectedCount > 0) status.Text = active + "대 감시 · " + disconnectedCount + "대 연결 대기";
-            tray.Text = "MonitorShade · " + active + "대 감시" + (waiting > 0 ? " · " + waiting + "대 대기" : "");
-            if (displayRecovery.Enabled && disconnectedCount > 0) tray.Text = "MonitorShade · " + status.Text;
-            pauseItem.Text = displayRecovery.Enabled ? "감시 일시정지" : "감시 시작 / 다시 시작";
-            if (manualShade.Controller.Count > 0) { status.Text = manualShade.Controller.Count + "대 강제 가림 중"; tray.Text = "MonitorShade · " + status.Text; }
+            tray.Text = UiText.Translate("MonitorShade · " + active + "대 감시" + (waiting > 0 ? " · " + waiting + "대 대기" : ""));
+            if (displayRecovery.Enabled && disconnectedCount > 0) tray.Text = UiText.Translate("MonitorShade · " + status.Text);
+            pauseItem.Text = UiText.Translate(displayRecovery.Enabled ? "감시 일시정지" : "감시 시작 / 다시 시작");
+            if (manualShade.Controller.Count > 0) { status.Text = manualShade.Controller.Count + "대 강제 가림 중"; tray.Text = UiText.Translate("MonitorShade · " + status.Text); }
         }
         private void DisplayChanged(object sender, EventArgs e)
         {

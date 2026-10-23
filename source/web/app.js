@@ -18,9 +18,35 @@
   const send = message => host?.postMessage(message);
   let state, currentPage = 'Brightness', requestedPage = 'Brightness', pageToken = 0, pageAnimations = [], toastTimer;
   const safeText = (element, value) => { if (element && element.textContent !== String(value ?? '')) element.textContent = value ?? ''; };
+  let language = 'KO', catalog = {}, fragments;
+  const t = text => {
+    text = String(text ?? '');
+    if (language !== 'EN') return text;
+    return Object.hasOwn(catalog, text) ? catalog[text] : text.replace(fragments, match => catalog[match]);
+  };
+  const localizedNodes = [], localizedAttributes = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) if (/[가-힣]/.test(walker.currentNode.nodeValue)) localizedNodes.push([walker.currentNode, walker.currentNode.nodeValue]);
+  $$('[aria-label],[placeholder],[title]').forEach(e => ['aria-label','placeholder','title'].forEach(a => {
+    const text = e.getAttribute(a); if (text && /[가-힣]/.test(text)) localizedAttributes.push([e,a,text]);
+  }));
+  function localize(next) {
+    const changed = language !== next.language || !fragments;
+    language = next.language || 'KO';
+    if (!fragments) {
+      catalog = next.translations || {};
+      const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      fragments = new RegExp(Object.keys(catalog).filter(k=>k.length>1 && /[가-힣]/.test(k)).sort((a,b)=>b.length-a.length).map(escape).join('|'), 'g');
+    }
+    if (!changed) return;
+    document.documentElement.lang = language === 'EN' ? 'en' : 'ko';
+    localizedNodes.forEach(([node,text])=>{ node.nodeValue = t(text); });
+    localizedAttributes.forEach(([e,a,text])=>e.setAttribute(a,t(text)));
+    displayKey = ''; ddcKey = ''; updateSearch();
+  }
   const field = (name, value) => send({ action: 'field', name, value });
   function notify(message) {
-    safeText($('#toast'), message); $('#toast').hidden = false;
+    safeText($('#toast'), t(message)); $('#toast').hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 5000);
   }
   function value(e, v) { if (document.activeElement !== e && !e.matches(':active')) e.value = v; }
@@ -31,7 +57,9 @@
     cancelAnimationFrame(e._frame);
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const start = performance.now();
-    const frame = now => { const t = reduced ? 1 : Math.min(1, (now - start) / 190); e._value = from + (target - from) * (1 - Math.pow(1 - t, 3)); safeText(e, Math.round(e._value)); if (e.id === 'masterPercent') drawDotNumber(Math.round(e._value)); if (t < 1) e._frame = requestAnimationFrame(frame); };
+    // A frame timestamp can predate a host message received during that frame.
+    // Clamp both ends so a 0 → 100 change never produces a negative dot glyph.
+    const frame = now => { const t = reduced ? 1 : Math.max(0, Math.min(1, (now - start) / 190)); e._value = from + (target - from) * (1 - Math.pow(1 - t, 3)); safeText(e, Math.round(e._value)); if (e.id === 'masterPercent') drawDotNumber(Math.round(e._value)); if (t < 1) e._frame = requestAnimationFrame(frame); };
     e._frame = requestAnimationFrame(frame);
   }
   const ns = 'http://www.w3.org/2000/svg';
@@ -93,7 +121,7 @@
   const cards = new Map();
   function updateMonitors(monitors) {
     const container = $('#monitorCards');
-    if (!monitors.length) { container.replaceChildren(Object.assign(document.createElement('article'), { className: 'card empty', textContent: '연결된 모니터가 없습니다.' })); cards.clear(); return; }
+    if (!monitors.length) { container.replaceChildren(Object.assign(document.createElement('article'), { className: 'card empty', textContent: t('연결된 모니터가 없습니다.') })); cards.clear(); return; }
     $('.empty', container)?.remove();
     for (const [id, card] of cards) if (!monitors.some(m => m.id === id)) { card.remove(); cards.delete(id); }
     monitors.forEach((m, index) => {
@@ -106,15 +134,16 @@
       }
       const number = m.primary ? 1 : monitors.filter(x => !x.primary).findIndex(x => x.id === m.id) + 2;
       const name = monitors.length === 2 ? (index === 0 ? '왼쪽 모니터' : '오른쪽 모니터') : '모니터 ' + number;
-      safeText($('.monitor-name', card), name); safeText($('.screen-icon', card), number);
+      safeText($('.monitor-name', card), t(name)); safeText($('.screen-icon', card), number);
       $('.screen-icon', card).classList.toggle('portrait', m.height > m.width);
-      safeText($('.monitor-model', card), m.name + ' · ' + (m.height > m.width ? '세로' : '가로'));
+      safeText($('.monitor-model', card), m.name + ' · ' + t(m.height > m.width ? '세로' : '가로'));
+      $('.monitor-linked', card).title = t('함께 조절 대상');
       $('input[type=checkbox]', card).checked = m.selected;
-      $('input[type=checkbox]', card).setAttribute('aria-label', name + ' 함께 조절 대상');
-      const slider = $('input[type=range]', card); slider.disabled = !m.supported; slider.setAttribute('aria-label', name + ' 밝기'); range(slider, m.percent);
-      animateNumber($('.number', card), m.percent); safeText($('.monitor-error', card), m.status || (m.supported ? '' : 'DDC/CI 연결을 확인하세요.'));
+      $('input[type=checkbox]', card).setAttribute('aria-label', t(name) + ' · ' + t('함께 조절 대상'));
+      const slider = $('input[type=range]', card); slider.disabled = !m.supported; slider.setAttribute('aria-label', t(name) + ' · ' + t('밝기')); range(slider, m.percent);
+      animateNumber($('.number', card), m.percent); safeText($('.monitor-error', card), t(m.status || (m.supported ? '' : 'DDC/CI 연결을 확인하세요.')));
       $('.monitor-error', card).hidden = !$('.monitor-error', card).textContent;
-      safeText($('.ddc-label', card), m.supported ? 'DDC/CI' : '연결 확인');
+      safeText($('.ddc-label', card), m.supported ? 'DDC/CI' : t('연결 확인'));
     });
   }
   let displayKey = '';
@@ -123,15 +152,15 @@
     if (key === displayKey) return;
     displayKey = key;
     const map = $('#displayMap'), choices = $('#displayChoices'); map.replaceChildren(); choices.replaceChildren();
-    if (!displays.length) { map.textContent = '연결된 모니터가 없습니다.'; return; }
+    if (!displays.length) { map.textContent = t('연결된 모니터가 없습니다.'); return; }
     const left = Math.min(...displays.map(d => d.x)), top = Math.min(...displays.map(d => d.y));
     const width = Math.max(...displays.map(d => d.x + d.width)) - left, height = Math.max(...displays.map(d => d.y + d.height)) - top;
     const scale = Math.min((map.clientWidth - 100) / width, (map.clientHeight - 60) / height);
     displays.forEach(d => {
-      const button = document.createElement('button'); button.className = d.selected ? 'selected' : ''; button.textContent = d.number; button.setAttribute('aria-label', '모니터 ' + d.number + (d.primary ? ' 기본' : '')); button.setAttribute('aria-pressed', d.selected);
+      const button = document.createElement('button'); button.className = d.selected ? 'selected' : ''; button.textContent = d.number; button.setAttribute('aria-label', t('모니터') + ' ' + d.number + (d.primary ? t(' 기본') : '')); button.setAttribute('aria-pressed', d.selected);
       Object.assign(button.style, { left: (map.clientWidth - width * scale) / 2 + (d.x - left) * scale + 'px', top: (map.clientHeight - height * scale) / 2 + (d.y - top) * scale + 'px', width: Math.max(20, d.width * scale - 4) + 'px', height: Math.max(20, d.height * scale - 4) + 'px' });
       button.addEventListener('click', () => send({ action: 'display', id: d.id, value: !d.selected })); map.append(button);
-      const choice = document.createElement('button'); choice.className = d.selected ? 'selected' : ''; choice.textContent = '모니터 ' + d.number; choice.setAttribute('aria-pressed', d.selected); choice.addEventListener('click', () => button.click()); choices.append(choice);
+      const choice = document.createElement('button'); choice.className = d.selected ? 'selected' : ''; choice.textContent = t('모니터') + ' ' + d.number; choice.setAttribute('aria-pressed', d.selected); choice.addEventListener('click', () => button.click()); choices.append(choice);
     });
   }
   new ResizeObserver(() => { if (state && !$('#Protection').hidden) { displayKey = ''; updateDisplays(state.displays); } }).observe($('#displayMap'));
@@ -140,32 +169,67 @@
     const key = JSON.stringify(monitors.map(m => [m.id, m.capabilities, m.peakNits, m.fullFrameNits]));
     if (key === ddcKey) return; ddcKey = key;
     const root = $('#ddcDetails'); root.replaceChildren();
-    monitors.forEach(m => { const detail = document.createElement('details'), title = document.createElement('summary'), p = document.createElement('p'); title.textContent = m.name + ' · ' + m.device; p.textContent = '피크 ' + (m.peakNits || '알 수 없음') + ' nit · 전체 화면 ' + (m.fullFrameNits || '알 수 없음') + ' nit'; detail.append(title, p); if (m.capabilities) { const pre = document.createElement('pre'); pre.textContent = m.capabilities; detail.append(pre); } root.append(detail); });
+    monitors.forEach(m => { const detail = document.createElement('details'), title = document.createElement('summary'), p = document.createElement('p'); title.textContent = m.name + ' · ' + m.device; p.textContent = t('피크 ') + (m.peakNits || t('알 수 없음')) + t(' nit · 전체 화면 ') + (m.fullFrameNits || t('알 수 없음')) + ' nit'; detail.append(title, p); if (m.capabilities) { const pre = document.createElement('pre'); pre.textContent = m.capabilities; detail.append(pre); } root.append(detail); });
   }
+  const layoutActions = { Left:'왼쪽', Up:'위쪽', Right:'오른쪽', Down:'아래쪽', Center:'중앙 배치', Scale:'크기 순환' };
+  const modifierName = mask => [[2,'Ctrl'],[1,'Alt'],[4,'Shift'],[8,'Win']].filter(([bit])=>mask & bit).map(([,name])=>name).join(' + ');
+  const keyName = key => ({8:'Backspace',33:'Page Up',34:'Page Down',35:'End',36:'Home',37:'←',38:'↑',39:'→',40:'↓',45:'Insert',46:'Delete'}[key] || (key>=112 ? 'F'+(key-111) : String.fromCharCode(key)));
+  const keyOptions = [8,33,34,35,36,37,38,39,40,45,46,...Array.from({length:10},(_,i)=>48+i),...Array.from({length:26},(_,i)=>65+i),...Array.from({length:12},(_,i)=>112+i)];
+  const shortcutLabel = binding => modifierName(binding.modifiers) + ' + ' + keyName(binding.key);
+  let layoutEditorLanguage;
+  function updateLayoutShortcuts(next) {
+    if (!next.layoutShortcuts) return;
+    const root = $('#layoutShortcutRows');
+    if (layoutEditorLanguage !== language) {
+      layoutEditorLanguage = language; root.replaceChildren();
+      Object.entries(layoutActions).forEach(([action,title]) => {
+        const row=document.createElement('div'); row.className='layout-shortcut-row'; row.dataset.action=action;
+        const label=document.createElement('span');label.textContent=t(title);
+        const modifiers=document.createElement('select'), key=document.createElement('select');
+        modifiers.id='layoutModifiers'+action;key.id='layoutKey'+action;
+        modifiers.setAttribute('aria-label', t(title)+' · '+t('보조키 선택'));key.setAttribute('aria-label',t(title)+' · '+t('키 선택'));
+        modifiers.append(...[8,2,1,6,3,5,9,10,12,7,11,13,14,15].map(v=>new Option(modifierName(v),v)));
+        key.append(...keyOptions.map(v=>new Option(keyName(v),v)));
+        const change=()=>send({action:'layoutShortcut',name:action,modifiers:Number(modifiers.value),key:Number(key.value)});
+        modifiers.addEventListener('change',change);key.addEventListener('change',change);
+        row.append(label,modifiers,key);root.append(row);
+      });
+    }
+    next.layoutShortcuts.forEach(b=>{value($('#layoutModifiers'+b.action),b.modifiers);value($('#layoutKey'+b.action),b.key);});
+    const applied=next.appliedShortcuts;
+    if (applied) {
+      const directions=applied.filter(b=>['Left','Up','Right','Down'].includes(b.action));
+      safeText($('#directionKeys'), directions.every(b=>b.modifiers===8 && b.key==={Left:37,Up:38,Right:39,Down:40}[b.action]) ? 'Win + ↑ ↓ ← →' : directions.map(shortcutLabel).join(' · '));
+      safeText($('#scaleKeys'),shortcutLabel(applied.find(b=>b.action==='Scale')));
+      safeText($('#centerKeys'),shortcutLabel(applied.find(b=>b.action==='Center'))+' · 16:9');
+    }
+  }
+  $('#resetLayoutShortcuts').addEventListener('click',()=>send({action:'resetLayoutShortcuts'}));
   function applyState(next) {
-    state = next; window.monitorShadeState = state;
+    state = next; window.monitorShadeState = state; localize(state); updateLayoutShortcuts(state);
     for (const [k, v] of Object.entries(state.palette)) if (k !== 'light') document.documentElement.style.setProperty('--' + k, v);
     document.documentElement.style.colorScheme = state.palette.light ? 'light' : 'dark';
     document.body.classList.toggle('light', state.palette.light);
     document.body.classList.toggle('solid', !state.glass); document.body.classList.toggle('windows-font', state.font === 'MalgunGothic'); document.body.classList.toggle('high-contrast', state.highContrast);
-    safeText($('#themeTime'), state.time); safeText($('#version'), state.version + (state.preview ? ' · 미리보기' : ''));
+    safeText($('#themeTime'), t(state.time)); safeText($('#version'), state.version + (state.preview ? t(' · 미리보기') : ''));
     $$('[data-field]').forEach(e => {
       const setting = state.fields[e.id];
       if (setting === undefined) return;
       if (e.tagName === 'SELECT') {
-        const key = JSON.stringify(setting.options);
-        if (e.dataset.options !== key) { e.replaceChildren(...setting.options.map((s, i) => new Option(s, i))); e.dataset.options = key; }
-        if (document.activeElement !== e) e.value = String(setting.value);
+        const key = language + JSON.stringify(setting.options);
+        const replaced = e.dataset.options !== key;
+        if (replaced) { e.replaceChildren(...setting.options.map((s, i) => new Option(t(s), i))); e.dataset.options = key; }
+        if (replaced || document.activeElement !== e) e.value = String(setting.value);
       } else if (e.type === 'checkbox' || e.type === 'radio') e.checked = setting;
       else value(e, setting);
     });
-    $$('[data-message]').forEach(e => safeText(e, state.messages[e.dataset.message]));
+    $$('[data-message]').forEach(e => safeText(e, t(state.messages[e.dataset.message])));
     $$('[data-button]').forEach(e => { e.disabled = state.enabled[e.dataset.button] === false; });
-    const maximize = $('[data-caption=maximize]'); maximize.setAttribute('aria-label', state.maximized ? '이전 크기로' : '최대화'); maximize.title = maximize.getAttribute('aria-label');
+    const maximize = $('[data-caption=maximize]'); maximize.setAttribute('aria-label', t(state.maximized ? '이전 크기로' : '최대화')); maximize.title = maximize.getAttribute('aria-label');
     const maximizeSvg = state.maximized ? '<path d="M5 3h8v8m-8-6h6v8H3V5Z"/>' : '<rect x="3.5" y="3.5" width="9" height="9" rx=".5"/>';
     if ($('svg', maximize).innerHTML !== maximizeSvg) $('svg', maximize).innerHTML = maximizeSvg;
     drawMaster(state.master.percent, state.master.enabled); updateMonitors(state.monitors);
-    if (!$('#Protection').hidden) updateDisplays(state.displays);
+    updateDisplays(state.displays);
     safeText($('#licenses'), state.licenses); updateDdc(state.monitors);
   }
   async function selectPage(page) {
@@ -193,6 +257,8 @@
     ['Protection','강제 검은 화면','F9 F10 가리기','ManualEnabled'],
     ['Layout','창 배치','윈도우 방향키 위 아래 왼쪽 오른쪽 windows','LayoutEnabled'],
     ['Layout','창 크기 조절','Win Backspace 백스페이스 크기 확장 50 70 100','resizeFeature'],
+    ['Layout','단축키 설정','키 조합 변경 modifiers keys bindings','layoutShortcutEditor'],
+    ['General','언어','language English Korean KO EN 한국어 영어','Language'],
     ['Layout','중앙 창 너비','Win Delete Del 16:9 중앙 비율','CenterPercent'],
     ['Shortcuts','밝기 단축키','키보드 Alt F2 F3 보조키','BrightnessModifier'],
     ['Shortcuts','밝기 조절 간격','증가 감소 단계 step','BrightnessStep'],
@@ -210,12 +276,12 @@
     const query = normalizeSearch(searchInput.value.trim());
     results.replaceChildren(); results.hidden = !query; $('#navigation').hidden = !!query; $('#clearSearch').hidden = !searchInput.value;
     if (!query) { safeText($('#searchAnnouncement'), ''); return; }
-    const matches = searchIndex.filter(item => normalizeSearch(item.slice(1,3).join(' ') + pageNames[item[0]]).includes(query));
-    safeText($('#searchAnnouncement'), '검색 결과 ' + matches.length + '개');
-    if (!matches.length) { const empty = document.createElement('p'); empty.className = 'search-empty'; empty.textContent = '검색 결과가 없습니다.'; results.append(empty); }
+    const matches = searchIndex.filter(item => normalizeSearch(item.slice(1,3).join(' ') + t(item[1]) + t(pageNames[item[0]])).includes(query));
+    safeText($('#searchAnnouncement'), language === 'EN' ? matches.length + ' results' : '검색 결과 ' + matches.length + '개');
+    if (!matches.length) { const empty = document.createElement('p'); empty.className = 'search-empty'; empty.textContent = t('검색 결과가 없습니다.'); results.append(empty); }
     matches.forEach(([page, title, keywords, id]) => {
       const button = document.createElement('button'), name = document.createElement('span'), section = document.createElement('small');
-      button.className = 'search-result'; name.textContent = title; section.textContent = pageNames[page]; button.append(name,section);
+      button.className = 'search-result'; name.textContent = t(title); section.textContent = t(pageNames[page]); button.append(name,section);
       button.addEventListener('click', async () => {
         clearSearch(); await selectPage(page);
         const target = document.getElementById(id); if (!target) return;

@@ -254,7 +254,7 @@
     <ScrollViewer x:Name="BrightnessPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,20">
      <Grid Margin="0,0,0,24"><TextBlock Text="밝기" FontSize="30" FontWeight="SemiBold"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock x:Name="ThemeTime" Style="{StaticResource Caption}" Margin="0,0,16,0" VerticalAlignment="Center"/><Button x:Name="RefreshBrightness" Content="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Width="36" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="밝기 새로고침" ToolTip="밝기 새로고침"/></StackPanel></Grid>
      <TextBlock x:Name="BrightnessStatus" Style="{StaticResource Caption}" Margin="0,0,0,12" Visibility="Collapsed"/>
-     <Border Style="{StaticResource CardStyle}" Margin="0,0,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xE71B;" Style="{StaticResource Glyph}" Width="24" FontSize="18"/><TextBlock Grid.Column="1" Text="두 모니터 밝기 동기화" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessSync" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="선택한 모니터 밝기 동기화"/></Grid></Border>
+     <Border Style="{StaticResource CardStyle}" Margin="0,0,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="&#xE71B;" Style="{StaticResource Glyph}" Width="24" FontSize="18"/><TextBlock Grid.Column="1" Text="밝기 동기화" VerticalAlignment="Center"/><CheckBox x:Name="BrightnessSync" Grid.Column="2" VerticalAlignment="Center" AutomationProperties.Name="선택한 모니터 밝기 동기화"/></Grid></Border>
      <Grid x:Name="BrightnessConsole"><Grid.ColumnDefinitions><ColumnDefinition Width="1.08*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
       <Border x:Name="MasterCard" Style="{StaticResource CardStyle}" Padding="26" VerticalAlignment="Top" MinHeight="476">
        <StackPanel>
@@ -293,6 +293,7 @@
     </StackPanel></ScrollViewer>
     <ScrollViewer x:Name="GeneralPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="28,24,28,24">
      <TextBlock Text="일반" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24"/>
+     <ComboBox x:Name="Language"/>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="시간별 색상" VerticalAlignment="Center"/><ComboBox x:Name="AppearanceMode" Grid.Column="1" AutomationProperties.Name="시간별 색상 모드"/></Grid></Border>
      <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions><TextBlock Text="한글 글꼴" VerticalAlignment="Center"/><ComboBox x:Name="KoreanFont" Grid.Column="1" AutomationProperties.Name="한글 글꼴"/></Grid></Border>
      <TextBlock x:Name="KoreanFontStatus" Style="{StaticResource Caption}" Visibility="Collapsed" Margin="0,0,0,12"/>

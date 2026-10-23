@@ -37,6 +37,8 @@ namespace MonitorShade
         private int waitingSteps;
         private BrightnessToast toast;
         internal event Action BindingChanged;
+        internal Func<BrightnessBinding, string> ValidateBinding;
+        internal BrightnessBinding ConfiguredBinding { get { return new BrightnessBinding(settings.HotkeysEnabled, settings.Modifier, settings.DownKey, settings.UpKey); } }
         internal BrightnessBinding Binding { get { return new BrightnessBinding(settings.HotkeysEnabled && !suspended && !preview, settings.Modifier, settings.DownKey, settings.UpKey); } }
         internal BrightnessPage(C.UserControl root, BrightnessPreferences preferences, string path, bool previewMode)
         {
@@ -253,7 +255,7 @@ namespace MonitorShade
         {
             if (preview || disposed) return;
             if (toast == null) toast = new BrightnessToast();
-            toast.Display(title, value);
+            toast.Display(UiText.Translate(title), UiText.Translate(value));
         }
         private void SetSnapshot(DdcMonitor[] values)
         {
@@ -313,6 +315,8 @@ namespace MonitorShade
             if (!BrightnessBinding.Valid(modifier, down, up)) { ShortcutMessage("서로 다른 F키를 선택하세요. Ctrl+Alt·AltGr의 F9~F12는 공통 단축키로 예약되어 있습니다."); return false; }
             if (!int.TryParse(Find<C.TextBox>("BrightnessStep").Text, out step) || step < 1 || step > 20) { ShortcutMessage("밝기 간격은 1~20%로 입력하세요."); return false; }
             var updated = new BrightnessPreferences { HotkeysEnabled = Find<C.CheckBox>("BrightnessHotkeys").IsChecked == true, Modifier = modifier, DownKey = down, UpKey = up, Step = step, Target = Find<C.ComboBox>("BrightnessTarget").SelectedIndex == 1 ? "Pointer" : "Selected", SyncEnabled = Find<C.CheckBox>("BrightnessSync").IsChecked == true, Monitors = GroupPreferences() };
+            string conflict = ValidateBinding == null ? null : ValidateBinding(new BrightnessBinding(updated.HotkeysEnabled, modifier, down, up));
+            if (conflict != null) { ShortcutMessage(conflict); return false; }
             try
             {
                 if (!preview) { var preferences = Preferences.Read(preferencesPath); preferences.Brightness = updated; preferences.Write(preferencesPath); }

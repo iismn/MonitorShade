@@ -74,3 +74,17 @@ body.light .ambient-master{border-color:rgba(230,239,207,.6);background-color:rg
 .ambient-master .stepper input{background:rgba(17,62,35,.24);border-color:rgba(242,255,222,.22);color:#f5ffdf}.ambient-master .stepper button{background:rgba(236,255,219,.13);border-color:rgba(242,255,222,.18);color:#f5ffdf}.ambient-master .stepper button:hover{background:rgba(236,255,219,.24)}
 body.high-contrast .ambient-master{background:Canvas;color:CanvasText;border-color:CanvasText}.high-contrast .master-heading,.high-contrast .master-caption,.high-contrast .master-heading .eyebrow{color:CanvasText}.high-contrast .dot-number circle{color:CanvasText;fill:CanvasText}
 @media(prefers-reduced-motion:reduce){.search-highlight{animation:none!important}}
+
+/* The editor keeps action labels and both parts of the chord aligned. */
+.shortcut-editor { margin-block: 16px; }
+.layout-shortcut-row { display:grid; grid-template-columns:minmax(100px,1fr) minmax(160px,1.3fr) minmax(130px,1fr); align-items:center; gap:14px; padding:10px 0; }
+.layout-shortcut-row select { width:100%; min-width:0; }
+.layout-shortcut-row + .layout-shortcut-row { border-top:1px solid rgba(var(--line),.32); }
+.feature-heading { flex-wrap:wrap; }
+.keycap { white-space:normal; overflow-wrap:anywhere; }
+html[lang=en] .setting-row > label { flex-shrink:1; }
+html[lang=en] .app-shell { grid-template-columns:220px minmax(0,1fr); }
+html[lang=en] .nav > span { white-space:nowrap; }
+.nav.active:after { flex-shrink:0; }
+#General select { width:240px; }
+.shortcut-editor > .feature-heading { flex-direction:row; align-items:center; justify-content:space-between; margin-bottom:8px; }
