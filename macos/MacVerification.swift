@@ -92,11 +92,14 @@ import SwiftUI
         let window = NSWindow(contentRect:NSRect(x:0,y:0,width:1120,height:820),styleMask:[.titled,.closable,.resizable,.fullSizeContentView],backing:.buffered,defer:false)
         window.isReleasedWhenClosed = false; window.title = "Monitor Shade"
         window.titlebarAppearsTransparent = true; window.isOpaque = false; window.backgroundColor = .clear
-        window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration))
+        window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration)
+            .environment(\.accessibilityReduceTransparency,false))
         window.center(); window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps:true)
         let directory = URL(fileURLWithPath:path,isDirectory:true)
         try! FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        let environment = "System Reduce Transparency: \(NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency)\nDefault appearance fixture: Reduce Transparency disabled\n"
+        try! environment.write(to:directory.appendingPathComponent("environment.txt"),atomically:true,encoding:.utf8)
         Task { @MainActor in
             var results = [String]()
             var morningSidebar: [Double]?
