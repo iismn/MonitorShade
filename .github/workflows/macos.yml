@@ -44,3 +44,27 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  verify-macos27:
+    needs: build
+    runs-on: xcode-27
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: MonitorShade-macOS
+          path: dist
+      - name: Run the packaged app on macOS 27
+        run: |
+          sw_vers
+          ditto -x -k dist/MonitorShade-macOS.zip app
+          "app/Monitor Shade.app/Contents/MacOS/MonitorShade" --self-test
+          "app/Monitor Shade.app/Contents/MacOS/MonitorShade" --ui-test "$PWD/ui-macos27"
+          cat ui-macos27/ui.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MonitorShade-macOS27-ui
+          path: ui-macos27/
+          if-no-files-found: error
+          retention-days: 14
