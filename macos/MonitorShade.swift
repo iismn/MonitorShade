@@ -186,6 +186,13 @@ func brightnessRawValue(percent: Int, maximum: Int) -> Int {
 func brightnessCapableMonitors(_ monitors: [Monitor], states: [String:BrightnessState]) -> [Monitor] {
     monitors.filter { states[$0.uuid]?.supported == true }
 }
+func resolvedProtection(_ profile: Profile, current: [Monitor]) -> ScreenProtectionSettings {
+    var settings = profile.screenProtection
+    if let selected = settings.selectedUUIDs, let pairs = try? resolveMonitors(profile.monitors,in:current) {
+        settings.selectedUUIDs = pairs.filter { selected.contains($0.0.uuid) }.map { $0.1.uuid }.sorted()
+    }
+    return settings
+}
 enum DisplayError: LocalizedError {
     case message(String)
     var errorDescription: String? { if case .message(let s) = self { return s }; return nil }
@@ -244,13 +251,19 @@ final class MonitorStore: ObservableObject {
     var profile: Profile? { profiles.first { $0.id == selectedProfileID } }
     var library: ProfileLibrary { ProfileLibrary(profiles:profiles) }
     var screenProtectionProfile: Profile? { profile ?? library.matching(monitors) }
-    var screenProtectionSettings: ScreenProtectionSettings { screenProtectionProfile?.screenProtection ?? unsavedScreenProtection }
+    var screenProtectionSettings: ScreenProtectionSettings {
+        screenProtectionProfile.map { resolvedProtection($0,current:monitors) } ?? unsavedScreenProtection
+    }
     func setScreenProtection(_ desired: ScreenProtectionSettings) {
         var settings = desired; settings.seconds = ScreenProtectionSettings.validSeconds(settings.seconds)
         guard settings != screenProtectionSettings else { return }
         if let target = screenProtectionProfile, let index = profiles.firstIndex(where:{$0.id == target.id}) {
             do {
-                var updated = profiles; updated[index].screenProtection = settings
+                var persisted = settings
+                if let selection = settings.selectedUUIDs, let pairs = try? resolveMonitors(target.monitors,in:monitors) {
+                    persisted.selectedUUIDs = pairs.filter { selection.contains($0.1.uuid) }.map { $0.0.uuid }.sorted()
+                }
+                var updated = profiles; updated[index].screenProtection = persisted
                 try persist(updated); profiles = updated
                 if target.matches(monitors) { oled.configure(settings) }
             } catch { reportError("화면 보호 설정 저장 실패: \(error.localizedDescription)") }
@@ -375,7 +388,7 @@ final class MonitorStore: ObservableObject {
     func detectEnvironment() {
         if let matched = library.matching(monitors) {
             selectedProfileID = matched.id
-            oled.configure(matched.screenProtection)
+            oled.configure(resolvedProtection(matched,current:monitors))
             if !profileLoadFailed { status = "‘\(matched.name)’ 환경을 인식했습니다." }
         } else {
             selectedProfileID = ""
@@ -402,7 +415,7 @@ final class MonitorStore: ObservableObject {
             try persist(updated.profiles)
             profiles = updated.profiles
             if selectedProfileID == target.id { selectedProfileID = updated.matching(monitors)?.id ?? "" }
-            oled.configure(updated.matching(monitors)?.screenProtection ?? ScreenProtectionSettings())
+            oled.configure(updated.matching(monitors).map { resolvedProtection($0,current:monitors) } ?? ScreenProtectionSettings())
             status = "‘\(target.name)’ 환경을 목록에서 삭제했습니다. 삭제한 설정은 저장 폴더에 백업했습니다."
         } catch { reportError("환경을 삭제하지 못했습니다: \(error.localizedDescription)") }
         deletionTarget = nil
@@ -561,7 +574,7 @@ final class MonitorStore: ObservableObject {
             }
             busy = false
             topology = topologyKey(monitors)
-            oled.configure(saved.screenProtection)
+            oled.configure(resolvedProtection(saved,current:monitors))
             updateGroupLevel()
             status = "‘\(saved.name)’ 환경으로 복구했습니다."
             if !brightnessErrors.isEmpty { reportError("밝기 응답 확인 필요: " + brightnessErrors.joined(separator:", ")) }

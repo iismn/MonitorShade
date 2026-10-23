@@ -58,6 +58,9 @@ import SwiftUI
         try! profile.validate()
         let reloaded = try! JSONDecoder().decode(Profile.self,from:JSONEncoder().encode(profile))
         check(reloaded.screenProtection == profile.screenProtection && reloaded.monitors == monitors,"Monitor arrays, main display, modes and protection targets persist together")
+        var reconnected = monitors
+        reconnected[0].uuid = "33333333-3333-4333-8333-333333333333"
+        check(resolvedProtection(profile,current:reconnected).selectedUUIDs == [reconnected[0].uuid],"Protection selection follows matched hardware when display UUIDs change across ports")
         var bad = profile; bad.screenProtection.mode = "unknown"
         check((try? bad.validate()) == nil,"Unknown protection modes are rejected")
         bad = profile; bad.screenProtection.selectedUUIDs = ["invalid"]
@@ -85,10 +88,11 @@ import SwiftUI
         let store = MonitorStore(preview:true); store.start()
         let integration = MacIntegration(store:store)
         let window = NSWindow(contentRect:NSRect(x:0,y:0,width:1120,height:820),styleMask:[.titled,.closable,.resizable,.fullSizeContentView],backing:.buffered,defer:false)
-        window.isReleasedWhenClosed = false; window.title = "MonitorShade UI verification"
+        window.isReleasedWhenClosed = false; window.title = "Monitor Shade"
         window.titlebarAppearsTransparent = true; window.isOpaque = false; window.backgroundColor = .clear
         window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration))
         window.center(); window.makeKeyAndOrderFront(nil)
+        app.activate(ignoringOtherApps:true)
         let directory = URL(fileURLWithPath:path,isDirectory:true)
         try! FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
         Task { @MainActor in

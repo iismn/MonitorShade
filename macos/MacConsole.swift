@@ -219,7 +219,7 @@ struct MonitorBrightnessCard: View {
 
 struct DisplayProfilesPage: View {
     @ObservedObject var store: MonitorStore
-    private var disabled: Bool { store.busy || store.brightnessBusy }
+    private var disabled: Bool { store.busy || store.brightnessBusy || store.brightnessReading }
     var body: some View {
         HStack(spacing:12) {
             Picker("저장 환경",selection:Binding(get:{store.selectedProfileID},set:store.selectProfile)) {
