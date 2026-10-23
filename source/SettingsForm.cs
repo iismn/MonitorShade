@@ -149,7 +149,8 @@ namespace MonitorShade
             Find<C.RadioButton>("NavHelp").Checked += delegate { SelectPage("Help"); };
             Find<C.RadioButton>("NavShortcuts").Checked += delegate { SelectPage("Shortcuts"); };
             Find<C.RadioButton>("NavBrightness").Checked += async delegate { SelectPage("Brightness"); await brightnessPage.Refresh(false); };
-            Find<C.Button>("ApplyLayout").Click += delegate { ApplyLayoutSettings(); };
+            Find<C.Button>("ApplyLayout").Click += delegate { ApplyLayoutSettings(true); };
+            Find<C.Button>("ApplyCenter").Click += delegate { ApplyCenterSettings(); };
             Find<C.Button>("TestLayout").Click += delegate { DiagnoseLayout(); };
             savedStartupTargets = preferences.SelectedDevices();
             if (!File.Exists(preferencesPath)) savedStartupTargets = Screen.AllScreens.Select(s => s.DeviceName).ToArray();
@@ -270,7 +271,7 @@ namespace MonitorShade
         {
             int value; bool valid = TryGetPercent(out value);
             Find<C.TextBlock>("CenterValidation").Visibility = valid ? W.Visibility.Collapsed : W.Visibility.Visible;
-            Find<C.Button>("ApplyLayout").IsEnabled = valid;
+            Find<C.Button>("ApplyCenter").IsEnabled = valid;
             if (amount != null && seconds != null && start != null) ValidateWait();
         }
         private void SetLayoutHook()
@@ -288,9 +289,20 @@ namespace MonitorShade
             }
             catch (Exception e) { Find<C.TextBlock>("LayoutStatus").Text = "단축키를 시작할 수 없습니다: " + e.Message; }
         }
-        private bool ApplyLayoutSettings()
+        private bool ApplyCenterSettings()
         {
             int value; if (!TryGetPercent(out value)) { ValidateLayout(); return false; }
+            try
+            {
+                if (!preview) { var saved = Preferences.Read(preferencesPath); saved.CenterPercent = value; saved.Write(preferencesPath); }
+                appliedCenterPercent = value; arranger.Reset(); Find<C.TextBlock>("CenterStatus").Text = "저장됨"; return true;
+            }
+            catch (Exception e) { Find<C.TextBlock>("CenterStatus").Text = "저장하지 못했습니다: " + e.Message; return false; }
+        }
+        private bool ApplyLayoutSettings(bool shortcutsOnly = false)
+        {
+            int value = appliedCenterPercent;
+            if (!shortcutsOnly && !TryGetPercent(out value)) { ValidateLayout(); return false; }
             string conflict = LayoutBindings.Error(draftLayoutShortcuts, layoutEnabled.IsChecked == true ? brightnessPage.ConfiguredBinding : null);
             if (conflict != null) { Find<C.TextBlock>("LayoutStatus").Text = conflict; return false; }
             try
@@ -764,7 +776,7 @@ namespace MonitorShade
                 check(Find<C.ScrollViewer>("LayoutPage").Visibility == W.Visibility.Visible && Find<C.ScrollViewer>("ProtectionPage").Visibility == W.Visibility.Collapsed, "Sidebar switches to layout without another window");
                 centerPercent.Text = "65"; int percent;
                 check(TryGetPercent(out percent) && percent == 65, "Center percentage accepts 65");
-                foreach (string invalid in new[] { "9", "101", "abc", "" }) { centerPercent.Text = invalid; check(!Find<C.Button>("ApplyLayout").IsEnabled, "Reject invalid center percentage: " + invalid); }
+                foreach (string invalid in new[] { "9", "101", "abc", "" }) { centerPercent.Text = invalid; check(!Find<C.Button>("ApplyCenter").IsEnabled, "Reject invalid center percentage: " + invalid); }
                 centerPercent.Text = "65";
                 foreach (bool light in new[] { false, true }) { ApplyTheme(!light); RenderPreview(Path.Combine(Path.GetDirectoryName(path), light ? "Layout-light.png" : "Layout-dark.png"), 1020, 880); }
                 Find<C.RadioButton>("NavGeneral").IsChecked = true;

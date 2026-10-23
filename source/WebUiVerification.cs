@@ -90,6 +90,9 @@ namespace MonitorShade
                         await check("document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth+1", page + " page fits without horizontal clipping");
                         if (page == "Layout") {
                             await check("document.querySelector('.scale-feature').textContent.includes('Backspace') && document.querySelector('.scale-feature').textContent.includes('70%')", "Monitor-ratio resize cycle is discoverable on the layout page");
+                        }
+                        if (page == "Shortcuts") {
+                            await check("document.querySelector('#Shortcuts #layoutShortcutEditor') && document.querySelector('#Shortcuts #LayoutEnabled') && !document.querySelector('#Layout #layoutShortcutEditor')", "Window shortcut editor and enable switch live only in Shortcuts");
                             await core.ExecuteScriptAsync("document.querySelector('#LayoutEnabled').click();document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
                             await check("!monitorShadeState.fields.LayoutEnabled && monitorShadeState.messages.LayoutStatus==='저장됨'", "Layout toggle applies to arrangement and resize shortcuts");
                             await core.ExecuteScriptAsync("document.querySelector('#LayoutEnabled').click();document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
@@ -106,12 +109,26 @@ namespace MonitorShade
                     await check("[...document.querySelectorAll('.page,nav,aside')].every(e=>![...e.querySelectorAll('p,label,h1,h2,summary,button,.sub-label,.monitor-model')].some(n=>/[가-힣]/.test(n.textContent)))", "Every settings page and help paragraph has an English translation");
                     await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='language';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
                     await check("document.querySelector('.search-result').textContent.includes('Language')", "English search finds the language setting");
-                    await core.ExecuteScriptAsync("document.querySelector('#clearSearch').click();monitorShadeNavigate('Layout')"); await Task.Delay(400);
+                    await core.ExecuteScriptAsync("document.querySelector('#clearSearch').click();monitorShadeNavigate('Shortcuts')"); await Task.Delay(400);
                     await check("document.querySelectorAll('.layout-shortcut-row').length===6", "All six placement and resize actions have separate editors");
+                    await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').value='layout shortcuts';document.querySelector('#settingsSearch').dispatchEvent(new Event('input'))");
+                    await check("document.querySelectorAll('.search-result').length===1 && document.querySelector('.search-result small').textContent==='Shortcuts'", "Search points window shortcut settings to the unified Shortcuts page");
+                    await core.ExecuteScriptAsync("document.querySelector('#settingsSearch').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))"); await Task.Delay(350);
+                    await check("!document.querySelector('#Shortcuts').hidden && document.activeElement.id==='layoutShortcutEditor'", "Search opens and focuses the moved editor");
                     await core.ExecuteScriptAsync("document.querySelector('#layoutModifiersScale').value='6';document.querySelector('#layoutKeyScale').value='82';document.querySelector('#layoutKeyScale').dispatchEvent(new Event('change'))"); await Task.Delay(300);
                     await check("monitorShadeState.layoutShortcuts.find(b=>b.action==='Scale').key===82 && monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===8", "Editing a custom Ctrl+Shift+R resize chord does not activate it before Apply");
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Layout')"); await Task.Delay(350);
+                    await core.ExecuteScriptAsync("document.querySelector('#CenterPercent').value='80';document.querySelector('#CenterPercent').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyCenter]').click()"); await Task.Delay(300);
+                    await check("monitorShadeState.appliedCenterPercent===80 && monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===8", "Saving center size does not apply an unsaved shortcut draft");
+                    await core.ExecuteScriptAsync("document.querySelector('#CenterPercent').value='101';document.querySelector('#CenterPercent').dispatchEvent(new Event('change'))"); await Task.Delay(300);
+                    await check("document.querySelector('[data-button=ApplyCenter]').disabled && !document.querySelector('[data-button=ApplyLayout]').disabled", "Invalid center width blocks only the layout size save");
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Shortcuts')"); await Task.Delay(350);
                     await core.ExecuteScriptAsync("document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
                     await check("monitorShadeState.appliedShortcuts.find(b=>b.action==='Scale').key===82 && document.querySelector('#scaleKeys').textContent==='Ctrl + Shift + R' && document.querySelector('[data-message=LayoutStatus]').textContent==='Saved'", "Apply activates the custom chord and updates the displayed shortcut");
+                    await check("monitorShadeState.appliedCenterPercent===80 && monitorShadeState.fields.CenterPercent==='101'", "Saving shortcuts preserves the last saved center width despite an invalid draft on another page");
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Layout')"); await Task.Delay(350);
+                    await core.ExecuteScriptAsync("document.querySelector('#CenterPercent').value='65';document.querySelector('#CenterPercent').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyCenter]').click()"); await Task.Delay(300);
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Shortcuts')"); await Task.Delay(350);
                     await core.ExecuteScriptAsync("document.querySelector('#layoutModifiersCenter').value='6';document.querySelector('#layoutKeyCenter').value='82';document.querySelector('#layoutKeyCenter').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
                     await check("monitorShadeState.appliedShortcuts.find(b=>b.action==='Center').key===46 && document.querySelector('[data-message=LayoutStatus]').textContent.includes('same shortcut')", "Duplicate chord is rejected without changing active shortcuts");
                     await core.ExecuteScriptAsync("document.querySelector('#resetLayoutShortcuts').click();document.querySelector('#layoutModifiersScale').value='1';document.querySelector('#layoutKeyScale').value='113';document.querySelector('#layoutKeyScale').dispatchEvent(new Event('change'));document.querySelector('[data-button=ApplyLayout]').click()"); await Task.Delay(300);
@@ -126,7 +143,9 @@ namespace MonitorShade
                     await check("document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth+1 && [...document.querySelectorAll('.layout-shortcut-row select')].every(e=>e.getBoundingClientRect().right<=document.querySelector('#main').getBoundingClientRect().right)", "English shortcut editor fits the minimum window size");
                     form.Width=1120;form.Height=840; await Task.Delay(400);
                     await core.ExecuteScriptAsync("document.documentElement.style.background='rgb('+monitorShadeState.palette.background+')'");
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Layout')"); await Task.Delay(350);
                     using (var output = File.Create(path + ".english-layout.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
+                    await core.ExecuteScriptAsync("monitorShadeNavigate('Shortcuts')"); await Task.Delay(350);
                     await core.ExecuteScriptAsync("document.querySelector('#layoutShortcutEditor').scrollIntoView({block:'center'});document.activeElement.blur()"); await Task.Delay(200);
                     using (var output = File.Create(path + ".english-shortcuts.png")) await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, output);
                     await core.ExecuteScriptAsync("monitorShadeNavigate('General')"); await Task.Delay(350);

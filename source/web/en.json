@@ -74,7 +74,6 @@
   "Win + 방향키를 반복해서 누르면 해당 방향 기준으로 ½ → ⅔ → 전체 작업 영역으로 순환합니다. Win + Del은 설정한 너비의 16:9 중앙 창 → 전체 작업 영역으로 순환합니다. 작업 표시줄은 제외합니다.": "By default, Win + an arrow key cycles placement from that edge: ½ → ⅔ → the full work area. Win + Del cycles between a centered 16:9 window at the configured width and the full work area. The taskbar is excluded.",
   "Win + Backspace는 현재 모니터 작업 영역의 가로·세로를 각각 50% → 70% → 100%로 순환합니다. 50%와 70%는 중앙 정렬이고 100%는 최대화입니다. 가로·세로 모니터 모두 해당 작업 영역의 비율을 유지합니다. 다른 배치 단축키를 누르거나 창을 직접 옮기고 크기를 바꾸면 다음 순환은 처음부터 시작합니다.": "By default, Win + Backspace cycles through 50%, 70%, and 100% of the monitor's work-area width and height. The first two sizes are centered; 100% maximizes the window. Both portrait and landscape monitors keep their work-area aspect ratio. Using another placement shortcut or moving or resizing the window resets the cycle.",
   "Windows의 기본 Win + 방향키 동작을 대신합니다. 창 배치 기능을 끄면 기본 동작으로 돌아갑니다. 관리자 권한 앱이나 최소 크기 제한이 있는 일부 창은 배치가 제한될 수 있습니다.": "The default bindings replace Windows' Win + arrow behavior. Disable window layout to restore Windows' behavior. Elevated apps and windows with minimum-size limits may not accept the requested placement.",
-  "창 배치에서 각 동작의 보조키와 키를 변경하고 적용을 누르세요. 기본값 버튼은 편집 중인 키를 초기화합니다. 적용 전에는 기존 단축키가 유지됩니다.": "In Window layout, select modifiers and a key for each action, then click Apply. Defaults resets the editor. Current shortcuts remain active until you apply the changes.",
   "Ctrl + Alt + F11 · 설정 열기": "Ctrl + Alt + F11 · Open settings",
   "Ctrl + Alt + F12 · 화면 보호 일시정지 / 재시작": "Ctrl + Alt + F12 · Pause / resume OLED protection",
   "트레이 아이콘을 두 번 클릭해도 설정을 열 수 있습니다. X 버튼은 트레이로 숨기며, 완전히 종료하려면 왼쪽 아래 ‘종료’를 사용하세요. 로그인 시 자동 실행을 켜면 창 없이 실행하고 저장한 설정으로 감시를 시작합니다.": "Double-click the tray icon to open settings. The X button hides the app in the tray. Use Quit at the bottom left to exit. Start at sign-in launches without a window and starts monitoring with saved settings.",
@@ -238,5 +237,10 @@
   "감시할 모니터를 선택해 주세요.": "Select monitors to watch.",
   "감시 영역을 확인하세요.": "Check the monitoring area.",
   "마우스 위치 확인 대기 (": "Waiting for pointer access (",
-  "바탕 화면 합성 대기": "Waiting for desktop composition"
+  "바탕 화면 합성 대기": "Waiting for desktop composition",
+  "단축키의 창 배치 · 크기 조절에서 각 동작의 보조키와 키를 변경하고 저장을 누르세요. 기본값 버튼은 편집 중인 키를 초기화합니다. 저장 전에는 기존 단축키가 유지됩니다.": "In Shortcuts → Window layout and resizing, select modifiers and a key for each action, then click Save. Defaults resets the editor. Current shortcuts remain active until you save the changes.",
+  "창 배치 · 크기 조절": "Window layout and resizing",
+  "단축키 사용": "Enable shortcuts",
+  "창 배치 단축키": "Window layout shortcuts",
+  "저장을 누르면 단축키를 저장합니다.": "Click Save to apply the shortcuts."
 }

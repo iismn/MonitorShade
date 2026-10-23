@@ -42,7 +42,7 @@ Per-monitor black overlay. Restores on mouse entry or screen changes. Supports a
 
 <sub>Percentages apply to work-area width and height. The 16:9 window width is configurable.</sub>
 
-Change each binding in **Window layout → Shortcut settings**. Select modifiers and a key, then click **Apply**.
+Change each binding in **Shortcuts → Window layout and resizing**. Select modifiers and a key, then click **Save**.
 
 <br>
 
