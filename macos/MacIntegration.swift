@@ -239,7 +239,7 @@ struct WindowPlacement {
         InstallEventHandler(GetApplicationEventTarget(), { _, event, context -> OSStatus in
             guard let event, let context else { return OSStatus(eventNotHandledErr) }
             var identifier = EventHotKeyID()
-            let result = GetEventParameter(event,EventParamName(kEventParamDirectObject),EventParamType(typeEventHotKeyID),nil,UInt32(MemoryLayout<EventHotKeyID>.size),nil,&identifier)
+            let result = GetEventParameter(event,EventParamName(kEventParamDirectObject),EventParamType(typeEventHotKeyID),nil,MemoryLayout<EventHotKeyID>.size,nil,&identifier)
             guard result == noErr, identifier.signature == 0x4d534844 else { return OSStatus(eventNotHandledErr) }
             let keys = Unmanaged<GlobalShortcuts>.fromOpaque(context).takeUnretainedValue()
             let id = identifier.id
