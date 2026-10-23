@@ -6,11 +6,11 @@
 
 <img src="docs/images/macos-evening-brightness.png" alt="MonitorShade for macOS — brightness sync and monitor controls" width="1120">
 
-<sub>Native app UI with preview monitors.</sub>
+<sub>macOS 27.0.1 · Native app UI with preview monitors.</sub>
 
 <br><br>
 
-[**Download for macOS**](https://github.com/iismn/MonitorShade/releases/download/mac-v1.18.0/MonitorShade-macOS.zip)
+[**Download for macOS**](https://github.com/iismn/MonitorShade/releases/download/mac-v1.18.1/MonitorShade-macOS.zip)
 
 **macOS 14+ · Apple silicon / Intel · Native app**
 
@@ -68,7 +68,7 @@ Edit all bindings in **Shortcuts**. Window control needs Accessibility permissio
 | :---: | :---: |
 | ![Morning native Mac UI](docs/images/macos-morning-brightness.png) | ![Evening native Mac UI](docs/images/macos-evening-brightness.png) |
 
-Live macOS blur, time palettes, warm evening cards and a glowing dot readout. No Edge, WebView2, .NET or separate browser runtime.
+Live desktop blur, time palettes and a glowing dot readout. Native Liquid Glass search and controls on macOS 26 or later, with macOS 27 sidebar refinements. Earlier systems use standard materials. No separate browser runtime.
 
 <br>
 
