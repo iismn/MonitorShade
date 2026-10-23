@@ -106,6 +106,7 @@ struct Profile: Codable, Identifiable {
     func validate() throws {
         guard version == 1, (1...3600).contains(screenProtection.seconds), ["input","content"].contains(screenProtection.mode),
               screenProtection.selectedUUIDs.map({ $0.count <= 32 && Set($0).count == $0.count && $0.allSatisfy { UUID(uuidString:$0) != nil } }) ?? true,
+              screenProtection.selectedUUIDs.map({ selected in selected.allSatisfy { id in monitors.contains { $0.uuid == id } } }) ?? true,
               UUID(uuidString:id) != nil,
               !name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, name.count <= 80,
               !monitors.isEmpty, monitors.count <= 32,
@@ -250,7 +251,10 @@ final class MonitorStore: ObservableObject {
     @Published var brightnessBusy = false
     var profile: Profile? { profiles.first { $0.id == selectedProfileID } }
     var library: ProfileLibrary { ProfileLibrary(profiles:profiles) }
-    var screenProtectionProfile: Profile? { profile ?? library.matching(monitors) }
+    var screenProtectionProfile: Profile? {
+        if let profile, profile.matches(monitors) { return profile }
+        return library.matching(monitors)
+    }
     var screenProtectionSettings: ScreenProtectionSettings {
         screenProtectionProfile.map { resolvedProtection($0,current:monitors) } ?? unsavedScreenProtection
     }

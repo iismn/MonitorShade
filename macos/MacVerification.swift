@@ -65,6 +65,8 @@ import SwiftUI
         check((try? bad.validate()) == nil,"Unknown protection modes are rejected")
         bad = profile; bad.screenProtection.selectedUUIDs = ["invalid"]
         check((try? bad.validate()) == nil,"Invalid persistent display identities are rejected")
+        bad = profile; bad.screenProtection.selectedUUIDs = ["44444444-4444-4444-8444-444444444444"]
+        check((try? bad.validate()) == nil,"Protection targets must belong to their saved display setup")
         let before = [UInt8](repeating:100,count:10000)
         check(!FrameDifference.changed(before,before),"Static frame does not reset the idle timer")
         var noise = before; noise[0] = 101; noise[1] = 102

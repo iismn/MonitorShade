@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import CoreGraphics
+import ServiceManagement
 
 struct ConsoleTheme {
     var light: Bool
@@ -342,7 +343,10 @@ struct GeneralConsolePage: View {
             Toggle("창 뒤 배경 블러",isOn:$preferences.blur)
             Toggle("시작 시 창 숨기기",isOn:$preferences.startHidden)
             Toggle("로그인 시 실행",isOn:Binding(get:{store.loginEnabled},set:store.setLogin))
-            if !store.loginMessage.isEmpty { Text(store.loginMessage).font(.caption).foregroundStyle(.orange) }
+            if !store.loginMessage.isEmpty {
+                Text(store.loginMessage).font(.caption).foregroundStyle(.orange)
+                Button("로그인 항목 열기") { SMAppService.openSystemSettingsLoginItems() }
+            }
             Toggle("모니터 연결 시 저장 환경 복구",isOn:$store.autoRestore)
         }.toggleStyle(.switch).controlSize(.small).consoleCard()
         HStack {
