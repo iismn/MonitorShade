@@ -92,13 +92,12 @@ import SwiftUI
         let window = NSWindow(contentRect:NSRect(x:0,y:0,width:1120,height:820),styleMask:[.titled,.closable,.resizable,.fullSizeContentView],backing:.buffered,defer:false)
         window.isReleasedWhenClosed = false; window.title = "Monitor Shade"
         window.titlebarAppearsTransparent = true; window.isOpaque = false; window.backgroundColor = .clear
-        window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration)
-            .environment(\.accessibilityReduceTransparency,false))
+        window.contentViewController = NSHostingController(rootView:ConsoleView(store:store,integration:integration))
         window.center(); window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps:true)
         let directory = URL(fileURLWithPath:path,isDirectory:true)
         try! FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
-        let environment = "System Reduce Transparency: \(NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency)\nDefault appearance fixture: Reduce Transparency disabled\n"
+        let environment = "System Reduce Transparency: \(NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency)\nDefault appearance fixture: CI requests Reduce Transparency disabled\n"
         try! environment.write(to:directory.appendingPathComponent("environment.txt"),atomically:true,encoding:.utf8)
         Task { @MainActor in
             var results = [String]()
@@ -135,8 +134,9 @@ import SwiftUI
                     }
                     precondition(maximum-minimum > 0.12,"Sidebar text and controls must be visible in the native window")
                     precondition(bitmap.pixelsWide >= 900 && bitmap.pixelsHigh >= 600)
+                    let frameWidth = window.frame.width
                     func background(_ x: Double, _ y: Double = 0.86) -> [Double] {
-                        let px = Int(x/window.frame.width*Double(rendered.pixelsWide))
+                        let px = Int(x/frameWidth*Double(rendered.pixelsWide))
                         let py = Int(Double(rendered.pixelsHigh)*y)
                         var channels = [Double](repeating:0,count:3)
                         for dy in -2...2 { for dx in -2...2 {

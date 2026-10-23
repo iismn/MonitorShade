@@ -30,6 +30,9 @@ jobs:
           plutil -lint "dist/Monitor Shade.app/Contents/Info.plist"
       - name: Render settings pages with preview monitors
         run: |
+          defaults read com.apple.universalaccess reduceTransparency || true
+          defaults write com.apple.universalaccess reduceTransparency -bool false
+          defaults write com.apple.universalaccess increaseContrast -bool false
           "dist/Monitor Shade.app/Contents/MacOS/MonitorShade" --ui-test "$PWD/dist/ui"
           cat dist/ui/ui.txt
       - name: Package app
@@ -57,6 +60,9 @@ jobs:
       - name: Run the packaged app on macOS 27
         run: |
           sw_vers
+          defaults read com.apple.universalaccess reduceTransparency || true
+          defaults write com.apple.universalaccess reduceTransparency -bool false
+          defaults write com.apple.universalaccess increaseContrast -bool false
           ditto -x -k dist/MonitorShade-macOS.zip app
           "app/Monitor Shade.app/Contents/MacOS/MonitorShade" --self-test
           "app/Monitor Shade.app/Contents/MacOS/MonitorShade" --ui-test "$PWD/ui-macos27"
