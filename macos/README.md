@@ -68,6 +68,6 @@ The app does not need Edge, WebView2, .NET or a browser runtime. Its panels use 
 
 ## Interface
 
-The window uses the system sidebar and a single window title. Search, brightness sync and the linked brightness controls use native Liquid Glass on macOS 26 or later. Content cards use standard materials. The linked card blends green daytime colors into orange, pink and pale gray in the evening. The native window backdrop stays live when the window moves.
+The sidebar and detail view share one full-window desktop backdrop and time palette. Navigation has no separate opaque panel. Search, hover states, keyboard navigation and the sidebar visibility control are retained. Brightness sync and the linked brightness controls use native Liquid Glass on macOS 26 or later. Content cards use standard materials. The linked card blends green daytime colors into orange, pink and pale gray in the evening. Its dot readout is 20% smaller than 1.18.1, with larger white dots and two soft glow layers. The native window backdrop stays live when the window moves.
 
 The design follows Apple's [Materials guidance](https://developer.apple.com/design/human-interface-guidelines/materials) and [macOS 27 design updates](https://developer.apple.com/videos/play/wwdc2026/289/), with the soft gradients and dot readout from the supplied [visual reference](https://www.instagram.com/p/DeKDxK1MhzI/). System Reduce Transparency and Increase Contrast settings affect the materials. Page transitions honor Reduce Motion.
