@@ -38,7 +38,10 @@ private final class ContentFrameReceiver: NSObject, SCStreamOutput, SCStreamDele
         for y in 0..<height {
             for x in 0..<width {
                 let p = y*stride+x*4
-                luminance[y*width+x] = UInt8((Int(bytes[p])*29+Int(bytes[p+1])*150+Int(bytes[p+2])*77)>>8)
+                let blue: Int = Int(bytes[p]) * 29
+                let green: Int = Int(bytes[p+1]) * 150
+                let red: Int = Int(bytes[p+2]) * 77
+                luminance[y*width+x] = UInt8((blue+green+red)/256)
             }
         }
         let changed = FrameDifference.changed(previous,luminance)
@@ -136,16 +139,16 @@ private final class ContentFrameReceiver: NSObject, SCStreamOutput, SCStreamDele
             let receiver = ContentFrameReceiver()
             receiver.onFrame = { [weak self] changed in
                 Task { @MainActor in
-                    guard let self, token == generation else { return }
-                    frames[id] = ProcessInfo.processInfo.systemUptime
-                    onFrame?(id,changed)
+                    guard let self, token == self.generation else { return }
+                    self.frames[id] = ProcessInfo.processInfo.systemUptime
+                    self.onFrame?(id,changed)
                 }
             }
             receiver.onError = { [weak self] error in
                 Task { @MainActor in
-                    guard let self, token == generation else { return }
-                    frames.removeValue(forKey:id); streams.removeValue(forKey:id); receivers.removeValue(forKey:id)
-                    message = "화면 변화 감지: \(error.localizedDescription)"; onStatus?()
+                    guard let self, token == self.generation else { return }
+                    self.frames.removeValue(forKey:id); self.streams.removeValue(forKey:id); self.receivers.removeValue(forKey:id)
+                    self.message = "화면 변화 감지: \(error.localizedDescription)"; self.onStatus?()
                 }
             }
             let stream = SCStream(filter:filter,configuration:config,delegate:receiver)
