@@ -137,7 +137,7 @@ private struct ConsoleSidebar: View {
                     if pages.isEmpty { Text("검색 결과 없음").font(.callout).foregroundStyle(.secondary).padding(.vertical,12) }
                 }.padding(.horizontal,12)
             }
-            Text("macOS · 1.18.2").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
+            Text("macOS · 1.18.3").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
         }.padding(.top,22).padding(.bottom,14)
             .onMoveCommand { direction in
                 guard !pages.isEmpty else { return }
@@ -170,28 +170,48 @@ extension View {
     func consoleCard() -> some View {
         modifier(ConsoleCardSurface())
     }
-    @ViewBuilder func consoleGlass(corner: CGFloat = 20, interactive: Bool = false) -> some View {
-        if #available(macOS 26.0, *) {
-            glassEffect(.regular.interactive(interactive),in:.rect(cornerRadius:corner))
+    func consoleGlass(corner: CGFloat = 20, interactive: Bool = false) -> some View {
+        modifier(ConsoleGlassSurface(corner:corner,interactive:interactive))
+    }
+}
+
+private struct ConsoleGlassSurface: ViewModifier {
+    var corner: CGFloat
+    var interactive: Bool
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @ViewBuilder func body(content: Content) -> some View {
+        if #available(macOS 26.0, *), !reduceTransparency {
+            content.background(.white.opacity(0.035),in:RoundedRectangle(cornerRadius:corner))
+                .glassEffect(.clear.interactive(interactive),in:.rect(cornerRadius:corner))
         } else {
-            background(.regularMaterial,in:RoundedRectangle(cornerRadius:corner))
-                .overlay(RoundedRectangle(cornerRadius:corner).strokeBorder(.primary.opacity(0.08)))
+            content.background(ConsolePanelBackdrop(corner:corner))
         }
+    }
+}
+
+// The full-window NSVisualEffectView already blurs the real desktop. A light
+// translucent wash lets that shared backdrop show through each content card;
+// another dark system material would replace it with a near-black panel.
+struct ConsolePanelBackdrop: View {
+    var corner: CGFloat = 20
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    var body: some View {
+        RoundedRectangle(cornerRadius:corner)
+            .fill(reduceTransparency
+                  ? AnyShapeStyle(Color(nsColor:.controlBackgroundColor))
+                  : AnyShapeStyle(LinearGradient(colors:[.white.opacity(scheme == .light ? 0.36 : 0.085),.white.opacity(scheme == .light ? 0.17 : 0.035)],startPoint:.topLeading,endPoint:.bottomTrailing)))
+            .overlay(RoundedRectangle(cornerRadius:corner).strokeBorder(
+                LinearGradient(colors:[.white.opacity(scheme == .light ? 0.80 : 0.26),.primary.opacity(contrast == .increased ? 0.35 : 0.045)],startPoint:.topLeading,endPoint:.bottomTrailing)))
     }
 }
 
 private struct ConsoleCardSurface: ViewModifier {
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.colorSchemeContrast) private var contrast
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     func body(content: Content) -> some View {
         content.padding(22).frame(maxWidth:.infinity,alignment:.leading)
-            .background {
-                if reduceTransparency { RoundedRectangle(cornerRadius:20).fill(Color(nsColor:.controlBackgroundColor)) }
-                else { RoundedRectangle(cornerRadius:20).fill(.thinMaterial) }
-            }
-            .overlay(RoundedRectangle(cornerRadius:20).strokeBorder(
-                LinearGradient(colors:[.white.opacity(scheme == .light ? 0.78 : 0.22),.primary.opacity(contrast == .increased ? 0.3 : 0.06)],startPoint:.topLeading,endPoint:.bottomTrailing)))
+            .background(ConsolePanelBackdrop())
             .shadow(color:.black.opacity(scheme == .light ? 0.035 : 0.06),radius:16,x:0,y:6)
     }
 }
@@ -323,7 +343,9 @@ struct BrightnessConsolePage: View {
             Button { integration.stepBrightness(-1) } label: { Image(systemName:"minus").frame(width:36,height:30).contentShape(Rectangle()) }.buttonStyle(.plain).help("밝기 낮추기")
             Text("\(Int(store.groupPercent.rounded()))%").font(.system(size:16,weight:.medium)).monospacedDigit().frame(width:72,height:34)
             Button { integration.stepBrightness(1) } label: { Image(systemName:"plus").frame(width:36,height:30).contentShape(Rectangle()) }.buttonStyle(.plain).help("밝기 높이기")
-        }.padding(5).consoleGlass(corner:24,interactive:true).environment(\.colorScheme,.dark).disabled(disabled)
+        }.padding(5).consoleGlass(corner:24,interactive:true)
+            .foregroundStyle(theme.warmth > 0.5 ? Color(red:0.12,green:0.18,blue:0.15) : .white)
+            .disabled(disabled)
     }
 }
 

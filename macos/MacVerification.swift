@@ -132,22 +132,30 @@ import SwiftUI
                     }
                     precondition(maximum-minimum > 0.12,"Sidebar text and controls must be visible in the native window")
                     precondition(bitmap.pixelsWide >= 900 && bitmap.pixelsHigh >= 600)
-                    if page == .general {
-                        // Sample empty areas at the same height, away from cards,
-                        // navigation rows and the version label. This catches a
-                        // separate opaque sidebar even when its text is visible.
-                        func background(_ x: Double) -> [Double] {
-                            let px = Int(x/window.frame.width*Double(rendered.pixelsWide))
-                            let py = Int(Double(rendered.pixelsHigh)*0.86)
-                            var channels = [Double](repeating:0,count:3)
-                            for dy in -2...2 { for dx in -2...2 {
-                                let color = rendered.colorAt(x:px+dx,y:py+dy)!.usingColorSpace(.deviceRGB)!
-                                channels[0] += color.redComponent/25
-                                channels[1] += color.greenComponent/25
-                                channels[2] += color.blueComponent/25
-                            } }
-                            return channels
+                    func background(_ x: Double, _ y: Double = 0.86) -> [Double] {
+                        let px = Int(x/window.frame.width*Double(rendered.pixelsWide))
+                        let py = Int(Double(rendered.pixelsHigh)*y)
+                        var channels = [Double](repeating:0,count:3)
+                        for dy in -2...2 { for dx in -2...2 {
+                            let color = rendered.colorAt(x:px+dx,y:py+dy)!.usingColorSpace(.deviceRGB)!
+                            channels[0] += color.redComponent/25
+                            channels[1] += color.greenComponent/25
+                            channels[2] += color.blueComponent/25
+                        } }
+                        return channels
+                    }
+                    if page == .brightness {
+                        let backdrop = background(270,0.93)
+                        let sync = background(window.frame.width*0.57,0.18)
+                        let card = background(window.frame.width*0.91,0.28)
+                        for (name,sample) in [("sync bar",sync),("monitor card",card)] {
+                            let delta = zip(sample,backdrop).map { abs($0-$1) }.max()!
+                            precondition(delta < 0.12,"Brightness \(name) must transmit its backdrop; delta=\(delta)")
+                            results.append("PASS: \(mode) \(name)/backdrop difference \(String(format:"%.4f",delta))")
                         }
+                    }
+                    if page == .general {
+                        // Sample empty regions away from controls and text.
                         let sidebar = background(100), detail = background(270)
                         let difference = zip(sidebar,detail).map { abs($0-$1) }.max()!
                         precondition(difference < 0.08,"Sidebar and detail must share the same backdrop; delta=\(difference)")

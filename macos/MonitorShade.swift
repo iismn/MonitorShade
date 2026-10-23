@@ -753,9 +753,7 @@ extension View {
         }
     }
     func displaySurface() -> some View {
-        padding(18)
-            .background(.regularMaterial,in:RoundedRectangle(cornerRadius:18))
-            .overlay(RoundedRectangle(cornerRadius:18).strokeBorder(.primary.opacity(0.055)))
+        padding(18).background(ConsolePanelBackdrop(corner:18))
     }
 
 }
@@ -791,7 +789,7 @@ struct LayoutView: View {
         }
         .frame(height:242)
         .background {
-            RoundedRectangle(cornerRadius:22).fill(Color(nsColor:.controlBackgroundColor))
+            ConsolePanelBackdrop(corner:22)
             RoundedRectangle(cornerRadius:22).fill(LinearGradient(colors:[Color.accentColor.opacity(0.10),.indigo.opacity(0.035),.clear],startPoint:.topLeading,endPoint:.bottomTrailing))
         }
         .overlay(alignment:.bottomTrailing) {

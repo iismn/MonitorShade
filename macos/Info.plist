@@ -6,8 +6,8 @@
 <key>CFBundleName</key><string>Monitor Shade</string>
 <key>CFBundleDisplayName</key><string>Monitor Shade</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.18.2</string>
-<key>CFBundleVersion</key><string>11802</string>
+<key>CFBundleShortVersionString</key><string>1.18.3</string>
+<key>CFBundleVersion</key><string>11803</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
