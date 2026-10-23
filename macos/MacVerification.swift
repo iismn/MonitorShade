@@ -99,6 +99,7 @@ import SwiftUI
         try! FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
         Task { @MainActor in
             var results = [String]()
+            var morningSidebar: [Double]?
             for mode in ["morning","evening"] {
                 store.preferences.appearance = mode
                 for page in ConsolePage.allCases {
@@ -115,7 +116,7 @@ import SwiftUI
                     // Capture this test app's own window through the compositor.
                     let capture = Process()
                     capture.executableURL = URL(fileURLWithPath:"/usr/sbin/screencapture")
-                    capture.arguments = ["-x","-l",String(window.windowNumber),imageURL.path]
+                    capture.arguments = ["-x","-o","-l",String(window.windowNumber),imageURL.path]
                     do { try capture.run(); capture.waitUntilExit() }
                     catch { fatalError("Native window capture failed: \(error)") }
                     precondition(capture.terminationStatus == 0,"Native test-window capture must succeed")
@@ -131,6 +132,32 @@ import SwiftUI
                     }
                     precondition(maximum-minimum > 0.12,"Sidebar text and controls must be visible in the native window")
                     precondition(bitmap.pixelsWide >= 900 && bitmap.pixelsHigh >= 600)
+                    if page == .general {
+                        // Sample empty areas at the same height, away from cards,
+                        // navigation rows and the version label. This catches a
+                        // separate opaque sidebar even when its text is visible.
+                        func background(_ x: Double) -> [Double] {
+                            let px = Int(x/window.frame.width*Double(rendered.pixelsWide))
+                            let py = Int(Double(rendered.pixelsHigh)*0.86)
+                            var channels = [Double](repeating:0,count:3)
+                            for dy in -2...2 { for dx in -2...2 {
+                                let color = rendered.colorAt(x:px+dx,y:py+dy)!.usingColorSpace(.deviceRGB)!
+                                channels[0] += color.redComponent/25
+                                channels[1] += color.greenComponent/25
+                                channels[2] += color.blueComponent/25
+                            } }
+                            return channels
+                        }
+                        let sidebar = background(100), detail = background(270)
+                        let difference = zip(sidebar,detail).map { abs($0-$1) }.max()!
+                        precondition(difference < 0.08,"Sidebar and detail must share the same backdrop; delta=\(difference)")
+                        results.append("PASS: \(mode) sidebar/detail background delta \(String(format:"%.4f",difference))")
+                        if mode == "morning" { morningSidebar = sidebar }
+                        else if let morningSidebar {
+                            precondition(zip(morningSidebar,sidebar).map { abs($0-$1) }.max()! > 0.15,"The sidebar must follow the time palette")
+                            results.append("PASS: Sidebar changes with the morning/evening palette")
+                        }
+                    }
                     results.append("PASS: \(mode)/\(page.rawValue) settings page rendered")
                 }
             }

@@ -32,6 +32,7 @@ struct ConsoleView: View {
     @ObservedObject var preferences: MacPreferences
     var integration: MacIntegration
     @State private var search = ""
+    @State private var sidebarVisible = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     init(store: MonitorStore, integration: MacIntegration) {
         self.store = store; self.integration = integration; preferences = store.preferences
@@ -39,29 +40,18 @@ struct ConsoleView: View {
     var body: some View {
         TimelineView(.periodic(from:.now,by:30)) { timeline in
             let theme = ConsoleTheme.at(timeline.date,mode:preferences.appearance)
-            NavigationSplitView {
-                VStack(alignment:.leading,spacing:14) {
-                    HStack(spacing:8) {
-                        Image(systemName:"magnifyingglass").foregroundStyle(.secondary)
-                        TextField("설정 검색",text:$search).textFieldStyle(.plain)
-                        if !search.isEmpty {
-                            Button { search = "" } label: { Image(systemName:"xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("검색 지우기")
-                        }
-                    }.padding(.horizontal,12).padding(.vertical,10).consoleGlass(corner:20).padding(.horizontal,12)
-                    List(selection:$preferences.page) {
-                        ForEach(ConsolePage.allCases.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }) { page in
-                            Label {
-                                Text(page.title).fontWeight(preferences.page == page ? .semibold : .regular)
-                            } icon: {
-                                Image(systemName:page.symbol).foregroundStyle(theme.tint).symbolRenderingMode(.hierarchical)
-                            }.padding(.vertical,7).tag(page)
-                        }
-                    }.listStyle(.sidebar).scrollContentBackground(.hidden)
-                    Text("macOS · 1.18.1").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
-                }.padding(.top,12).padding(.bottom,12).navigationSplitViewColumnWidth(min:190,ideal:208,max:250)
-            } detail: {
+            HStack(spacing:0) {
+                if sidebarVisible {
+                    ConsoleSidebar(search:$search,selection:$preferences.page,theme:theme)
+                        .frame(width:208).transition(.move(edge:.leading).combined(with:.opacity))
+                }
                 VStack(spacing:0) {
-                    HStack {
+                    HStack(spacing:12) {
+                        Button {
+                            withAnimation(reduceMotion ? nil : .easeInOut(duration:0.20)) { sidebarVisible.toggle() }
+                        } label: {
+                            Image(systemName:"sidebar.left").frame(width:20,height:20)
+                        }.buttonStyle(.plain).foregroundStyle(.secondary).help(sidebarVisible ? "사이드바 숨기기" : "사이드바 표시")
                         Text(preferences.page.title).font(.system(size:28,weight:.semibold))
                         Spacer()
                         Text(timeline.date,style:.time).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
@@ -79,9 +69,11 @@ struct ConsoleView: View {
                             }
                         }.frame(maxWidth:1120,alignment:.leading).padding(.horizontal,28).padding(.bottom,28)
                     }
-                }.animation(reduceMotion ? nil : .easeInOut(duration:0.20),value:preferences.page)
+                }.frame(maxWidth:.infinity,maxHeight:.infinity)
+                    .animation(reduceMotion ? nil : .easeInOut(duration:0.20),value:preferences.page)
             }
-            .navigationSplitViewStyle(.balanced)
+            // One full-window backdrop. A native NavigationSplitView inserts
+            // its own dark sidebar material, which breaks the shared palette.
             .background {
                 if preferences.blur { LiveWindowBackground().ignoresSafeArea() }
                 else { Color(nsColor:.windowBackgroundColor).ignoresSafeArea() }
@@ -106,6 +98,71 @@ struct ConsoleView: View {
         case .general: GeneralConsolePage(store:store,preferences:preferences,integration:integration)
         case .help: HelpConsolePage()
         }
+    }
+}
+
+private struct ConsoleSidebar: View {
+    @Binding var search: String
+    @Binding var selection: ConsolePage
+    var theme: ConsoleTheme
+    private var pages: [ConsolePage] {
+        ConsolePage.allCases.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }
+    }
+    var body: some View {
+        VStack(alignment:.leading,spacing:14) {
+            HStack(spacing:8) {
+                Image(systemName:"magnifyingglass").foregroundStyle(.secondary)
+                TextField("설정 검색",text:$search).textFieldStyle(.plain)
+                if !search.isEmpty {
+                    Button { search = "" } label: { Image(systemName:"xmark.circle.fill").foregroundStyle(.secondary) }
+                        .buttonStyle(.plain).help("검색 지우기")
+                }
+            }.padding(.horizontal,12).padding(.vertical,10)
+                .background(.primary.opacity(0.035),in:Capsule())
+                .overlay(Capsule().strokeBorder(.primary.opacity(0.09)))
+                .padding(.horizontal,12)
+            ScrollView {
+                VStack(spacing:4) {
+                    ForEach(pages) { page in
+                        Button { selection = page } label: {
+                            Label {
+                                Text(page.title).font(.system(size:13,weight:selection == page ? .semibold : .regular))
+                            } icon: {
+                                Image(systemName:page.symbol).font(.system(size:17,weight:.regular))
+                                    .foregroundStyle(theme.tint).symbolRenderingMode(.hierarchical).frame(width:24)
+                            }
+                        }.buttonStyle(ConsoleNavigationStyle(selected:selection == page))
+                            .accessibilityAddTraits(selection == page ? [.isSelected] : [])
+                    }
+                    if pages.isEmpty { Text("검색 결과 없음").font(.callout).foregroundStyle(.secondary).padding(.vertical,12) }
+                }.padding(.horizontal,12)
+            }
+            Text("macOS · 1.18.2").font(.caption2).foregroundStyle(.secondary).padding(.horizontal,16)
+        }.padding(.top,22).padding(.bottom,14)
+            .onMoveCommand { direction in
+                guard !pages.isEmpty else { return }
+                let index = pages.firstIndex(of:selection) ?? 0
+                if direction == .down { selection = pages[min(pages.count-1,index+1)] }
+                if direction == .up { selection = pages[max(0,index-1)] }
+            }
+    }
+}
+
+private struct ConsoleNavigationStyle: ButtonStyle {
+    var selected: Bool
+    @State private var hovering = false
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.frame(maxWidth:.infinity,alignment:.leading)
+            .padding(.horizontal,12).frame(height:42).contentShape(RoundedRectangle(cornerRadius:12))
+            .background {
+                RoundedRectangle(cornerRadius:12).fill(.primary.opacity(configuration.isPressed ? 0.14 : selected ? (scheme == .dark ? 0.12 : 0.08) : hovering ? 0.045 : 0))
+            }
+            .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(.primary.opacity(selected ? 0.055 : 0)))
+            .onHover { hovering = $0 }
+            .animation(reduceMotion ? nil : .easeInOut(duration:0.16),value:hovering)
+            .animation(reduceMotion ? nil : .easeInOut(duration:0.16),value:selected)
     }
 }
 
@@ -193,19 +250,22 @@ struct DotPercent: View {
     var body: some View {
         Canvas { context, size in
             let text = Array("\(min(100,max(0,percent)))%")
-            let spacing = min(size.width/CGFloat(text.count*6),size.height/7)
-            let left = (size.width-CGFloat(text.count*6-1)*spacing)/2
-            let top = (size.height-7*spacing)/2
+            let columns = text.count*6-1
+            let spacing = min(size.width/CGFloat(columns),size.height/7)
+            let diameter = spacing*0.42
+            let left = (size.width-CGFloat(columns-1)*spacing)/2-diameter/2
+            let top = (size.height-6*spacing)/2-diameter/2
             for (index,char) in text.enumerated() {
                 for (y,row) in (glyphs[String(char)] ?? []).enumerated() {
                     for (x,pixel) in row.enumerated() where pixel == "1" {
-                        let rect = CGRect(x:left+CGFloat(index*6+x)*spacing,y:top+CGFloat(y)*spacing,width:spacing*0.25,height:spacing*0.25)
+                        let rect = CGRect(x:left+CGFloat(index*6+x)*spacing,y:top+CGFloat(y)*spacing,width:diameter,height:diameter)
                         context.fill(Path(ellipseIn:rect),with:.color(.white))
                     }
                 }
             }
-        }.shadow(color:.white.opacity(0.65),radius:4)
-            .accessibilityLabel("\(percent)%").frame(width:180,height:78)
+        }.shadow(color:.white.opacity(0.95),radius:2)
+            .shadow(color:.white.opacity(0.60),radius:6)
+            .accessibilityLabel("\(percent)%").frame(width:144,height:62.4)
     }
 }
 
