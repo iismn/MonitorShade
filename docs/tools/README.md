@@ -25,6 +25,8 @@ python .\docs\tools\encode-demos.py .\.build\readme-recordings .\docs\images
 The encoder requires Pillow. Intermediate frames and validation results stay in
 `.build/readme-recordings`. The GIFs, four appearance stills, and window-layout screenshot are published.
 
+Run `python docs/tools/build-readme-hero.py` after updating the screenshots to rebuild the SVG cover. It embeds the morning and evening screenshots and needs no remote assets, scripts, or custom README CSS.
+
 Source EXE SHA-256:
 
 ```text

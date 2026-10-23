@@ -1,6 +1,8 @@
 <div align="center">
 
-# MonitorShade
+<img src="docs/images/hero.svg" alt="MonitorShade — Brightness, OLED Protection, Window Layout" width="1280">
+
+<br><br>
 
 <a href="https://github.com/iismn/MonitorShade/releases/download/v1.18.2/MonitorShade.exe"><img src="docs/images/download-windows.svg" alt="Download MonitorShade 1.18.2 for Windows" width="260" height="56"></a>
 
@@ -64,7 +66,9 @@ Choose **KO** or **EN** in **General → Language**.
 <details>
 <summary><strong>Requirements and setup</strong></summary>
 
-Windows 10 2004+ or Windows 11, x64, .NET Framework 4.8, and [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
+Windows 10 2004+ or Windows 11, x64, and .NET Framework 4.8.
+
+WebView2 is included with Windows 11 and already installed on most Windows 10 PCs. Run the EXE first. [Install WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) only if the app reports that it is missing. [Microsoft deployment details](https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution).
 
 - Brightness control requires DDC/CI support.
 - Desktop blur requires Windows 11 22H2+ with transparency effects enabled.

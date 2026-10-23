@@ -17,7 +17,7 @@ MonitorShade는 Windows용 모니터 관리 프로그램입니다. 화면 보호
 | 창 뒤 배경 블러 | Windows 11 22H2 이상. Windows 투명도 효과를 켜야 합니다. |
 | 모니터 밝기 조절 | 모니터가 DDC/CI 밝기 명령을 지원해야 합니다. |
 
-WebView2 Runtime이 없으면 [Microsoft 배포 페이지](https://developer.microsoft.com/microsoft-edge/webview2/)에서 Evergreen Runtime을 설치하세요.
+WebView2 Runtime은 Windows 11에 기본 포함되며 Windows 10도 대부분 이미 설치되어 있습니다. 먼저 EXE를 실행하세요. 런타임이 없다는 메시지가 나올 때만 [Microsoft 배포 페이지](https://developer.microsoft.com/microsoft-edge/webview2/)에서 Evergreen Runtime을 설치하면 됩니다. Edge 브라우저와 런타임은 별도 구성요소입니다. [Microsoft 배포 안내](https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution)
 
 ## 처음 실행
 
