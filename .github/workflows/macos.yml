@@ -1,0 +1,42 @@
+name: macOS
+
+on:
+  push:
+    branches: [mac, codex/mac-build]
+    paths: ["macos/**", ".github/workflows/macos.yml"]
+  pull_request:
+    branches: [mac]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal app, verify signature and run self-tests
+        run: |
+          mkdir -p dist
+          zsh macos/build.command "$PWD/dist/Monitor Shade.app" 2>&1 | tee dist/build.txt
+          file "dist/Monitor Shade.app/Contents/MacOS/MonitorShade"
+          xcrun lipo -verify_arch arm64 x86_64 "dist/Monitor Shade.app/Contents/MacOS/MonitorShade"
+          plutil -lint "dist/Monitor Shade.app/Contents/Info.plist"
+      - name: Render settings pages with preview monitors
+        run: |
+          "dist/Monitor Shade.app/Contents/MacOS/MonitorShade" --ui-test "$PWD/dist/ui"
+          cat dist/ui/ui.txt
+      - name: Package app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "dist/Monitor Shade.app" dist/MonitorShade-macOS.zip
+          cd dist
+          shasum -a 256 MonitorShade-macOS.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MonitorShade-macOS
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

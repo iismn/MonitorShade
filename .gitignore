@@ -11,6 +11,8 @@
 *.log
 *.tmp
 __pycache__/
+/dist/
+*.DS_Store
 
 # Local editor files
 .vs/
