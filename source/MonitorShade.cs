@@ -13,8 +13,8 @@ using Microsoft.Win32;
 
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 [assembly: System.Reflection.AssemblyTitle("MonitorShade")]
-[assembly: System.Reflection.AssemblyVersion("1.15.2.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.15.2.0")]
+[assembly: System.Reflection.AssemblyVersion("1.16.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.16.0.0")]
 
 namespace MonitorShade
 {
@@ -23,10 +23,18 @@ namespace MonitorShade
         [STAThread]
         private static int Main(string[] args)
         {
+            WebRuntime.Register();
+            return Run(args);
+        }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static int Run(string[] args)
+        {
             bool automatic = !args.Contains("--settings");
             Native.SetProcessDpiAwarenessContext(new IntPtr(-4));
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Length == 2 && args[0] == "--web-ui-test") return WebUiVerification.Run(args[1]);
+            if (args.Length == 2 && args[0] == "--web-live-test") return WebLiveVerification.Run(args[1]);
             if (args.Length == 1 && args[0] == "--design-preview")
             {
                 var demo = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose };
@@ -68,7 +76,7 @@ namespace MonitorShade
                     previewApplication.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e) {
                         File.WriteAllText(args[1] + ".error.txt", e.Exception.ToString());
                     };
-                    using (SettingsForm form = new SettingsForm(true))
+                    using (SettingsForm form = new SettingsForm(true, false, true))
                     {
                         form.Show();
                         Application.DoEvents();

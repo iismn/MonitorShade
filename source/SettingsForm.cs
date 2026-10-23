@@ -46,7 +46,7 @@ namespace MonitorShade
         public override string ToString() { return "디스플레이 " + Number + (Screen.Primary ? " (기본)" : ""); }
     }
 
-    internal sealed class SettingsForm : SettingsWindow
+    internal sealed partial class SettingsForm : SettingsWindow
     {
         private readonly WatchGroup watcher = new WatchGroup();
         private readonly DisplayRecovery displayRecovery;
@@ -93,7 +93,7 @@ namespace MonitorShade
         private bool SystemSuspended { get { return sessionBlocked || powerBlocked; } }
         private readonly uint settingsMessage = Native.RegisterWindowMessage("MonitorShade.ShowSettings.v1");
 
-        public SettingsForm(bool previewMode, bool automatic = true)
+        public SettingsForm(bool previewMode, bool automatic = true, bool legacyPreview = false)
         {
             preview = previewMode;
             displayRecovery = new DisplayRecovery(watcher);
@@ -115,10 +115,13 @@ namespace MonitorShade
             autoStart = Find<C.CheckBox>("AutoStart");
             ignoreWallpaper = Find<C.CheckBox>("IgnoreWallpaper");
             layoutEnabled = Find<C.CheckBox>("LayoutEnabled"); centerPercent = Find<C.TextBox>("CenterPercent");
-            backdrop = new CompositedBackdrop(this, ui, () => SystemSuspended, delegate {
-                Dispatcher.BeginInvoke(new Action(delegate { if (!IsDisposed && appearance != null) ApplyTheme(null); }));
-            });
-            Content = backdrop.Root;
+            // The old capture compositor exists only for historical WPF regression tools.
+            // Production uses a transparent Chromium surface over native DWM Acrylic.
+            if (legacyPreview)
+                backdrop = new CompositedBackdrop(this, ui, () => SystemSuspended, delegate {
+                    Dispatcher.BeginInvoke(new Action(delegate { if (!IsDisposed && appearance != null) ApplyTheme(null); }));
+                });
+            Content = legacyPreview ? backdrop.Root : null;
             ConnectCaption(ui);
             pageTransition = new PageTransition(Find<C.Grid>("PageHost"), new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }.ToDictionary(name => name, name => Find<C.ScrollViewer>(name + "Page")));
             foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" })
@@ -201,6 +204,7 @@ namespace MonitorShade
                 startupTimer.Start();
             }
             Find<C.RadioButton>("NavBrightness").IsChecked = true;
+            if (!legacyPreview) InitializeWebUi();
         }
 
         private void CancelAutomaticStart() { startupPending = false; startupTimer.Stop(); }
@@ -328,7 +332,7 @@ namespace MonitorShade
             mode.SelectedIndex = Array.IndexOf(values, appearance.Theme);
             Find<C.CheckBox>("UseBackdrop").IsChecked = appearance.Blur;
             var koreanFont = Find<C.ComboBox>("KoreanFont");
-            koreanFont.ItemsSource = new[] { "맑은 고딕 · 기본", "Pretendard" };
+            koreanFont.ItemsSource = new[] { "맑은 고딕 · Windows", "Pretendard · 기본" };
             koreanFont.SelectedIndex = appearance.KoreanFont == "Pretendard" ? 1 : 0;
             Action save = delegate
             {
@@ -349,10 +353,10 @@ namespace MonitorShade
         {
             double hour = forceDark.HasValue ? (forceDark.Value ? 20 : 9) : previewHour ?? appearance.Hour(DateTime.Now);
             DayPalette p = DayPalette.At(hour); dark = !p.Light;
-            bool composed = backdrop.Apply(appearance.Blur, dark);
+            bool composed = backdrop != null && backdrop.Apply(appearance.Blur, dark);
             bool nativeGlass = IsHandleCreated && DesktopBackdrop.Apply(Handle, appearance.Blur && !composed, dark);
             bool glass = composed || nativeGlass;
-            TextPresentation.Apply(backdrop.Root, glass, composed);
+            if (backdrop != null) TextPresentation.Apply(backdrop.Root, glass, composed);
             string[] names = { "Page", "Card", "CardTop", "Map", "Input", "Stroke", "Text", "Muted", "Accent", "AccentText", "Hover", "Monitor", "Selection", "Soft", "TextSurface" };
             // Preserve 1.12's translucent card brushes. Only the final background
             // canvas is RGB; no opaque text patches are added to the design.
@@ -383,7 +387,8 @@ namespace MonitorShade
             foreach (string name in new[] { "Protection", "Layout", "Brightness", "Shortcuts", "General", "Help" }) NavigationFeedback.Update(Find<C.RadioButton>("Nav" + name), Find<C.RadioButton>("Nav" + name).IsMouseOver, false);
             var time = Find<C.TextBlock>("ThemeTime"); if (time != null) time.Text = TimeSpan.FromHours(hour).ToString(@"hh\:mm") + (appearance.Theme == "Auto" && !forceDark.HasValue ? " · 자동" : "");
             var label = Find<C.TextBlock>("AppearanceStatus");
-            if (label != null) label.Text = !appearance.Blur || composed ? "" : nativeGlass ? "배경 합성을 사용할 수 없어 Windows 블러로 표시합니다. 글자는 그레이스케일로 표시되며 자동으로 다시 시도합니다." : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
+            if (label != null) label.Text = !appearance.Blur || composed || nativeGlass ? "" : "배경 블러는 Windows 11 22H2 이상에서 투명도 효과가 켜져 있을 때 적용됩니다.";
+            webGlass = glass;
             if (map != null) DrawMap();
         }
         private void ApplyWindowStyle()
@@ -647,6 +652,7 @@ namespace MonitorShade
                 if (brightnessPage != null) brightnessPage.Dispose();
                 if (pageTransition != null) pageTransition.Dispose();
                 if (backdrop != null) backdrop.Dispose();
+                if (webUi != null) webUi.Dispose();
                 arranger.Dispose();
                 startupTimer.Dispose(); reconnectTimer.Dispose(); displayRecovery.Dispose(); appearanceTimer.Dispose();
                 if (tray != null) { tray.Visible = false; ContextMenuStrip menu = tray.ContextMenuStrip; tray.Dispose(); if (menu != null) menu.Dispose(); }

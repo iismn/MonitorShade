@@ -2,11 +2,9 @@
 
 Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니터의 화면 내용이 일정 시간 동안 바뀌지 않으면 해당 화면만 검은 오버레이로 가립니다. 다른 모니터에서의 작업은 계속할 수 있습니다.
 
-현재 소스 버전: **1.15.2**
+현재 소스 버전: **1.16.0**
 
-1.15.2는 한글 기본 글꼴을 Windows의 맑은 고딕으로 변경합니다. Pretendard는 일반 설정에서 선택할 수 있습니다.
-
-1.15.1은 탭 페이드 이후 글자가 그레이스케일로 남던 문제를 수정합니다. 블러를 끈 상태와 배경 합성 모드 모두에서 전환 종료 시 WPF의 내부 텍스트 렌더링 상태까지 복구합니다. Pretendard, 반투명 카드와 기존 애니메이션은 유지합니다.
+1.15.1의 Pretendard와 반투명 디자인을 기준으로 설정 화면을 **Chromium 기반 WebView2**로 전환했습니다. WPF 텍스트의 픽셀 정렬 대신 Chromium의 자연스러운 글꼴 렌더링을 사용합니다. 창 뒤는 Windows DWM Acrylic이 실시간으로 처리하며, 배경 캡처용 보조 창을 만들지 않습니다. 감시·DDC/CI·창 배치·단축키 로직은 기존 네이티브 코드를 사용합니다.
 
 ## 기능
 
@@ -18,37 +16,33 @@ Windows용 작은 OLED 모니터 보호 유틸리티입니다. 선택한 모니�
 - 트레이에서 숨김 실행하며, 설정에서 Windows 로그인 시 자동 실행을 등록할 수 있습니다.
 - 모니터별 강제 검은 화면 단축키, 창 배치 단축키, DDC/CI 밝기 조절을 제공합니다.
 - 밝기 동기화를 켜면 선택한 모니터에 같은 밝기 값을 적용합니다.
-- 시간에 따라 바뀌는 색상과 창 뒤 배경 블러를 결합한 네이티브 WPF UI를 제공합니다. 오전 9시는 흰색·살구색, 오후는 세이지, 저녁은 올리브, 밤은 슬레이트 계열입니다.
+- 시간에 따라 바뀌는 색상과 창 뒤 배경 블러를 결합한 Chromium UI를 제공합니다. 오전 9시는 흰색·살구색, 오후는 세이지, 저녁은 올리브, 밤은 슬레이트 계열입니다.
 - 반원형 밝기 게이지, 모니터별 카드, 마우스를 올리면 은은하게 밝아지는 슬라이더를 제공합니다. 마우스를 올리는 것만으로 모니터 밝기가 바뀌지는 않습니다.
-- 한글 UI의 기본 글꼴은 Windows의 맑은 고딕, 숫자는 내장 Manrope입니다. 1.12의 반투명 카드를 유지하고 실제 창 뒤 배경을 먼저 블러 합성한 뒤 ClearType으로 글자를 그립니다.
+- 한글 UI의 기본 글꼴은 내장 Pretendard, 숫자는 Manrope입니다. 1.15.1의 반투명 디자인을 유지하고 배경은 DWM, 텍스트는 Chromium으로 합성합니다.
 
 ## 디자인 설정
 
-**일반 → 시간별 색상**에서 자동 변화 또는 아침·낮·저녁·밤을 고정할 수 있습니다. 자동 모드는 PC의 현지 시간을 사용합니다. **창 뒤 배경 블러**는 Windows 11 22H2 이상에서 Windows 투명도 효과가 켜져 있을 때 적용됩니다. 실제 창 뒤 화면을 낮은 해상도로 읽어 흐리게 만든 뒤 시간별 색상과 반투명 카드를 겹칩니다. 이전 Windows나 투명도 효과가 꺼진 환경에서는 같은 색상의 불투명 배경을 사용합니다. 고대비 및 애니메이션 설정도 따릅니다.
+**일반 → 시간별 색상**에서 자동 변화 또는 아침·낮·저녁·밤을 고정할 수 있습니다. 자동 모드는 PC의 현지 시간을 사용합니다. 오전 9시는 흰색·살구색이며 낮에는 세이지, 저녁에는 올리브, 밤에는 슬레이트 계열로 이어집니다.
 
-밝기 단축키는 **단축키** 탭에, 상세 안내와 글꼴 라이선스는 **도움말**에 있습니다. 글꼴 출처와 라이선스는 [source/fonts/README.md](source/fonts/README.md)를 참고하세요.
+**창 뒤 배경 블러**는 Windows 11 22H2 이상에서 Windows 투명도 효과가 켜져 있을 때 적용됩니다. 배경은 Windows DWM의 Desktop Acrylic이고, 그 위에 투명한 WebView2 화면의 시간별 색상과 반투명 카드를 겹칩니다. 별도 화면 캡처·Magnifier 보조 창·주기적인 배경 이미지 갱신은 사용하지 않습니다. 이전 Windows, 투명도 비활성화, 고대비 환경에서는 단색 배경을 사용합니다.
 
-상단 창 버튼은 앱 배경에 통합되어 있습니다. 빈 상단 영역을 끌어서 이동하거나 두 번 클릭해 최대화·복원할 수 있고, 가장자리로 크기를 조절할 수 있습니다. 닫기 버튼은 기존처럼 트레이로 숨깁니다.
+카드 모서리는 20px입니다. 슬라이더 호버 광채, 메뉴 호버, 본문 페이드와 숫자 전환을 유지했습니다. 마우스를 올리는 것만으로 실제 밝기를 변경하지 않습니다. 상단 빈 영역은 Chromium의 네이티브 `app-region` 기능으로 이동·두 번 클릭 최대화/복원·시스템 메뉴를 지원합니다. 닫기 버튼은 트레이로 숨깁니다.
 
-왼쪽 메뉴는 배경·글자색·선택 표시를 180ms 동안 변화시키며, 본문은 약 270ms에 걸쳐 사라졌다 나타납니다. 빠르게 전환해도 마지막 선택을 따르고 작성 중인 값은 유지합니다. Windows의 애니메이션 끄기와 고대비 설정을 따릅니다.
+**일반 → 한글 글꼴**의 기본값은 내장 Pretendard이고 숫자는 Manrope입니다. Regular와 SemiBold 실제 파일을 각각 사용하며 합성 굵기는 사용하지 않습니다. 맑은 고딕도 선택할 수 있습니다. 1.16에서 이전 설정을 처음 읽을 때 Pretendard로 복귀하고 이후 사용자의 선택은 유지합니다. 모니터·밝기·단축키·블러 설정은 유지합니다. 글꼴 렌더러는 Chromium이 결정하며 WPF의 ClearType을 강제하거나 MacType을 설치하지 않습니다.
 
-**일반 → 한글 글꼴**에서 맑은 고딕과 Pretendard를 즉시 전환하고 선택을 저장할 수 있습니다. 1.15.2에서 이전 설정을 처음 읽을 때 맑은 고딕으로 전환하며, 이후 선택은 유지합니다. 맑은 고딕은 Windows 설치본을 참조하며 EXE에 재배포하지 않습니다. 해당 글꼴이 없는 PC에서는 내장 Pretendard로 자동 대체합니다. 숫자용 Manrope와 배경 블러 설정은 그대로 유지합니다.
+설정 화면은 EXE에 포함된 HTML/CSS/JavaScript와 글꼴만 사용합니다. 외부 페이지 탐색·다운로드·권한 요청은 차단하고, 제한된 메시지 명령으로 기존 C# 컨트롤러를 호출합니다. 설정 창을 처음 열 때만 브라우저를 초기화하고 숨기면 렌더러를 일시정지합니다. 코드상 WPF 창과 비표시 설정 컨트롤은 네이티브 컨트롤러 호환 계층으로 남아 있지만 보이는 설정 텍스트는 Chromium이 그립니다.
 
-ClearType은 글꼴을 화면에 그리는 기술이며 Pretendard에도 적용할 수 있습니다. 1.15는 배경 → 블러 → 시간별 색상 → 반투명 카드 → 글자 순서로 하나의 RGB 화면에 합성합니다. 카드의 알파 값은 1.12와 같은 210/255이며 제목·메뉴·안내문 뒤의 불투명 패치는 제거했습니다. 완성된 배경색을 알고 있는 스크롤 영역에 ClearType 힌트를 적용합니다. 페이지가 사라지고 나타나는 동안에는 그레이스케일로 그린 뒤 정지 상태에서 ClearType으로 돌아옵니다. ([Microsoft 렌더링 안내](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.cleartypehint))
-
-배경은 Magnification API의 창 제외 기능과 Windows Graphics Capture를 통해 메모리에서만 처리하며 저장하거나 전송하지 않습니다. 일반 화면 공유에서 앱을 숨기는 전역 캡처 제외 설정은 사용하지 않습니다. 배경은 최대 초당 10회 갱신하고, 트레이 숨김·최소화·잠금·화면보호기·절전 중에는 캡처를 중단합니다. 네이티브 Acrylic과 같은 분위기를 별도의 합성 경로로 구현하므로 세부적인 블러 결과는 Windows DWM과 다를 수 있습니다. 캡처를 사용할 수 없으면 기존 Windows Acrylic과 그레이스케일 글자로 자동 전환하고 30초 후 다시 시도합니다.
-
-`MonitorShade.exe --text-test <보고서 경로>`는 모니터 밝기를 변경하지 않는 별도의 렌더링 검사입니다. 별도 배경 테스트 창 위에서 창 제외·실시간 배경 변화·이동·크기 변경·최소화·숨김·복원을 확인합니다. 반투명 카드 위 한글 픽셀을 그레이스케일 대조군과 비교해 RGB 서브픽셀 렌더링도 확인합니다. 대화형 Windows 화면이 열린 상태에서 실행하세요. 일반 `--ui-test`의 오프스크린 PNG는 레이아웃 검사용이며 ClearType 확인 자료로 사용하지 않습니다.
+글꼴과 WebView2 SDK의 라이선스는 **도움말 → 외형과 렌더링**에서 볼 수 있습니다. 출처는 [source/fonts/README.md](source/fonts/README.md), SDK 고지는 [source/licenses](source/licenses)에 있습니다.
 
 ## 실행
 
-Windows 10 버전 2004 이상 또는 Windows 11, .NET Framework 4.8이 필요합니다. x64 전용입니다.
+Windows 10 버전 2004 이상 또는 Windows 11, .NET Framework 4.8, Microsoft Edge WebView2 Runtime이 필요합니다. x64 전용입니다. WebView2 Runtime이 없는 PC에서는 [Microsoft 공식 배포처](https://developer.microsoft.com/microsoft-edge/webview2/)의 Evergreen Runtime을 설치하세요.
 
-빌드한 `MonitorShade.exe`를 쓰기 가능한 폴더에 두고 실행하세요. 설정은 EXE 옆의 `MonitorShade.settings.xml`에 자동 저장됩니다. 별도 리소스 파일은 필요하지 않습니다.
+빌드한 `MonitorShade.exe`를 쓰기 가능한 폴더에 두고 실행하세요. 설정은 EXE 옆의 `MonitorShade.settings.xml`에 자동 저장됩니다. 글꼴·HTML·WebView2 SDK 파일은 EXE에 포함되어 별도 리소스 파일은 필요하지 않습니다. SDK DLL은 첫 실행 시 `%LOCALAPPDATA%\MonitorShade\WebView2SDK`에 풀고 브라우저 캐시는 `%LOCALAPPDATA%\MonitorShade\WebView2`에 보관합니다.
 
 - 기본 실행: 설정 창 없이 트레이에서 시작하고 약 3초 뒤 자동 감시를 준비합니다.
 - 설정 열기: 트레이 아이콘을 두 번 클릭하거나 `Ctrl + Alt + F11`을 누릅니다.
-- 설정을 편집한 다음 **저장하고 감시**를 누르면 감시를 시작합니다. 설정 창을 여는 동안에는 보호가 일시정지합니다.
+- 설정을 편집한 다음 **감시 시작**을 누르면 감시를 시작합니다. 설정 창을 여는 동안에는 보호가 일시정지합니다.
 - 로그인 자동 실행: **일반 → 로그인 시 자동 실행**을 켭니다. EXE를 다른 폴더로 옮겼다면 다시 등록하세요.
 - 앱 종료: 트레이 메뉴의 **종료**를 선택합니다. 창의 닫기 버튼은 트레이로 숨깁니다.
 
@@ -76,7 +70,7 @@ Windows 10 버전 2004 이상 또는 Windows 11, .NET Framework 4.8이 필요합
 
 ## 빌드
 
-외부 NuGet 패키지나 별도 SDK 없이 Windows의 .NET Framework 컴파일러로 빌드합니다.
+Windows의 .NET Framework 컴파일러로 빌드합니다. 첫 빌드에서 공식 NuGet의 Microsoft.Web.WebView2 1.0.4258.31을 내려받아 고정 SHA-256으로 검증합니다. 이후 `.build/webview2` 캐시를 사용합니다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\source\build.ps1
@@ -96,8 +90,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
 
 결과는 `tests/`에 생성됩니다. 기본 검증은 재연결, 화면 접근 복구, 강제 가림, 밝기 계산, 배경화면 제외, 유휴 시간 및 창 배치 로직을 다룹니다. 재연결 검증은 모의 모니터와 가짜 화면 표면을 사용하며, 실제 케이블이나 모니터 밝기를 변경하지 않습니다. `-IncludeUi`는 설정 UI를 잠시 열고 렌더링합니다.
 
-`--settings-text-test <보고서 경로>`는 실제 일반 설정 창의 맑은 고딕 한글 항목과 드롭다운을 그레이스케일 대조군과 픽셀 단위로 비교합니다. `--settings-text-pretendard-test`는 같은 검사를 Pretendard로 실행합니다. 블러 켜기/끄기, 페이드 완료, 빠른 탭 전환, 전환 중 창 숨김/복원을 검사합니다. 대화형 데스크톱에서 실행해야 하며, 앱의 테스트 글자 이미지를 보고서 옆에 저장합니다. 미리보기 모드이므로 사용자 설정과 모니터 밝기는 변경하지 않습니다.
+`--web-ui-test <보고서 경로>`는 미리보기 모드에서 Chromium 글꼴 로딩, 실제 메시지 연결, 밝기 동기화, 페이지 전환, 설정과 창 크기별 배치를 검사합니다. 모니터 밝기와 사용자 설정을 변경하지 않습니다. 브라우저 PNG는 보고서 옆에 저장하며 Windows DWM 배경은 웹 캡처 밖에 있습니다.
 
+`--web-live-test <보고서 경로>`는 잠금이 해제된 대화형 화면에서 임시 색상 창과 앱 자신의 창만 이용해 실제 DWM 투과·배경 갱신·이동 후 갱신·숨김/복원을 검사합니다. 테스트용 캡처와 임시 배경 창은 이 명령에서만 생성됩니다.
+
+이전 `--ui-test`, `--text-test`, `--settings-text-test`, `--settings-text-pretendard-test`는 과거 WPF 화면 회귀 검사용으로만 남아 있습니다. 새 Chromium 렌더러의 검증 자료로 사용하지 않습니다.
 소스에는 실제 화면 캡처·가림·창 이동을 확인하는 별도 진단도 포함되어 있지만 기본 검증 스크립트에서는 실행하지 않습니다. 실제 케이블 재연결과 모니터별 DDC/CI 호환성은 사용 환경에서 별도로 확인해야 합니다.
 
 ## 동작 범위
@@ -116,10 +113,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1 -IncludeUi
 - `source/MonitorShade.cs`: 진입점, 설정 저장, 화면 캡처와 감시 그룹
 - `source/DesktopRecovery.cs`, `source/DisplayRecovery.cs`: 화면 접근 복구와 모니터 재연결 처리
 - `source/WallpaperRegions.cs`: 바탕화면 영역 제외
-- `source/SettingsForm.cs`, `source/Settings.xaml`: Windows 스타일 설정 UI
-- `source/SettingsWindow.cs`: 네이티브 WPF 창, 트레이 및 메시지 처리 연결
+- `source/SettingsForm.cs`, `source/Settings.xaml`: 기존 네이티브 컨트롤러와 비표시 호환 컨트롤
+- `source/SettingsWindow.cs`: 네이티브 창, 트레이 및 메시지 처리 연결
 - `source/Appearance.cs`, `source/BrightnessControls.cs`: 시간별 색상, Desktop Acrylic, 게이지 및 슬라이더 효과
-- `source/UiMotion.cs`: 메뉴 호버, 중단 가능한 페이지 전환, 글자 렌더링
+- `source/WebUi.cs`, `source/WebSettings.cs`, `source/WebRuntime.cs`: WebView2 호스트, 메시지 연결, 내장 SDK 로더
+- `source/web/`: 실제 설정 화면 HTML, CSS, JavaScript
+- `source/UiMotion.cs`: 이전 WPF 화면의 회귀 검사와 호환 컨트롤
 - `source/WindowLayout.cs`: 창 배치 단축키
 - `source/ManualShade.cs`: 강제 검은 화면
 - `source/Ddc.cs`, `source/Brightness*.cs`: 밝기 조절과 단축키

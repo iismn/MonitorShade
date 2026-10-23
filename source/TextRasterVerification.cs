@@ -109,7 +109,7 @@ namespace MonitorShade
             {
                 if (!DesktopAccess.Available()) throw new InvalidOperationException("Interactive desktop is unavailable.");
                 SetThreadExecutionState(0x80000003);
-                using (var window = new SettingsForm(true, false))
+                using (var window = new SettingsForm(true, false, true))
                 {
                     window.Topmost = true; window.Show(); Wait(200);
                     window.Hide(); window.Show(); ShowWindow(window.Handle, 5); window.Activate(); Wait(300);

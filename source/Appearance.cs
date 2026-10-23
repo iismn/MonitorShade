@@ -11,14 +11,14 @@ namespace MonitorShade
     {
         public bool Blur = true;
         public string Theme = "Auto";
-        public string KoreanFont = "MalgunGothic";
+        public string KoreanFont = "Pretendard";
         public int TypographyVersion;
         public void Normalize()
         {
             if (!new[] { "Auto", "Morning", "Day", "Evening", "Night" }.Contains(Theme)) Theme = "Auto";
-            // Adopt the requested Windows Korean UI face once, then preserve choices.
-            if (TypographyVersion < 2) { KoreanFont = "MalgunGothic"; TypographyVersion = 2; }
-            if (KoreanFont != "MalgunGothic" && KoreanFont != "Pretendard") KoreanFont = "MalgunGothic";
+            // Restore the requested 1.15.1 face when adopting the Chromium renderer.
+            if (TypographyVersion < 3) { KoreanFont = "Pretendard"; TypographyVersion = 3; }
+            if (KoreanFont != "MalgunGothic" && KoreanFont != "Pretendard") KoreanFont = "Pretendard";
         }
         internal double Hour(DateTime now)
         { return Theme == "Morning" ? 9 : Theme == "Day" ? 14 : Theme == "Evening" ? 20 : Theme == "Night" ? 0 : now.TimeOfDay.TotalHours; }

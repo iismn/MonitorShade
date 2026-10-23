@@ -69,6 +69,26 @@ namespace MonitorShade
             });
         }
         private T Find<T>(string name) where T : class { return (T)ui.FindName(name); }
+        internal object WebSnapshot()
+        {
+            return monitors.OrderBy(m => m.X).ThenBy(m => m.Y).Select(m => new {
+                id = m.Id, name = m.Name, device = m.Device, primary = m.Primary,
+                width = m.Width, height = m.Height, x = m.X, y = m.Y,
+                supported = m.Supported, selected = IsSelected(m.Id),
+                percent = desired.ContainsKey(m.Id) ? desired[m.Id] : m.Percent,
+                status = cards.ContainsKey(m.Id) ? cards[m.Id].Status.Text : m.Status,
+                capabilities = m.Capabilities, peakNits = m.PeakNits, fullFrameNits = m.FullFrameNits
+            }).ToArray();
+        }
+        internal void WebBrightness(string id, int percent, bool step)
+        {
+            if (step && (percent < -100 || percent > 100) || !step && (percent < 0 || percent > 100)) throw new ArgumentOutOfRangeException("percent");
+            if (id == "master") { if (step) StepMaster(percent); else QueueMaster(percent); }
+            else if (cards.ContainsKey(id)) { if (step) QueueStep(id, percent); else QueueAbsolute(id, percent); }
+            else throw new ArgumentException("연결된 모니터가 아닙니다.");
+        }
+        internal void WebSelected(string id, bool selected)
+        { if (!cards.ContainsKey(id)) throw new ArgumentException("연결된 모니터가 아닙니다."); cards[id].Selected.IsChecked = selected; }
         private void Message(string text, bool help = false)
         {
             var label = Find<C.TextBlock>(help ? "DdcStatus" : "BrightnessStatus");

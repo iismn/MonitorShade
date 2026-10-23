@@ -7,4 +7,4 @@ These unmodified fonts and their full SIL Open Font License texts are embedded i
 
 All fonts are distributed under the SIL Open Font License 1.1. Font names and copyright statements remain unchanged.
 
-The default Korean UI font is [Malgun Gothic](https://learn.microsoft.com/en-us/typography/font-list/malgun-gothic), loaded from the user's Windows installation. It is **not** embedded or redistributed in this project and is not covered by the bundled OFL licenses. If unavailable, MonitorShade uses bundled Pretendard. Pretendard can also be selected explicitly in General settings.
+The default Korean UI font is bundled Pretendard (restored from 1.15.1). Chromium uses the real Regular and SemiBold faces without synthesized weights. [Malgun Gothic](https://learn.microsoft.com/en-us/typography/font-list/malgun-gothic) remains an alternative in General settings and is loaded from the user's Windows installation. Malgun Gothic is **not** embedded or redistributed and is not covered by the bundled OFL licenses. If it is unavailable, the CSS font stack falls back to bundled Pretendard.

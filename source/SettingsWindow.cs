@@ -9,8 +9,8 @@ using F = System.Windows.Forms;
 
 namespace MonitorShade
 {
-    // Native WPF surface: an ElementHost child HWND would obscure the DWM backdrop.
-    // Keep the controller's small WinForms lifetime/message interface while using one WPF HWND.
+    // Native HWND shell hosts the transparent Chromium settings surface. The existing
+    // WinForms-style lifetime/message interface also serves the tray and monitor controllers.
     internal class SettingsWindow : Window, IDisposable, F.IWin32Window
     {
         private IntPtr handle;
