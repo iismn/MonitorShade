@@ -1,5 +1,8 @@
 <div align="center">
 
+[Windows](https://github.com/iismn/MonitorShade/tree/window) · [macOS](https://github.com/iismn/MonitorShade/tree/mac)
+
+
 <img src="docs/images/hero.gif" alt="MonitorShade — layered app windows change colors through the day" width="1280">
 
 <br><br>
